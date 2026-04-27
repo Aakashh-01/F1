@@ -1192,7 +1192,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3758891634827851056, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3825563487021001714, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_Size.y
@@ -1304,7 +1304,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7717933990437072110, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7941974375857762642, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: lateralD
