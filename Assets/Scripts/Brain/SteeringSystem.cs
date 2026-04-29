@@ -4,93 +4,168 @@ public class SteeringSystem : MonoBehaviour
 {
     [Header("References")]
     public Rigidbody rb;
-    public TractionSystem tractionSystem; // To read slip for assist
+    public TractionSystem tractionSystem;
     public Transform wheelFL;
     public Transform wheelFR;
 
     [Header("Steering Settings")]
     public float maxSteerAngle = 25f;
-    public AnimationCurve speedSensitivityCurve; // High speed = lower multiplier
+    public AnimationCurve speedSensitivityCurve = AnimationCurve.Linear(0f, 1f, 300f, 0.1f);
 
-    [Header("Smoothing (Low-Pass)")]
+    [Header("Smoothing")]
     public float lowSpeedSmoothTime = 0.05f;
     public float highSpeedSmoothTime = 0.2f;
-    public float speedThreshold = 50f; // Speed to transition to high smoothing
+    public float speedThreshold = 50f;
 
     [Header("Ackermann & Assist")]
-    [Range(0, 0.2f)] public float ackermannFactor = 0.15f;
-    [Range(0, 1f)] public float oversteerAssistStrength = 0.3f;
-    public float slipThreshold = 8f; // Degrees of slip before assist kicks in
+    [Range(0f, 0.2f)] public float ackermannFactor = 0.15f;
+    [Range(0f, 1f)] public float oversteerAssistStrength = 0.3f;
+    [Range(0f, 1f)] public float understeerAssistStrength = 0.15f;
+    public float slipThreshold = 8f;
+
+    [HideInInspector] public float CurrentSteerAngle;
+    [HideInInspector] public float LastAssistAngle;
+
+    public bool UseExternalSimulation { get; set; }
 
     private float _currentInput;
     private float _steeringVelocity;
-    private float _clampedAngle;
-
     private float _targetInput;
 
-    void Update()
+    private void Awake()
     {
-        // RULE 1: ALWAYS read input in Update never miss a quick key tap
+        if (rb == null)
+            rb = GetComponent<Rigidbody>();
+    }
+
+    private void Update()
+    {
+        if (UseExternalSimulation)
+            return;
+
         _targetInput = Input.GetAxisRaw("Horizontal");
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        // RULE 2: ALL smoothing and rotation MUST happen in FixedUpdate for Physics sync
-#if UNITY_6000_0_OR_NEWER
-        float currentSpeed = rb.linearVelocity.magnitude * 3.6f; // km/h
-#else
-        float currentSpeed = rb.velocity.magnitude * 3.6f; // km/h
-#endif
+        if (UseExternalSimulation)
+            return;
 
-        // 1. Calculate Dynamic Smoothing Time
-        float t = Mathf.InverseLerp(0, speedThreshold, currentSpeed);
-        float currentSmoothTime = Mathf.Lerp(lowSpeedSmoothTime, highSpeedSmoothTime, t);
+        Simulate(null);
+    }
 
-        // 2. Smooth the Input (Forced to use fixed physics time)
+    public void Simulate(VehiclePhysicsCoordinator coordinator)
+    {
+        if (coordinator != null)
+            _targetInput = coordinator.SteeringInput;
+
+        float currentSpeed = coordinator != null ? coordinator.SpeedKmh : GetSpeedKmh();
+        float t = Mathf.InverseLerp(0f, speedThreshold, currentSpeed);
+        float smoothTime = Mathf.Lerp(lowSpeedSmoothTime, highSpeedSmoothTime, t);
+
         _currentInput = Mathf.SmoothDamp(
             _currentInput,
             _targetInput,
             ref _steeringVelocity,
-            currentSmoothTime,
+            smoothTime,
             Mathf.Infinity,
-            Time.fixedDeltaTime 
-        );
+            Time.fixedDeltaTime);
 
-        // 3. Apply Speed Sensitivity Curve
-        float sensitivity = speedSensitivityCurve.Evaluate(currentSpeed);
+        float sensitivity = speedSensitivityCurve != null ? speedSensitivityCurve.Evaluate(currentSpeed) : 1f;
         float targetAngle = _currentInput * maxSteerAngle * sensitivity;
-
-        // 4. Subtle Oversteer Assist
-        targetAngle += CalculateCounterSteer(currentSpeed);
+        targetAngle += CalculateAssistAngle(coordinator, currentSpeed);
 
         ApplySteering(targetAngle);
     }
 
-    float CalculateCounterSteer(float speed)
+    public void ApplyProfile(SteeringAssistProfile profile)
     {
-        if (speed < 10f) return 0f; // No assist at walking speed
+        if (profile == null)
+            return;
 
-        // Average slip angle from rear wheels (Indices 2 and 3)
-        float rearSlip = (tractionSystem.LateralGripCoeff[2] + tractionSystem.LateralGripCoeff[3]) / 2f;
+        maxSteerAngle = profile.maxSteerAngle;
+        speedSensitivityCurve = profile.speedSensitivityCurve;
+        lowSpeedSmoothTime = profile.lowSpeedSmoothTime;
+        highSpeedSmoothTime = profile.highSpeedSmoothTime;
+        speedThreshold = profile.speedThresholdKmh;
+        ackermannFactor = profile.ackermannFactor;
+        oversteerAssistStrength = profile.oversteerAssistStrength;
+        understeerAssistStrength = profile.understeerAssistStrength;
+        slipThreshold = profile.slipThresholdDegrees;
+    }
 
-        // If rear is sliding out significantly
+    private float CalculateAssistAngle(VehiclePhysicsCoordinator coordinator, float speedKmh)
+    {
+        LastAssistAngle = 0f;
+        if (speedKmh < 10f)
+            return 0f;
+
+        float rearSlip = coordinator != null ? coordinator.AverageRearSlipAngle : GetAverageSlip(2, 3);
+        float frontSlip = coordinator != null ? coordinator.AverageFrontSlipAngle : GetAverageSlip(0, 1);
+
         if (Mathf.Abs(rearSlip) > slipThreshold)
         {
-            // Return a counter-force to nudge the wheels toward the slide
-            return -rearSlip * oversteerAssistStrength;
+            LastAssistAngle = -rearSlip * oversteerAssistStrength;
+            return LastAssistAngle;
         }
+
+        if (Mathf.Abs(frontSlip) > slipThreshold && Mathf.Sign(frontSlip) == Mathf.Sign(_currentInput))
+        {
+            LastAssistAngle = -frontSlip * understeerAssistStrength;
+            return LastAssistAngle;
+        }
+
         return 0f;
     }
 
-    void ApplySteering(float angle)
+    private float GetAverageSlip(int leftIndex, int rightIndex)
     {
-        // Ackermann Logic: Inner wheel turns more than outer
+        if (tractionSystem == null || tractionSystem.wheels == null)
+            return 0f;
+
+        float slip = 0f;
+        int count = 0;
+        AddSlip(leftIndex, ref slip, ref count);
+        AddSlip(rightIndex, ref slip, ref count);
+        return count > 0 ? slip / count : 0f;
+    }
+
+    private void AddSlip(int index, ref float slip, ref int count)
+    {
+        if (index < 0 || index >= tractionSystem.wheels.Length)
+            return;
+
+        RaycastWheel wheel = tractionSystem.wheels[index];
+        if (wheel == null || !wheel.IsGrounded)
+            return;
+
+        slip += wheel.LocalSlipVector.x;
+        count++;
+    }
+
+    private void ApplySteering(float angle)
+    {
         float angleInner = angle * (1f + ackermannFactor);
         float angleOuter = angle * (1f - ackermannFactor);
 
-        // Apply to visuals/raycast origins
-        wheelFL.localRotation = Quaternion.Euler(0, angle > 0 ? angleOuter : angleInner, 0);
-        wheelFR.localRotation = Quaternion.Euler(0, angle > 0 ? angleInner : angleOuter, 0);
+        if (wheelFL != null)
+            wheelFL.localRotation = Quaternion.Euler(0f, angle > 0f ? angleOuter : angleInner, 0f);
+
+        if (wheelFR != null)
+            wheelFR.localRotation = Quaternion.Euler(0f, angle > 0f ? angleInner : angleOuter, 0f);
+
+        CurrentSteerAngle = angle;
+    }
+
+    private float GetSpeedKmh()
+    {
+        if (rb == null)
+            return 0f;
+
+#if UNITY_6000_0_OR_NEWER
+        return rb.linearVelocity.magnitude * 3.6f;
+#else
+        return rb.velocity.magnitude * 3.6f;
+#endif
     }
 }

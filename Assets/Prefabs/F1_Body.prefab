@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 1152990134596990982}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.8, y: -0.4, z: -2.062}
+  m_LocalPosition: {x: 0.8, y: -0.453, z: -2.062}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -47,11 +47,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wheelMesh: {fileID: 0}
   carRb: {fileID: 0}
+  physicsWheel: {fileID: 0}
   wheelRadius: 0.34
-  maxSuspensionLength: 0.3
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
+  visualSmoothing: 30
 --- !u!114 &8816140255850240785
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74,7 +72,7 @@ MonoBehaviour:
     m_Bits: 8
   maxSuspensionVelocity: 8
   useSettleFrames: 1
-  settleFrames: 8
+  settleFrames: 14
   peakLateralGrip: 1.6
   peakLongGrip: 1.8
   peakSlipAngle: 6
@@ -132,11 +130,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wheelMesh: {fileID: 1328013216778212533}
   carRb: {fileID: 3611491108134853229}
+  physicsWheel: {fileID: 0}
   wheelRadius: 0.34
-  maxSuspensionLength: 0.3
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 8
+  visualSmoothing: 30
 --- !u!114 &3735138690543017340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,7 +155,7 @@ MonoBehaviour:
     m_Bits: 8
   maxSuspensionVelocity: 8
   useSettleFrames: 1
-  settleFrames: 8
+  settleFrames: 14
   peakLateralGrip: 1.6
   peakLongGrip: 1.8
   peakSlipAngle: 6
@@ -273,6 +269,7 @@ GameObject:
   - component: {fileID: 2741609745239572151}
   - component: {fileID: 7941974375857762642}
   - component: {fileID: 7771566506941757146}
+  - component: {fileID: 7532193726166083493}
   m_Layer: 0
   m_Name: F1_Body
   m_TagString: Untagged
@@ -312,7 +309,7 @@ Rigidbody:
   m_Drag: 1
   m_AngularDrag: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1500, y: 1800, z: 0}
+  m_InertiaTensor: {x: 1500, y: 1800, z: 1500}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
@@ -361,8 +358,70 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 3611491108134853229}
+  wheels:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   motorForce: 85000
   throttleSpoolSpeed: 1.5
+  rearDriveBias: 1
+  motorForceBySpeed:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: -0.0025
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 320
+      value: 0.2
+      inSlope: -0.0025
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  brakeForce: 90000
+  brakeSpoolSpeed: 6
+  frontBrakeBias: 0.58
+  brakeForceBySpeed:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.65
+      inSlope: 0
+      outSlope: 0.0010937501
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 320
+      value: 1
+      inSlope: 0.0010937501
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverseMaxSpeedKmh: 12
+  CurrentThrottle: 0
+  CurrentBrake: 0
+  LastMotorForce: 0
+  LastBrakeForce: 0
 --- !u!114 &4832105010875687065
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -433,7 +492,10 @@ MonoBehaviour:
   speedThreshold: 50
   ackermannFactor: 0.15
   oversteerAssistStrength: 0.3
+  understeerAssistStrength: 0.15
   slipThreshold: 8
+  CurrentSteerAngle: 0
+  LastAssistAngle: 0
 --- !u!114 &7941974375857762642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -514,8 +576,8 @@ MonoBehaviour:
   longTransferRate: 5
   latTransferRate: 6
   comSmoothing: 0.06
-  frontAntiRollStiffness: 90000
-  rearAntiRollStiffness: 70000
+  frontAntiRollStiffness: 70000
+  rearAntiRollStiffness: 55000
   maxLongShift: 0.06
   maxLatShift: 0.04
   maxVertShift: 0.02
@@ -526,6 +588,38 @@ MonoBehaviour:
   LongTransferG: 0
   LatTransferG: 0
   CurrentCoMLocal: {x: 0, y: 0, z: 0}
+--- !u!114 &7532193726166083493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6317130275601892748}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e9dbd3ab2da45ca98f7f6d8ade355c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  physicsProfile: {fileID: 11400000, guid: bd0a6c543d6fae94892ca23027d55fd7, type: 2}
+  applyProfileOnAwake: 1
+  rb: {fileID: 0}
+  wheels:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  drivetrain: {fileID: 0}
+  downforce: {fileID: 0}
+  steering: {fileID: 0}
+  traction: {fileID: 0}
+  weightTransfer: {fileID: 0}
+  speedMs: 0
+  speedKmh: 0
+  throttleInput: 0
+  brakeInput: 0
+  steeringInput: 0
+  averageFrontSlipAngle: 0
+  averageRearSlipAngle: 0
 --- !u!1 &6432139193080390389
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,11 +667,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wheelMesh: {fileID: 0}
   carRb: {fileID: 0}
+  physicsWheel: {fileID: 0}
   wheelRadius: 0.34
-  maxSuspensionLength: 0.3
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
+  visualSmoothing: 30
 --- !u!114 &4141135456374678524
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -600,7 +692,7 @@ MonoBehaviour:
     m_Bits: 8
   maxSuspensionVelocity: 8
   useSettleFrames: 1
-  settleFrames: 8
+  settleFrames: 14
   peakLateralGrip: 1.6
   peakLongGrip: 1.8
   peakSlipAngle: 6
@@ -658,11 +750,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wheelMesh: {fileID: 0}
   carRb: {fileID: 0}
+  physicsWheel: {fileID: 0}
   wheelRadius: 0.34
-  maxSuspensionLength: 0.3
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
+  visualSmoothing: 30
 --- !u!114 &1252457071185344477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -685,7 +775,7 @@ MonoBehaviour:
     m_Bits: 8
   maxSuspensionVelocity: 8
   useSettleFrames: 1
-  settleFrames: 8
+  settleFrames: 14
   peakLateralGrip: 1.6
   peakLongGrip: 1.8
   peakSlipAngle: 6

@@ -31,6 +31,8 @@ public class PhysicsDebugPanel : MonoBehaviour
     private TractionSystem _traction;
     private DownforceSystem _downforce;
     private WeightTransfer _weightXfer;
+    private DrivetrainBrakeSystem _drivetrain;
+    private VehiclePhysicsCoordinator _coordinator;
     private Rigidbody _rb;
 
     // -------------------------------------------------------------------------
@@ -50,6 +52,16 @@ public class PhysicsDebugPanel : MonoBehaviour
         public string group;
         public float min, max, value;
         public System.Action<float> apply;
+        public float lastApplied;
+
+        public void ApplyIfChanged()
+        {
+            if (Mathf.Approximately(value, lastApplied))
+                return;
+
+            apply(value);
+            lastApplied = value;
+        }
     }
     private List<SliderParam> _sliders = new List<SliderParam>();
     private bool _slidersBuilt;
@@ -73,7 +85,7 @@ public class PhysicsDebugPanel : MonoBehaviour
 
         if (_visible && _slidersBuilt)
             foreach (var s in _sliders)
-                s.apply(s.value);
+                s.ApplyIfChanged();
     }
 
     // =========================================================================
@@ -139,6 +151,12 @@ public class PhysicsDebugPanel : MonoBehaviour
         {
             Row("Downforce", $"{_downforce.DownforceTotal:F0} N");
             Row("Front / Rear", $"{_downforce.FrontDownforce:F0} / {_downforce.RearDownforce:F0} N");
+        }
+
+        if (_drivetrain != null)
+        {
+            Row("Throttle / Brake", $"{_drivetrain.CurrentThrottle:F2} / {_drivetrain.CurrentBrake:F2}");
+            Row("Motor / Brake F", $"{_drivetrain.LastMotorForce:F0} / {_drivetrain.LastBrakeForce:F0} N");
         }
 
         if (_weightXfer != null)
@@ -253,6 +271,7 @@ public class PhysicsDebugPanel : MonoBehaviour
             min = min,
             max = max,
             value = init,
+            lastApplied = init,
             apply = apply
         });
     }
@@ -285,6 +304,19 @@ public class PhysicsDebugPanel : MonoBehaviour
             AddSlider("Downforce", "Lateral drag",
                 0f, 5f, _downforce.lateralDragCoeff,
                 v => _downforce.lateralDragCoeff = v);
+        }
+
+        if (_drivetrain != null)
+        {
+            AddSlider("Drivetrain", "Motor force",
+                10000f, 200000f, _drivetrain.motorForce,
+                v => _drivetrain.motorForce = v);
+            AddSlider("Drivetrain", "Brake force",
+                10000f, 200000f, _drivetrain.brakeForce,
+                v => _drivetrain.brakeForce = v);
+            AddSlider("Drivetrain", "Front brake bias",
+                0f, 1f, _drivetrain.frontBrakeBias,
+                v => _drivetrain.frontBrakeBias = v);
         }
 
         if (_traction != null)
@@ -325,6 +357,8 @@ public class PhysicsDebugPanel : MonoBehaviour
     private void ResolveRefs()
     {
         _rb = carRoot.GetComponent<Rigidbody>();
+        _coordinator = carRoot.GetComponent<VehiclePhysicsCoordinator>();
+        _drivetrain = carRoot.GetComponent<DrivetrainBrakeSystem>();
         _traction = carRoot.GetComponent<TractionSystem>();
         _downforce = carRoot.GetComponent<DownforceSystem>();
         _weightXfer = carRoot.GetComponent<WeightTransfer>();
