@@ -56,6 +56,14 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
 
     private void Update()
     {
+        if (MobileTouchControls.IsActive)
+        {
+            steeringInput = MobileTouchControls.Steering;
+            throttleInput = MobileTouchControls.Throttle;
+            brakeInput = MobileTouchControls.Brake;
+            return;
+        }
+
         steeringInput = Input.GetAxisRaw("Horizontal");
 
         float vertical = Input.GetAxisRaw("Vertical");
