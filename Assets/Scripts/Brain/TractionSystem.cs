@@ -137,7 +137,8 @@ public class TractionSystem : MonoBehaviour
         float effectiveLateralD = lateralD * gripScale * speedMult;
         float effectiveLongD = longD * gripScale * speedMult;
 
-        float lateralCoeff = Pacejka(wheel.LocalSlipVector.x, lateralB, lateralC, effectiveLateralD, lateralE);
+        float lateralSlipRadians = wheel.LocalSlipVector.x * Mathf.Deg2Rad;
+        float lateralCoeff = Pacejka(lateralSlipRadians, lateralB, lateralC, effectiveLateralD, lateralE);
         float longCoeff = Pacejka(wheel.LocalSlipVector.y, longB, longC, effectiveLongD, longE);
 
         LateralGripCoeff[index] = lateralCoeff;

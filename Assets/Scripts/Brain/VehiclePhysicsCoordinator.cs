@@ -247,6 +247,9 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (rb == null)
             return;
 
+        if (rb.linearDamping > 0.05f)
+            rb.linearDamping = 0.02f;
+
         Vector3 tensor = rb.inertiaTensor;
         if (tensor.x <= 0f || tensor.y <= 0f || tensor.z <= 0f)
         {

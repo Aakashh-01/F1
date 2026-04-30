@@ -19,17 +19,25 @@ public class DrivetrainBrakeSystem : MonoBehaviour
     [Range(0f, 1f)] public float frontBrakeBias = 0.58f;
     public AnimationCurve brakeForceBySpeed = AnimationCurve.Linear(0f, 0.65f, 320f, 1f);
 
+    [Header("Brake Stability")]
+    [Range(0f, 1f)] public float brakeSteerStability = 0.45f;
+    [Range(0f, 1f)] public float brakeSteerFrontBias = 0.78f;
+    [Range(0f, 250f)] public float brakeSteerBlendSpeedKmh = 80f;
+
     [Header("Reverse")]
     public float reverseMaxSpeedKmh = 12f;
 
     [HideInInspector] public float CurrentThrottle;
     [HideInInspector] public float CurrentBrake;
+    [HideInInspector] public float CurrentReverse;
     [HideInInspector] public float LastMotorForce;
     [HideInInspector] public float LastBrakeForce;
+    [HideInInspector] public float LastReverseForce;
 
     public bool UseExternalSimulation { get; set; }
 
     private VehiclePhysicsCoordinator _coordinator;
+    private const float ReverseForceMultiplier = 0.45f;
 
     protected virtual void Awake()
     {
@@ -50,24 +58,28 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         ResolveReferences();
 
         float targetThrottle;
-        float targetBrake;
+        float targetBrakeInput;
 
         if (coordinator != null)
         {
             targetThrottle = coordinator.ThrottleInput;
-            targetBrake = coordinator.BrakeInput;
+            targetBrakeInput = coordinator.BrakeInput;
         }
         else
         {
             float vertical = Input.GetAxisRaw("Vertical");
             targetThrottle = Mathf.Max(0f, vertical);
-            targetBrake = Mathf.Max(0f, -vertical);
+            targetBrakeInput = Mathf.Max(0f, -vertical);
         }
+
+        DetermineBrakeAndReverseTargets(targetThrottle, targetBrakeInput, out float targetBrake, out float targetReverse);
 
         CurrentThrottle = Mathf.MoveTowards(CurrentThrottle, targetThrottle, throttleSpoolSpeed * Time.fixedDeltaTime);
         CurrentBrake = Mathf.MoveTowards(CurrentBrake, targetBrake, brakeSpoolSpeed * Time.fixedDeltaTime);
+        CurrentReverse = Mathf.MoveTowards(CurrentReverse, targetReverse, throttleSpoolSpeed * Time.fixedDeltaTime);
 
         ApplyDrive(CurrentThrottle);
+        ApplyReverse(CurrentReverse);
         ApplyBrake(CurrentBrake);
     }
 
@@ -82,6 +94,9 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         brakeSpoolSpeed = profile.brakeSpoolSpeed;
         rearDriveBias = profile.rearDriveBias;
         frontBrakeBias = profile.frontBrakeBias;
+        brakeSteerStability = profile.brakeSteerStability;
+        brakeSteerFrontBias = profile.brakeSteerFrontBias;
+        brakeSteerBlendSpeedKmh = profile.brakeSteerBlendSpeedKmh;
         reverseMaxSpeedKmh = profile.reverseMaxSpeedKmh;
         motorForceBySpeed = profile.motorForceBySpeed;
         brakeForceBySpeed = profile.brakeForceBySpeed;
@@ -103,6 +118,25 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         ApplyAxleDistributedForce(force, rearDriveBias, true);
     }
 
+    private void ApplyReverse(float reverse)
+    {
+        LastReverseForce = 0f;
+
+        if (reverse <= 0.01f || rb == null)
+            return;
+
+        float forwardSpeedKmh = GetSignedForwardSpeedKmh();
+        if (forwardSpeedKmh <= -Mathf.Abs(reverseMaxSpeedKmh))
+            return;
+
+        float speedScale = motorForceBySpeed != null ? motorForceBySpeed.Evaluate(Mathf.Abs(forwardSpeedKmh)) : 1f;
+        float totalForce = reverse * motorForce * Mathf.Max(0f, speedScale) * ReverseForceMultiplier;
+        LastReverseForce = totalForce;
+
+        Vector3 force = -transform.forward * totalForce;
+        ApplyAxleDistributedForce(force, rearDriveBias, true);
+    }
+
     private void ApplyBrake(float brake)
     {
         LastBrakeForce = 0f;
@@ -113,6 +147,9 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         float speedKmh = GetSpeedKmh();
         float speedScale = brakeForceBySpeed != null ? brakeForceBySpeed.Evaluate(speedKmh) : 1f;
         float totalForce = brake * brakeForce * Mathf.Max(0f, speedScale);
+        float steeringAmount = GetSteeringAmount();
+        float stabilityBlend = Mathf.Clamp01(steeringAmount * Mathf.InverseLerp(0f, brakeSteerBlendSpeedKmh, speedKmh));
+        totalForce *= 1f - (brakeSteerStability * stabilityBlend);
         LastBrakeForce = totalForce;
 
 #if UNITY_6000_0_OR_NEWER
@@ -124,8 +161,21 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         if (planarVelocity.sqrMagnitude < 0.05f)
             return;
 
-        Vector3 brakeForceVector = -planarVelocity.normalized * totalForce;
-        ApplyAxleDistributedForce(brakeForceVector, 1f - frontBrakeBias, false);
+        Vector3 brakeForceVector = CalculateBrakeForceVector(planarVelocity, totalForce);
+        if (brakeForceVector.sqrMagnitude <= 0.0001f)
+            return;
+
+        float stableFrontBias = Mathf.Lerp(frontBrakeBias, brakeSteerFrontBias, stabilityBlend);
+        ApplyAxleDistributedForce(brakeForceVector, 1f - stableFrontBias, false);
+    }
+
+    private Vector3 CalculateBrakeForceVector(Vector3 planarVelocity, float totalForce)
+    {
+        float forwardSpeed = Vector3.Dot(planarVelocity, transform.forward);
+        if (Mathf.Abs(forwardSpeed) < 0.1f)
+            return Vector3.zero;
+
+        return -Mathf.Sign(forwardSpeed) * transform.forward * totalForce;
     }
 
     private void ApplyAxleDistributedForce(Vector3 force, float rearBias, bool rearDriveOnly)
@@ -205,6 +255,49 @@ public class DrivetrainBrakeSystem : MonoBehaviour
 #else
         return rb.velocity.magnitude * 3.6f;
 #endif
+    }
+
+    private float GetSteeringAmount()
+    {
+        if (_coordinator != null)
+            return Mathf.Abs(_coordinator.SteeringInput);
+
+        return Mathf.Abs(Input.GetAxisRaw("Horizontal"));
+    }
+
+    private void DetermineBrakeAndReverseTargets(float throttleInput, float brakeInput, out float brakeTarget, out float reverseTarget)
+    {
+        brakeTarget = 0f;
+        reverseTarget = 0f;
+
+        if (!ShouldUseReverse(brakeInput, throttleInput, GetSignedForwardSpeedKmh()))
+        {
+            brakeTarget = brakeInput;
+            return;
+        }
+
+        reverseTarget = brakeInput;
+    }
+
+    private bool ShouldUseReverse(float brakeInput, float throttleInput, float forwardSpeedKmh)
+    {
+        if (brakeInput <= 0.01f || throttleInput > 0.01f)
+            return false;
+
+        return forwardSpeedKmh <= 2f;
+    }
+
+    private float GetSignedForwardSpeedKmh()
+    {
+        if (rb == null)
+            return 0f;
+
+#if UNITY_6000_0_OR_NEWER
+        Vector3 velocity = rb.linearVelocity;
+#else
+        Vector3 velocity = rb.velocity;
+#endif
+        return Vector3.Dot(velocity, transform.forward) * 3.6f;
     }
 
     private void ResolveReferences()

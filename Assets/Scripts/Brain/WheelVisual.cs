@@ -6,11 +6,14 @@ public class WheelVisual : MonoBehaviour
     public Transform wheelMesh;
     public Rigidbody carRb;
     public RaycastWheel physicsWheel; // Must be linked in the Inspector!
+    public SteeringSystem steeringSystem;
 
     [Header("Settings")]
     public float wheelRadius = 0.34f;
     [Tooltip("How fast the visual wheel snaps to the physics wheel. Higher = tighter.")]
     public float visualSmoothing = 30f;
+    public bool steerable;
+    [Range(0f, 1f)] public float steeringYawScale = 1f;
 
     private float _rotationX;
     private Vector3 _initialPosition;
@@ -19,6 +22,9 @@ public class WheelVisual : MonoBehaviour
 
     void Start()
     {
+        if (steeringSystem == null)
+            steeringSystem = GetComponentInParent<SteeringSystem>();
+
         if (wheelMesh != null)
         {
             // Store the Sketchfab offset
@@ -54,7 +60,8 @@ public class WheelVisual : MonoBehaviour
         _currentY = Mathf.Lerp(_currentY, targetY, Time.deltaTime * visualSmoothing);
 
         // 4. COMBINE STEERING + SPIN + SMOOTH SUSPENSION
+        float steerYaw = steerable && steeringSystem != null ? steeringSystem.CurrentSteerAngle * steeringYawScale : 0f;
         wheelMesh.localPosition = _initialPosition + new Vector3(0, _currentY, 0);
-        wheelMesh.localRotation = Quaternion.Euler(_rotationX, _initialRotation.eulerAngles.y, _initialRotation.eulerAngles.z);
+        wheelMesh.localRotation = _initialRotation * Quaternion.Euler(_rotationX, steerYaw, 0f);
     }
 }

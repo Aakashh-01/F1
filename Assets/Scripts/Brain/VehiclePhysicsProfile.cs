@@ -57,11 +57,15 @@ public class AeroProfile
 [System.Serializable]
 public class SteeringAssistProfile
 {
-    [Range(5f, 35f)] public float maxSteerAngle = 15f;
-    public AnimationCurve speedSensitivityCurve = AnimationCurve.Linear(0f, 1f, 300f, 0.1f);
+    [Range(5f, 35f)] public float maxSteerAngle = 16f;
+    public AnimationCurve speedSensitivityCurve = new AnimationCurve(
+        new Keyframe(0f, 1f),
+        new Keyframe(120f, 0.82f),
+        new Keyframe(220f, 0.42f),
+        new Keyframe(310f, 0.28f));
     [Range(0.01f, 0.8f)] public float lowSpeedSmoothTime = 0.3f;
     [Range(0.01f, 1.0f)] public float highSpeedSmoothTime = 0.5f;
-    [Range(10f, 150f)] public float speedThresholdKmh = 50f;
+    [Range(10f, 250f)] public float speedThresholdKmh = 50f;
     [Range(0f, 0.2f)] public float ackermannFactor = 0.15f;
     [Range(0f, 1f)] public float oversteerAssistStrength = 0.3f;
     [Range(0f, 1f)] public float understeerAssistStrength = 0.15f;
@@ -71,15 +75,23 @@ public class SteeringAssistProfile
 [System.Serializable]
 public class DrivetrainBrakeProfile
 {
-    [Range(1000f, 200000f)] public float motorForce = 85000f;
+    [Range(1000f, 200000f)] public float motorForce = 92000f;
     [Range(1000f, 200000f)] public float brakeForce = 90000f;
     [Range(0.2f, 8f)] public float throttleSpoolSpeed = 1.5f;
     [Range(0.2f, 12f)] public float brakeSpoolSpeed = 6f;
     [Range(0f, 1f)] public float rearDriveBias = 1f;
     [Range(0f, 1f)] public float frontBrakeBias = 0.58f;
+    [Range(0f, 1f)] public float brakeSteerStability = 0.58f;
+    [Range(0f, 1f)] public float brakeSteerFrontBias = 0.72f;
+    [Range(0f, 250f)] public float brakeSteerBlendSpeedKmh = 80f;
     [Range(0f, 25f)] public float reverseMaxSpeedKmh = 12f;
-    public AnimationCurve motorForceBySpeed = AnimationCurve.Linear(0f, 1f, 320f, 0.2f);
-    public AnimationCurve brakeForceBySpeed = AnimationCurve.Linear(0f, 0.65f, 320f, 1f);
+    public AnimationCurve motorForceBySpeed = new AnimationCurve(
+        new Keyframe(0f, 1f),
+        new Keyframe(180f, 0.78f),
+        new Keyframe(260f, 0.46f),
+        new Keyframe(310f, 0.2f),
+        new Keyframe(350f, 0.08f));
+    public AnimationCurve brakeForceBySpeed = AnimationCurve.Linear(0f, 0.65f, 320f, 0.86f);
 }
 
 [System.Serializable]

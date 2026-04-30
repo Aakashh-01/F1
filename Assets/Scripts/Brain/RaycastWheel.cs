@@ -123,7 +123,9 @@ public class RaycastWheel : MonoBehaviour
         float speed = contactVelocityWorld.magnitude;
 
         float lateralSlipAngle = speed > 0.5f ? Mathf.Rad2Deg * Mathf.Atan2(velRight, Mathf.Abs(velForward)) : 0f;
-        float longitudinalSlip = -velForward / Mathf.Max(Mathf.Abs(velForward), 1f);
+        // Longitudinal slip needs wheel angular velocity. Body velocity alone turns normal
+        // forward motion into a fake braking slip, so drivetrain/brakes own this axis for now.
+        float longitudinalSlip = 0f;
 
         LocalSlipVector = new Vector2(lateralSlipAngle, longitudinalSlip);
     }
@@ -151,8 +153,11 @@ public class RaycastWheel : MonoBehaviour
 
         Vector3 topOrigin = transform.position + up * probeHeight;
         TryCollectGroundHit(topOrigin, -up, probeLength, maxAnchorDistance, ref bestHit, ref bestAnchorDistance, ref bestScore);
+        if (bestScore < float.MaxValue)
+            return true;
 
-        // Some imported track meshes have reversed triangle winding. The reverse probe catches those surfaces.
+        // Some imported track meshes have reversed triangle winding. Keep this as a fallback
+        // so it cannot win over a valid top-down hit on normal colliders.
         Vector3 bottomOrigin = transform.position - up * (maxAnchorDistance + 0.1f);
         TryCollectGroundHit(bottomOrigin, up, probeLength, maxAnchorDistance, ref bestHit, ref bestAnchorDistance, ref bestScore);
 

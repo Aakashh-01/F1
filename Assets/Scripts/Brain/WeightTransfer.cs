@@ -91,21 +91,45 @@ public class WeightTransfer : MonoBehaviour
 
     private void InitializeCenterOfMass()
     {
+        float localGroundY = EstimateWheelContactPlaneLocalY();
+        float localComY = localGroundY + comHeight;
+
         if (wheels[0] == null || wheels[1] == null || wheels[2] == null || wheels[3] == null)
         {
-            _staticCoMLocal = new Vector3(0f, comHeight, 0f);
+            _staticCoMLocal = new Vector3(0f, localComY, 0f);
         }
         else
         {
             float frontZ = (wheels[0].transform.localPosition.z + wheels[1].transform.localPosition.z) * 0.5f;
             float rearZ = (wheels[2].transform.localPosition.z + wheels[3].transform.localPosition.z) * 0.5f;
             float balancedZ = Mathf.Lerp(rearZ, frontZ, staticFrontBias);
-            _staticCoMLocal = new Vector3(0f, comHeight, balancedZ);
+            _staticCoMLocal = new Vector3(0f, localComY, balancedZ);
         }
 
         _rb.centerOfMass = _staticCoMLocal;
         _targetCoMLocal = _staticCoMLocal;
         CurrentCoMLocal = _staticCoMLocal;
+    }
+
+    private float EstimateWheelContactPlaneLocalY()
+    {
+        float total = 0f;
+        int count = 0;
+
+        for (int i = 0; i < wheels.Length; i++)
+        {
+            RaycastWheel wheel = wheels[i];
+            if (wheel == null)
+                continue;
+
+            total += wheel.transform.localPosition.y - wheel.GetRestAnchorDistance();
+            count++;
+        }
+
+        if (count > 0)
+            return total / count;
+
+        return -Mathf.Abs(comHeight);
     }
 
     private void MeasureAccelerations(float dt)
@@ -177,8 +201,8 @@ public class WeightTransfer : MonoBehaviour
         antiRollForce *= settleBlend * settleBlend;
         antiRollForce = Mathf.Clamp(antiRollForce, -25000f, 25000f);
 
-        AddForceAtPosition(transform.up * -antiRollForce, left.transform.position);
-        AddForceAtPosition(transform.up * antiRollForce, right.transform.position);
+        AddForceAtPosition(transform.up * antiRollForce, left.transform.position);
+        AddForceAtPosition(transform.up * -antiRollForce, right.transform.position);
     }
 
     private void AddForceAtPosition(Vector3 force, Vector3 position)

@@ -44,7 +44,7 @@ MonoBehaviour:
     lateralDragOnsetSpeed: 20
     lateralDragCap: 18000
   steering:
-    maxSteerAngle: 15
+    maxSteerAngle: 16
     speedSensitivityCurve:
       serializedVersion: 2
       m_Curve:
@@ -52,16 +52,34 @@ MonoBehaviour:
         time: 0
         value: 1
         inSlope: 0
-        outSlope: -0.003
+        outSlope: -0.0015
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 300
-        value: 0.1
-        inSlope: -0.003
-        outSlope: 0
+        time: 120
+        value: 0.82
+        inSlope: -0.0015
+        outSlope: -0.004
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 220
+        value: 0.42
+        inSlope: -0.004
+        outSlope: -0.0015555555
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 310
+        value: 0.28
+        inSlope: -0.0015555555
+        outSlope: -0.0015555555
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
@@ -77,12 +95,15 @@ MonoBehaviour:
     understeerAssistStrength: 0.15
     slipThresholdDegrees: 8
   drivetrain:
-    motorForce: 85000
+    motorForce: 92000
     brakeForce: 90000
     throttleSpoolSpeed: 1.5
     brakeSpoolSpeed: 6
     rearDriveBias: 1
     frontBrakeBias: 0.58
+    brakeSteerStability: 0.58
+    brakeSteerFrontBias: 0.72
+    brakeSteerBlendSpeedKmh: 80
     reverseMaxSpeedKmh: 12
     motorForceBySpeed:
       serializedVersion: 2
@@ -91,16 +112,43 @@ MonoBehaviour:
         time: 0
         value: 1
         inSlope: 0
-        outSlope: -0.0025
+        outSlope: -0.0012222222
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 320
+        time: 180
+        value: 0.78
+        inSlope: -0.0012222222
+        outSlope: -0.004
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 260
+        value: 0.46
+        inSlope: -0.004
+        outSlope: -0.0028888888
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 310
         value: 0.2
-        inSlope: -0.0025
-        outSlope: 0
+        inSlope: -0.0028888888
+        outSlope: -0.003
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 350
+        value: 0.08
+        inSlope: -0.003
+        outSlope: -0.003
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
@@ -115,15 +163,15 @@ MonoBehaviour:
         time: 0
         value: 0.65
         inSlope: 0
-        outSlope: 0.0010937501
+        outSlope: 0.00065625005
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 320
-        value: 1
-        inSlope: 0.0010937501
+        value: 0.86
+        inSlope: 0.00065625005
         outSlope: 0
         tangentMode: 0
         weightedMode: 0

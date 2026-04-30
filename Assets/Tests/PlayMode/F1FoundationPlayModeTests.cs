@@ -46,6 +46,40 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void DrivetrainBrake_YawedCarBrakesAlongForwardAxisOnly()
+    {
+        GameObject car = new GameObject("Yawed Brake Test Car");
+        BasicMotor drivetrain = car.AddComponent<BasicMotor>();
+        var method = typeof(DrivetrainBrakeSystem).GetMethod(
+            "CalculateBrakeForceVector",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        Vector3 planarVelocity = (car.transform.forward + car.transform.right).normalized * 80f;
+        Vector3 brakeForce = (Vector3)method.Invoke(drivetrain, new object[] { planarVelocity, 10000f });
+
+        Assert.Less(Vector3.Dot(brakeForce, car.transform.forward), -9999f);
+        Assert.AreEqual(0f, Vector3.Dot(brakeForce, car.transform.right), 0.001f);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void DrivetrainBrake_UsesReverseOnlyAtLowForwardSpeed()
+    {
+        GameObject car = new GameObject("Reverse Selection Test Car");
+        BasicMotor drivetrain = car.AddComponent<BasicMotor>();
+        var method = typeof(DrivetrainBrakeSystem).GetMethod(
+            "ShouldUseReverse",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        bool atRestUsesReverse = (bool)method.Invoke(drivetrain, new object[] { 1f, 0f, 0f });
+        bool forwardSpeedUsesBrake = (bool)method.Invoke(drivetrain, new object[] { 1f, 0f, 40f });
+
+        Assert.IsTrue(atRestUsesReverse);
+        Assert.IsFalse(forwardSpeedUsesBrake);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
     public void SteeringAssist_UsesSlipAngleInsteadOfGripCoefficient()
     {
         GameObject car = new GameObject("Steering Test Car");
@@ -80,6 +114,71 @@ public class F1FoundationPlayModeTests
         steering.Simulate(null);
 
         Assert.Less(steering.LastAssistAngle, 0f);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void RaycastWheel_ForwardVelocityDoesNotCreateLongitudinalSlip()
+    {
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "Longitudinal Slip Test Ground";
+        ground.transform.position = Vector3.zero;
+        ground.transform.localScale = new Vector3(4f, 0.02f, 4f);
+
+        GameObject car = new GameObject("Longitudinal Slip Test Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+
+        GameObject wheelObject = new GameObject("FL");
+        wheelObject.transform.SetParent(car.transform);
+        wheelObject.transform.localPosition = new Vector3(0f, 0.49f, 0f);
+        wheelObject.AddComponent<WheelVisual>();
+        RaycastWheel wheel = wheelObject.AddComponent<RaycastWheel>();
+        wheel.suspensionLength = 0.3f;
+        wheel.wheelRadius = 0.34f;
+        wheel.restLengthRatio = 0.5f;
+        wheel.useSettleFrames = false;
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = car.transform.forward * 10f;
+#else
+        rb.velocity = car.transform.forward * 10f;
+#endif
+        Physics.SyncTransforms();
+        wheel.Simulate(null);
+
+        Assert.IsTrue(wheel.IsGrounded);
+        Assert.AreEqual(0f, wheel.LocalSlipVector.y, 0.0001f);
+
+        Object.DestroyImmediate(car);
+        Object.DestroyImmediate(ground);
+    }
+
+    [Test]
+    public void WheelVisual_AppliesSteeringYawToSteerableWheel()
+    {
+        GameObject car = new GameObject("Wheel Visual Steering Test Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        SteeringSystem steering = car.AddComponent<SteeringSystem>();
+        steering.CurrentSteerAngle = 12f;
+
+        GameObject wheelObject = new GameObject("FL");
+        wheelObject.transform.SetParent(car.transform);
+        WheelVisual visual = wheelObject.AddComponent<WheelVisual>();
+        RaycastWheel physicsWheel = wheelObject.AddComponent<RaycastWheel>();
+
+        GameObject meshObject = new GameObject("Wheel Mesh");
+        meshObject.transform.SetParent(wheelObject.transform);
+        visual.wheelMesh = meshObject.transform;
+        visual.carRb = rb;
+        visual.physicsWheel = physicsWheel;
+        visual.steeringSystem = steering;
+        visual.steerable = true;
+        visual.steeringYawScale = 1f;
+
+        visual.SendMessage("Start");
+        visual.SendMessage("Update");
+
+        Assert.AreEqual(12f, meshObject.transform.localEulerAngles.y, 0.01f);
         Object.DestroyImmediate(car);
     }
 

@@ -219,7 +219,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -7.1066513, y: 3.07, z: 0.04610973}
+  m_LocalPosition: {x: -4.796651, y: 3.2300003, z: 0.046109453}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -605,8 +605,8 @@ MonoBehaviour:
   m_StreamingVersion: 20241001
   m_LegacyPriority: 0
   Target:
-    TrackingTarget: {fileID: 1543065704}
-    LookAtTarget: {fileID: 0}
+    TrackingTarget: {fileID: 745128786}
+    LookAtTarget: {fileID: 745128786}
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 60.000004
@@ -637,7 +637,7 @@ Transform:
   m_GameObject: {fileID: 674891840}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -7.1066513, y: 3.07, z: 0.04610973}
+  m_LocalPosition: {x: -4.796651, y: 3.2300003, z: 0.046109453}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -655,11 +655,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 625c14eee3ad46c99df7c7c891ef668a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Damping: {x: 0.2, y: 0.5, z: 0.3}
-  ShoulderOffset: {x: 0, y: 1.85, z: -5.03}
-  VerticalArmLength: 0.22
+  Damping: {x: 0.16, y: 0.32, z: 0.24}
+  ShoulderOffset: {x: 0, y: 1.45, z: -3.35}
+  VerticalArmLength: 0.16
   CameraSide: 1
-  CameraDistance: 2.03
+  CameraDistance: 1.15
   AvoidObstacles:
     Enabled: 0
     CollisionFilter:
@@ -681,25 +681,81 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4afa82ae3200b82408d605c3dbdd1e38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Damping: 0.1
---- !u!4 &729403056 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6930328227814665131, guid: 093801ee528ac4249a0bec751c733059, type: 3}
-  m_PrefabInstance: {fileID: 5762442114198320265}
-  m_PrefabAsset: {fileID: 0}
---- !u!134 &743881072
+  Damping: 0.16
+--- !u!134 &695016632
 PhysicsMaterial:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ' (Instance) (Instance)'
+  m_Name: ' (Instance) (Instance) (Instance)'
   serializedVersion: 2
   m_DynamicFriction: 0.6
   m_StaticFriction: 0.6
   m_Bounciness: 0
   m_FrictionCombine: 0
   m_BounceCombine: 0
+--- !u!4 &729403056 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6930328227814665131, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &745128784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 745128786}
+  - component: {fileID: 745128785}
+  m_Layer: 0
+  m_Name: F1_CameraTarget
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &745128785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745128784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6889e3a33b6651e4183b881a7371fbfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  car: {fileID: 1543065704}
+  carRb: {fileID: 1543065703}
+  steeringSystem: {fileID: 1543065708}
+  localOffset: {x: 0, y: 0.62, z: -0.25}
+  positionSharpness: 20
+  rotationSharpness: 8.5
+  maxYawLead: 4.5
+  maxRollLean: 1.7
+  fullEffectSpeedKmh: 145
+  steeringInfluence: 0.38
+  yawRateInfluence: 0.55
+  lateralVelocityInfluence: 0.18
+--- !u!4 &745128786
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745128784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071067}
+  m_LocalPosition: {x: -0.2966513, y: 1.62, z: 0.046108916}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -864,6 +920,19 @@ Transform:
   - {fileID: 888901854}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!134 &1046536571
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!4 &1050558598 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4302825468964781792, guid: 093801ee528ac4249a0bec751c733059, type: 3}
@@ -931,7 +1000,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &1153045300
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -984,7 +1053,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1153045299}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 1046536571}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1287,6 +1356,17 @@ MonoBehaviour:
   steeringInput: 0
   averageFrontSlipAngle: 0
   averageRearSlipAngle: 0
+--- !u!114 &1543065708 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1543065696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bac6ded6a1b1b8a46a4ba2b9b41d41fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &1960092739 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4906153571939038971, guid: 093801ee528ac4249a0bec751c733059, type: 3}
@@ -1353,12 +1433,24 @@ PrefabInstance:
       value: 85000
       objectReference: {fileID: 0}
     - target: {fileID: 1722859066002862584, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: brakeSpoolSpeed
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1722859066002862584, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: reverseMaxSpeedKmh
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 1722859066002862584, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: throttleSpoolSpeed
       value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: maxSteerAngle
-      value: 15
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: speedThreshold
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: speedSensitivityCurve.m_Curve.Array.data[1].value
@@ -1403,7 +1495,11 @@ PrefabInstance:
     - target: {fileID: 3825563487021001714, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_Material
       value: 
-      objectReference: {fileID: 743881072}
+      objectReference: {fileID: 695016632}
+    - target: {fileID: 3896576848223821567, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steerable
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3896576848223821567, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: wheelMesh
       value: 
@@ -1416,6 +1512,10 @@ PrefabInstance:
       propertyPath: physicsWheel
       value: 
       objectReference: {fileID: 146646590}
+    - target: {fileID: 3896576848223821567, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringSystem
+      value: 
+      objectReference: {fileID: 1543065708}
     - target: {fileID: 3896576848223821567, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: maxSuspensionLength
       value: 0.19
@@ -1445,6 +1545,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1280245822}
     - target: {fileID: 4799515341024995373, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringSystem
+      value: 
+      objectReference: {fileID: 1543065708}
+    - target: {fileID: 4799515341024995373, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringYawScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4799515341024995373, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 8
       objectReference: {fileID: 0}
@@ -1473,6 +1581,14 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 492021466}
     - target: {fileID: 4863463631117697222, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringSystem
+      value: 
+      objectReference: {fileID: 1543065708}
+    - target: {fileID: 4863463631117697222, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringYawScale
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4863463631117697222, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 8
       objectReference: {fileID: 0}
@@ -1489,6 +1605,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1543065703}
     - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steerable
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: wheelMesh
       value: 
       objectReference: {fileID: 1050558598}
@@ -1500,6 +1620,14 @@ PrefabInstance:
       propertyPath: physicsWheel
       value: 
       objectReference: {fileID: 1420103600}
+    - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringSystem
+      value: 
+      objectReference: {fileID: 1543065708}
+    - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringYawScale
+      value: 0.88
+      objectReference: {fileID: 0}
     - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: groundLayer.m_Bits
       value: 8
@@ -1551,3 +1679,4 @@ SceneRoots:
   - {fileID: 5762442114198320265}
   - {fileID: 674891842}
   - {fileID: 1153045303}
+  - {fileID: 745128786}
