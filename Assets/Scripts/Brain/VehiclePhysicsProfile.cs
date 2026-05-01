@@ -60,11 +60,11 @@ public class SteeringAssistProfile
     [Range(5f, 35f)] public float maxSteerAngle = 16f;
     public AnimationCurve speedSensitivityCurve = new AnimationCurve(
         new Keyframe(0f, 1f),
-        new Keyframe(120f, 0.82f),
-        new Keyframe(220f, 0.42f),
-        new Keyframe(310f, 0.28f));
-    [Range(0.01f, 0.8f)] public float lowSpeedSmoothTime = 0.3f;
-    [Range(0.01f, 1.0f)] public float highSpeedSmoothTime = 0.5f;
+        new Keyframe(120f, 0.9f),
+        new Keyframe(220f, 0.68f),
+        new Keyframe(310f, 0.52f));
+    [Range(0.01f, 0.8f)] public float lowSpeedSmoothTime = 0.05f;
+    [Range(0.01f, 1.0f)] public float highSpeedSmoothTime = 0.1f;
     [Range(10f, 250f)] public float speedThresholdKmh = 50f;
     [Range(0f, 0.2f)] public float ackermannFactor = 0.15f;
     [Range(0f, 1f)] public float oversteerAssistStrength = 0.3f;
@@ -80,8 +80,8 @@ public class DrivetrainBrakeProfile
     [Range(0.2f, 8f)] public float throttleSpoolSpeed = 1.5f;
     [Range(0.2f, 12f)] public float brakeSpoolSpeed = 6f;
     [Range(0f, 1f)] public float rearDriveBias = 1f;
-    [Range(0f, 1f)] public float frontBrakeBias = 0.58f;
-    [Range(0f, 1f)] public float brakeSteerStability = 0.58f;
+    [Range(0f, 1f)] public float frontBrakeBias = 0.68f;
+    [Range(0f, 1f)] public float brakeSteerStability = 0.75f;
     [Range(0f, 1f)] public float brakeSteerFrontBias = 0.72f;
     [Range(0f, 250f)] public float brakeSteerBlendSpeedKmh = 80f;
     [Range(0f, 25f)] public float reverseMaxSpeedKmh = 12f;
@@ -98,7 +98,7 @@ public class DrivetrainBrakeProfile
 public class CameraSpeedProfile
 {
     [Range(40f, 90f)] public float baseFov = 60f;
-    [Range(50f, 110f)] public float maxFov = 78f;
+    [Range(50f, 110f)] public float maxFov = 72f;
     [Range(10f, 350f)] public float maxFovSpeedKmh = 260f;
     [Range(0.01f, 1f)] public float fovSmoothTime = 0.18f;
     [Range(0f, 2f)] public float shakeAmplitude = 0.15f;

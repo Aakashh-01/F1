@@ -56,19 +56,14 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
 
     private void Update()
     {
-        if (MobileTouchControls.IsActive)
-        {
-            steeringInput = MobileTouchControls.Steering;
-            throttleInput = MobileTouchControls.Throttle;
-            brakeInput = MobileTouchControls.Brake;
-            return;
-        }
+        float keyboardSteering = Input.GetAxisRaw("Horizontal");
+        float keyboardVertical = Input.GetAxisRaw("Vertical");
+        float keyboardThrottle = Mathf.Max(0f, keyboardVertical);
+        float keyboardBrake = Mathf.Max(0f, -keyboardVertical);
 
-        steeringInput = Input.GetAxisRaw("Horizontal");
-
-        float vertical = Input.GetAxisRaw("Vertical");
-        throttleInput = Mathf.Max(0f, vertical);
-        brakeInput = Mathf.Max(0f, -vertical);
+        steeringInput = Mathf.Abs(keyboardSteering) > 0.01f ? keyboardSteering : MobileTouchControls.Steering;
+        throttleInput = keyboardThrottle > 0.01f ? keyboardThrottle : MobileTouchControls.Throttle;
+        brakeInput = keyboardBrake > 0.01f ? keyboardBrake : MobileTouchControls.Brake;
     }
 
     private void FixedUpdate()

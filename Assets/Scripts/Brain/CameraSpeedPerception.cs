@@ -12,7 +12,7 @@ public class CameraSpeedPerception : MonoBehaviour
 
     [Header("Fallback Settings")]
     public float baseFov = 60f;
-    public float maxFov = 78f;
+    public float maxFov = 72f;
     public float maxFovSpeedKmh = 260f;
     public float fovSmoothTime = 0.18f;
 

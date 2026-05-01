@@ -392,7 +392,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   brakeForce: 90000
   brakeSpoolSpeed: 6
-  frontBrakeBias: 0.58
+  frontBrakeBias: 0.68
   brakeForceBySpeed:
     serializedVersion: 2
     m_Curve:
@@ -476,8 +476,26 @@ MonoBehaviour:
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 300
-      value: 0.2
+      time: 120
+      value: 0.9
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 220
+      value: 0.68
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 310
+      value: 0.52
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -487,8 +505,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  lowSpeedSmoothTime: 0.3
-  highSpeedSmoothTime: 0.5
+  lowSpeedSmoothTime: 0.05
+  highSpeedSmoothTime: 0.1
   speedThreshold: 50
   ackermannFactor: 0.15
   oversteerAssistStrength: 0.3

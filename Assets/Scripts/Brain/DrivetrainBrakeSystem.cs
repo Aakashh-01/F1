@@ -16,11 +16,11 @@ public class DrivetrainBrakeSystem : MonoBehaviour
     [Header("Brakes")]
     public float brakeForce = 90000f;
     public float brakeSpoolSpeed = 6f;
-    [Range(0f, 1f)] public float frontBrakeBias = 0.58f;
+    [Range(0f, 1f)] public float frontBrakeBias = 0.68f;
     public AnimationCurve brakeForceBySpeed = AnimationCurve.Linear(0f, 0.65f, 320f, 1f);
 
     [Header("Brake Stability")]
-    [Range(0f, 1f)] public float brakeSteerStability = 0.45f;
+    [Range(0f, 1f)] public float brakeSteerStability = 0.75f;
     [Range(0f, 1f)] public float brakeSteerFrontBias = 0.78f;
     [Range(0f, 250f)] public float brakeSteerBlendSpeedKmh = 80f;
 

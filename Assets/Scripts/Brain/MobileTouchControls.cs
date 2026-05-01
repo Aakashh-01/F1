@@ -1,140 +1,106 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class MobileTouchControls : MonoBehaviour
 {
-    [Header("Layout")]
-    [Range(0.12f, 0.35f)] public float buttonSizeNormalized = 0.2f;
-    [Range(0.01f, 0.08f)] public float screenMarginNormalized = 0.03f;
-    [Range(0.01f, 0.08f)] public float buttonGapNormalized = 0.02f;
-
-    [Header("Behavior")]
-    public bool showInEditor = true;
-
-    public static bool IsActive { get; private set; }
     public static float Steering { get; private set; }
     public static float Throttle { get; private set; }
     public static float Brake { get; private set; }
 
-    private Rect _leftRect;
-    private Rect _rightRect;
-    private Rect _throttleRect;
-    private Rect _brakeRect;
-
-    private GUIStyle _buttonStyle;
-
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void EnsureInstance()
+    public static void SetSteering(float value)
     {
-        if (FindFirstObjectByType<MobileTouchControls>() != null)
-            return;
-
-        GameObject controlsObject = new GameObject("MobileTouchControls");
-        controlsObject.AddComponent<MobileTouchControls>();
+        Steering = Mathf.Clamp(value, -1f, 1f);
     }
 
-    private void OnEnable()
+    public static void SetThrottle(float value)
     {
-        IsActive = true;
-        RecalculateRects();
+        Throttle = Mathf.Clamp01(value);
+    }
+
+    public static void SetBrake(float value)
+    {
+        Brake = Mathf.Clamp01(value);
+    }
+
+    public static void ResetInputs()
+    {
+        SetSteering(0f);
+        SetThrottle(0f);
+        SetBrake(0f);
     }
 
     private void OnDisable()
     {
-        Steering = 0f;
-        Throttle = 0f;
-        Brake = 0f;
-        IsActive = false;
+        ResetInputs();
     }
 
-    private void Update()
+    public void SteerLeftDown()
     {
-        RecalculateRects();
-        Steering = 0f;
-        Throttle = 0f;
-        Brake = 0f;
-
-        for (int i = 0; i < Input.touchCount; i++)
-        {
-            Touch touch = Input.GetTouch(i);
-            if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
-                continue;
-
-            Vector2 point = touch.position;
-            point.y = Screen.height - point.y;
-            ApplyPoint(point);
-        }
-
-#if UNITY_EDITOR
-        if (showInEditor && Input.GetMouseButton(0))
-        {
-            Vector2 point = Input.mousePosition;
-            point.y = Screen.height - point.y;
-            ApplyPoint(point);
-        }
-#endif
+        SetSteering(-1f);
     }
 
-    private void OnGUI()
+    public void SteerLeftDown(BaseEventData eventData)
     {
-        if (!_ShouldDraw())
-            return;
-
-        if (_buttonStyle == null)
-        {
-            _buttonStyle = new GUIStyle(GUI.skin.button);
-            _buttonStyle.fontSize = Mathf.RoundToInt(Mathf.Min(Screen.width, Screen.height) * 0.045f);
-            _buttonStyle.alignment = TextAnchor.MiddleCenter;
-        }
-
-        Color oldColor = GUI.color;
-        DrawButton(_leftRect, "LEFT", Steering < 0f);
-        DrawButton(_rightRect, "RIGHT", Steering > 0f);
-        DrawButton(_throttleRect, "GAS", Throttle > 0f);
-        DrawButton(_brakeRect, "BRAKE", Brake > 0f);
-        GUI.color = oldColor;
+        SteerLeftDown();
     }
 
-    private void DrawButton(Rect rect, string text, bool pressed)
+    public void SteerRightDown()
     {
-        GUI.color = pressed ? new Color(0.2f, 0.9f, 0.3f, 0.95f) : new Color(0f, 0f, 0f, 0.55f);
-        GUI.Box(rect, text, _buttonStyle);
+        SetSteering(1f);
     }
 
-    private void ApplyPoint(Vector2 point)
+    public void SteerRightDown(BaseEventData eventData)
     {
-        if (_leftRect.Contains(point))
-            Steering = -1f;
-        else if (_rightRect.Contains(point))
-            Steering = 1f;
-
-        if (_throttleRect.Contains(point))
-            Throttle = 1f;
-        else if (_brakeRect.Contains(point))
-            Brake = 1f;
+        SteerRightDown();
     }
 
-    private bool _ShouldDraw()
+    public void SteeringUp()
     {
-#if UNITY_EDITOR
-        return showInEditor;
-#else
-        return true;
-#endif
+        SetSteering(0f);
     }
 
-    private void RecalculateRects()
+    public void SteeringUp(BaseEventData eventData)
     {
-        float minDim = Mathf.Min(Screen.width, Screen.height);
-        float buttonSize = minDim * buttonSizeNormalized;
-        float margin = minDim * screenMarginNormalized;
-        float gap = minDim * buttonGapNormalized;
+        SteeringUp();
+    }
 
-        float y = Screen.height - margin - buttonSize;
-        _leftRect = new Rect(margin, y, buttonSize, buttonSize);
-        _rightRect = new Rect(margin + buttonSize + gap, y, buttonSize, buttonSize);
+    public void ThrottleDown()
+    {
+        SetThrottle(1f);
+    }
 
-        float rightX = Screen.width - margin - buttonSize;
-        _throttleRect = new Rect(rightX, y, buttonSize, buttonSize);
-        _brakeRect = new Rect(rightX - buttonSize - gap, y, buttonSize, buttonSize);
+    public void ThrottleDown(BaseEventData eventData)
+    {
+        ThrottleDown();
+    }
+
+    public void ThrottleUp()
+    {
+        SetThrottle(0f);
+    }
+
+    public void ThrottleUp(BaseEventData eventData)
+    {
+        ThrottleUp();
+    }
+
+    public void BrakeDown()
+    {
+        SetBrake(1f);
+    }
+
+    public void BrakeDown(BaseEventData eventData)
+    {
+        BrakeDown();
+    }
+
+    public void BrakeUp()
+    {
+        SetBrake(0f);
+    }
+
+    public void BrakeUp(BaseEventData eventData)
+    {
+        BrakeUp();
     }
 }

@@ -183,6 +183,29 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void VehiclePhysicsCoordinator_UsesMobileInputWhenKeyboardIsIdle()
+    {
+        MobileTouchControls.ResetInputs();
+        MobileTouchControls.SetSteering(0.75f);
+        MobileTouchControls.SetThrottle(1f);
+        MobileTouchControls.SetBrake(0.5f);
+
+        GameObject car = new GameObject("Mobile Input Test Car");
+        car.AddComponent<Rigidbody>();
+        VehiclePhysicsCoordinator coordinator = car.AddComponent<VehiclePhysicsCoordinator>();
+        coordinator.applyProfileOnAwake = false;
+
+        coordinator.SendMessage("Update");
+
+        Assert.AreEqual(0.75f, coordinator.SteeringInput, 0.001f);
+        Assert.AreEqual(1f, coordinator.ThrottleInput, 0.001f);
+        Assert.AreEqual(0.5f, coordinator.BrakeInput, 0.001f);
+
+        MobileTouchControls.ResetInputs();
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
     public void CameraSpeedPerception_IncreasesFovWithSpeed()
     {
         GameObject cameraObject = new GameObject("Speed Camera");

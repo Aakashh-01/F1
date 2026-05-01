@@ -34,6 +34,7 @@ public class RaycastWheel : MonoBehaviour
     [HideInInspector] public Vector2 LocalSlipVector;
     [HideInInspector] public bool IsSettled;
     [HideInInspector] public float SettleProgress;
+    [HideInInspector] public float VisualSpinDegreesPerSecond;
 
     public bool UseExternalSimulation { get; set; }
 
@@ -78,6 +79,7 @@ public class RaycastWheel : MonoBehaviour
 
         if (!IsGrounded)
         {
+            UpdateVisualSpinSpeed(_rb.GetPointVelocity(transform.position));
             SuspensionTravel = 0f;
             NormalForce = 0f;
             LocalSlipVector = Vector2.zero;
@@ -118,6 +120,7 @@ public class RaycastWheel : MonoBehaviour
         _hasPreviousSuspensionTravel = true;
 
         Vector3 contactVelocityWorld = _rb.GetPointVelocity(ContactPoint);
+        UpdateVisualSpinSpeed(contactVelocityWorld);
         float velForward = Vector3.Dot(contactVelocityWorld, transform.forward);
         float velRight = Vector3.Dot(contactVelocityWorld, transform.right);
         float speed = contactVelocityWorld.magnitude;
@@ -128,6 +131,13 @@ public class RaycastWheel : MonoBehaviour
         float longitudinalSlip = 0f;
 
         LocalSlipVector = new Vector2(lateralSlipAngle, longitudinalSlip);
+    }
+
+    private void UpdateVisualSpinSpeed(Vector3 sampleVelocityWorld)
+    {
+        float safeRadius = Mathf.Max(0.01f, wheelRadius);
+        float forwardSpeed = Vector3.Dot(sampleVelocityWorld, transform.forward);
+        VisualSpinDegreesPerSecond = (forwardSpeed / (2f * Mathf.PI * safeRadius)) * 360f;
     }
 
     public bool TrySampleGround(out RaycastHit hit, out float anchorToHitDistance)

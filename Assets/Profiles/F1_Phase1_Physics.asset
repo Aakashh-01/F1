@@ -44,7 +44,7 @@ MonoBehaviour:
     lateralDragOnsetSpeed: 20
     lateralDragCap: 18000
   steering:
-    maxSteerAngle: 16
+    maxSteerAngle: 15
     speedSensitivityCurve:
       serializedVersion: 2
       m_Curve:
@@ -52,34 +52,34 @@ MonoBehaviour:
         time: 0
         value: 1
         inSlope: 0
-        outSlope: -0.0015
+        outSlope: -0.00083333335
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 120
-        value: 0.82
-        inSlope: -0.0015
-        outSlope: -0.004
+        value: 0.9
+        inSlope: -0.00083333335
+        outSlope: -0.0022
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 220
-        value: 0.42
-        inSlope: -0.004
-        outSlope: -0.0015555555
+        value: 0.68
+        inSlope: -0.0022
+        outSlope: -0.0017777778
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 310
-        value: 0.28
-        inSlope: -0.0015555555
-        outSlope: -0.0015555555
+        value: 0.52
+        inSlope: -0.0017777778
+        outSlope: -0.0017777778
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
@@ -87,21 +87,21 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    lowSpeedSmoothTime: 0.3
-    highSpeedSmoothTime: 0.5
-    speedThresholdKmh: 50
+    lowSpeedSmoothTime: 0.02
+    highSpeedSmoothTime: 0.05
+    speedThresholdKmh: 100
     ackermannFactor: 0.15
     oversteerAssistStrength: 0.3
     understeerAssistStrength: 0.15
-    slipThresholdDegrees: 8
+    slipThresholdDegrees: 15
   drivetrain:
-    motorForce: 92000
+    motorForce: 109296
     brakeForce: 90000
     throttleSpoolSpeed: 1.5
     brakeSpoolSpeed: 6
     rearDriveBias: 1
-    frontBrakeBias: 0.58
-    brakeSteerStability: 0.58
+    frontBrakeBias: 0.68
+    brakeSteerStability: 0.75
     brakeSteerFrontBias: 0.72
     brakeSteerBlendSpeedKmh: 80
     reverseMaxSpeedKmh: 12
@@ -182,7 +182,7 @@ MonoBehaviour:
       m_RotationOrder: 4
   camera:
     baseFov: 60
-    maxFov: 78
+    maxFov: 72
     maxFovSpeedKmh: 260
     fovSmoothTime: 0.18
     shakeAmplitude: 0.15

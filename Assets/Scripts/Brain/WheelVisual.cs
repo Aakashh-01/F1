@@ -36,14 +36,10 @@ public class WheelVisual : MonoBehaviour
 
     void Update()
     {
-        if (wheelMesh == null || carRb == null || physicsWheel == null) return;
+        if (wheelMesh == null || physicsWheel == null) return;
 
-        // 1. CALCULATE TIRE SPIN
-        Vector3 localVel = transform.InverseTransformDirection(carRb.GetPointVelocity(transform.position));
-        float forwardSpeed = localVel.z;
-        _rotationX += (forwardSpeed / (2f * Mathf.PI * wheelRadius)) * 360f * Time.deltaTime;
+        _rotationX += physicsWheel.VisualSpinDegreesPerSecond * Time.deltaTime;
 
-        // 2. CALCULATE TARGET SUSPENSION BOUNCE
         float targetY = 0f;
         if (physicsWheel.IsGrounded)
         {
