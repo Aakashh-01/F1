@@ -44,7 +44,7 @@ MonoBehaviour:
     lateralDragOnsetSpeed: 20
     lateralDragCap: 18000
   steering:
-    maxSteerAngle: 15
+    maxSteerAngle: 16
     speedSensitivityCurve:
       serializedVersion: 2
       m_Curve:
@@ -88,7 +88,7 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
     lowSpeedSmoothTime: 0.02
-    highSpeedSmoothTime: 0.05
+    highSpeedSmoothTime: 0.3
     speedThresholdKmh: 100
     ackermannFactor: 0.15
     oversteerAssistStrength: 0.3
