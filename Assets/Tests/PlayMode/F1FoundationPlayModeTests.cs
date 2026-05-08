@@ -593,6 +593,30 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void AIDriver_DoesNotRelockToFarWaypointAcrossTrack()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out _, out _);
+        AIRacingLine line = driver.racingLine;
+        SetLineWaypoint(line, 0, new Vector3(0f, 0f, 0f), 160f);
+        SetLineWaypoint(line, 1, new Vector3(0f, 0f, 100f), 160f);
+        SetLineWaypoint(line, 2, new Vector3(100f, 0f, 100f), 160f);
+        SetLineWaypoint(line, 3, new Vector3(4f, 0f, 42f), 160f);
+        driver.transform.position = new Vector3(3f, 0f, 42f);
+        driver.CurrentWaypointIndex = 0;
+        driver.forwardProgressSearchSteps = 1;
+        typeof(AIDriverController)
+            .GetField("_hasProgressIndex", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .SetValue(driver, true);
+
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.AreNotEqual(3, driver.CurrentWaypointIndex);
+        Assert.LessOrEqual(driver.CurrentWaypointIndex, 2);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
     public void RaycastWheel_ForwardVelocityDoesNotCreateLongitudinalSlip()
     {
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);

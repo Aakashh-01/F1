@@ -18,6 +18,8 @@ public class AIDriverController : MonoBehaviour
     [Range(1, 6)] public int curvatureLookaheadSteps = 2;
     [Range(15f, 90f)] public float steeringAngleForFullInput = 38f;
     [Range(0.2f, 8f)] public float laneOffsetMoveSpeed = 3.5f;
+    [Range(1f, 25f)] public float waypointReachDistance = 8f;
+    [Range(1, 10)] public int forwardProgressSearchSteps = 4;
 
     [Header("Speed Control")]
     [Range(1f, 80f)] public float throttleFullErrorKmh = 22f;
@@ -42,6 +44,7 @@ public class AIDriverController : MonoBehaviour
     [HideInInspector] public float CurrentLaneOffset;
 
     private AIDifficultyProfile _runtimeDifficulty;
+    private bool _hasProgressIndex;
 
     private AIDifficultyProfile Difficulty
     {
@@ -81,10 +84,11 @@ public class AIDriverController : MonoBehaviour
             perception.Tick(false);
 
         AIDifficultyProfile difficulty = Difficulty;
-        CurrentWaypointIndex = racingLine.FindNearestIndex(transform.position);
         float speedKmh = coordinator.SpeedKmh;
         float lookaheadDistance = baseLookaheadDistance + speedKmh * lookaheadPerKmh;
-        LookaheadWaypointIndex = racingLine.GetLookaheadIndex(CurrentWaypointIndex, lookaheadDistance);
+        UpdateProgressIndex();
+        Vector3 lookaheadPoint = racingLine.GetPointAheadFromSegment(CurrentWaypointIndex, transform.position, lookaheadDistance, out int lookaheadSegmentIndex);
+        LookaheadWaypointIndex = racingLine.WrapIndex(lookaheadSegmentIndex + 1);
 
         AIRacingWaypoint waypoint = racingLine.GetWaypoint(LookaheadWaypointIndex);
         if (waypoint == null)
@@ -96,9 +100,55 @@ public class AIDriverController : MonoBehaviour
         LastTargetSpeedKmh *= Mathf.Lerp(1f, 1f - waypoint.brakingCaution * 0.35f, LastCornerCurvature);
 
         UpdateLaneOffset(waypoint, difficulty);
-        Vector3 targetPoint = waypoint.Position + racingLine.GetSegmentRight(LookaheadWaypointIndex) * CurrentLaneOffset;
+        Vector3 targetPoint = lookaheadPoint + racingLine.GetSegmentRight(lookaheadSegmentIndex) * CurrentLaneOffset;
         CalculateInputs(targetPoint, LastTargetSpeedKmh, speedKmh, difficulty);
         coordinator.SetExternalInput(LastSteeringInput, LastThrottleInput, LastBrakeInput);
+    }
+
+    private void UpdateProgressIndex()
+    {
+        if (!_hasProgressIndex || CurrentWaypointIndex < 0 || CurrentWaypointIndex >= racingLine.Count)
+        {
+            CurrentWaypointIndex = racingLine.FindNearestIndex(transform.position);
+            _hasProgressIndex = CurrentWaypointIndex >= 0;
+        }
+
+        if (!_hasProgressIndex)
+            return;
+
+        int bestIndex = CurrentWaypointIndex;
+        float bestDistance = DistanceToSegmentSq(CurrentWaypointIndex);
+        int maxSteps = Mathf.Min(forwardProgressSearchSteps, racingLine.Count);
+        for (int step = 1; step <= maxSteps; step++)
+        {
+            int candidate = racingLine.WrapIndex(CurrentWaypointIndex + step);
+            float distance = DistanceToSegmentSq(candidate);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestIndex = candidate;
+            }
+        }
+
+        CurrentWaypointIndex = bestIndex;
+
+        int guard = 0;
+        while (guard < maxSteps)
+        {
+            Vector3 nextPoint = racingLine.GetPosition(CurrentWaypointIndex + 1);
+            float distanceToNext = Vector3.Distance(transform.position, nextPoint);
+            if (distanceToNext > waypointReachDistance && !racingLine.HasPassedWaypoint(CurrentWaypointIndex, transform.position))
+                break;
+
+            CurrentWaypointIndex = racingLine.WrapIndex(CurrentWaypointIndex + 1);
+            guard++;
+        }
+    }
+
+    private float DistanceToSegmentSq(int segmentIndex)
+    {
+        Vector3 closest = racingLine.GetClosestPointOnSegment(segmentIndex, transform.position);
+        return Vector3.ProjectOnPlane(transform.position - closest, Vector3.up).sqrMagnitude;
     }
 
     private void UpdateLaneOffset(AIRacingWaypoint waypoint, AIDifficultyProfile difficulty)

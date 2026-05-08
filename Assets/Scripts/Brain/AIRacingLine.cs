@@ -82,6 +82,90 @@ public class AIRacingLine : MonoBehaviour
         return index;
     }
 
+    public Vector3 GetPointAtDistance(int startIndex, float distance, out int segmentIndex)
+    {
+        segmentIndex = startIndex;
+        if (Count == 0)
+            return transform.position;
+
+        int index = WrapIndex(startIndex);
+        float remaining = Mathf.Max(0f, distance);
+        int maxSteps = loop ? Count : Count - index - 1;
+
+        for (int i = 0; i < maxSteps; i++)
+        {
+            int next = WrapIndex(index + 1);
+            Vector3 from = GetPosition(index);
+            Vector3 to = GetPosition(next);
+            float segmentLength = Vector3.Distance(from, to);
+            if (segmentLength <= 0.001f)
+            {
+                index = next;
+                continue;
+            }
+
+            if (remaining <= segmentLength)
+            {
+                segmentIndex = index;
+                return Vector3.Lerp(from, to, remaining / segmentLength);
+            }
+
+            remaining -= segmentLength;
+            index = next;
+        }
+
+        segmentIndex = index;
+        return GetPosition(index);
+    }
+
+    public Vector3 GetPointAheadFromSegment(int startIndex, Vector3 position, float lookaheadDistance, out int segmentIndex)
+    {
+        segmentIndex = startIndex;
+        if (Count == 0)
+            return transform.position;
+
+        Vector3 from = GetPosition(startIndex);
+        Vector3 to = GetPosition(startIndex + 1);
+        Vector3 segment = to - from;
+        float segmentLength = segment.magnitude;
+        float projectedDistance = 0f;
+
+        if (segmentLength > 0.001f)
+        {
+            float t = Vector3.Dot(position - from, segment) / (segmentLength * segmentLength);
+            projectedDistance = Mathf.Clamp01(t) * segmentLength;
+        }
+
+        return GetPointAtDistance(startIndex, projectedDistance + Mathf.Max(0f, lookaheadDistance), out segmentIndex);
+    }
+
+    public Vector3 GetClosestPointOnSegment(int index, Vector3 position)
+    {
+        if (Count == 0)
+            return transform.position;
+
+        Vector3 from = GetPosition(index);
+        Vector3 to = GetPosition(index + 1);
+        Vector3 segment = to - from;
+        float lengthSq = segment.sqrMagnitude;
+        if (lengthSq <= 0.001f)
+            return from;
+
+        float t = Vector3.Dot(position - from, segment) / lengthSq;
+        return Vector3.Lerp(from, to, Mathf.Clamp01(t));
+    }
+
+    public bool HasPassedWaypoint(int segmentStartIndex, Vector3 position)
+    {
+        if (Count < 2)
+            return false;
+
+        Vector3 waypoint = GetPosition(segmentStartIndex + 1);
+        Vector3 forward = GetSegmentForward(segmentStartIndex);
+        Vector3 toPosition = Vector3.ProjectOnPlane(position - waypoint, Vector3.up);
+        return Vector3.Dot(toPosition, forward) > 0f;
+    }
+
     public Vector3 GetSegmentForward(int index)
     {
         if (Count < 2)
