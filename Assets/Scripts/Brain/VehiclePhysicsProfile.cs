@@ -9,6 +9,7 @@ public class VehiclePhysicsProfile : ScriptableObject
     public SteeringAssistProfile steering = new SteeringAssistProfile();
     public SteeringAssistAdvancedProfile advancedSteering = new SteeringAssistAdvancedProfile();
     public DrivetrainBrakeProfile drivetrain = new DrivetrainBrakeProfile();
+    public AdvancedBrakeProfile advancedBrake = new AdvancedBrakeProfile();
     public CameraSpeedProfile camera = new CameraSpeedProfile();
 }
 
@@ -114,6 +115,35 @@ public class DrivetrainBrakeProfile
         new Keyframe(310f, 0.2f),
         new Keyframe(350f, 0.08f));
     public AnimationCurve brakeForceBySpeed = AnimationCurve.Linear(0f, 0.65f, 320f, 0.86f);
+}
+
+[System.Serializable]
+public class AdvancedBrakeProfile
+{
+    [Range(0.5f, 20f)] public float brakePressRate = 7.5f;
+    [Range(0.5f, 20f)] public float brakeReleaseRate = 10f;
+    public AnimationCurve brakePressureCurve = new AnimationCurve(
+        new Keyframe(0f, 0f),
+        new Keyframe(0.35f, 0.24f),
+        new Keyframe(0.75f, 0.82f),
+        new Keyframe(1f, 1f));
+    public AnimationCurve lateBrakeMultiplierBySpeed = new AnimationCurve(
+        new Keyframe(0f, 0.88f),
+        new Keyframe(120f, 1f),
+        new Keyframe(220f, 1.12f),
+        new Keyframe(320f, 1.18f));
+    [Range(0.5f, 1.5f)] public float maxLateBrakeMultiplier = 1.18f;
+    [Range(0.1f, 1.5f)] public float frontLockupThreshold = 0.96f;
+    [Range(0.1f, 1.5f)] public float rearLockupThreshold = 0.84f;
+    [Range(0.02f, 0.8f)] public float lockupBlendRange = 0.24f;
+    [Range(0f, 0.8f)] public float maxLockupEfficiencyLoss = 0.36f;
+    [Range(0f, 1f)] public float trailBrakeSupportStrength = 0.62f;
+    [Range(0f, 0.25f)] public float trailBrakeFrontBiasShift = 0.08f;
+    [Range(0f, 1f)] public float trailBrakeSteeringThreshold = 0.18f;
+    [Range(0f, 220f)] public float trailBrakeMinSpeedKmh = 45f;
+    [Range(0f, 1f)] public float rearInstabilityStrength = 0.36f;
+    [Range(0f, 8000f)] public float maxRearInstabilityYawTorque = 2800f;
+    [Range(0f, 220f)] public float rearInstabilityStartSpeedKmh = 80f;
 }
 
 [System.Serializable]

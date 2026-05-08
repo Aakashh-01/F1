@@ -7,11 +7,13 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     [Header("Tuning")]
     public VehiclePhysicsProfile physicsProfile;
     public bool applyProfileOnAwake = true;
+    public bool UseExternalInput;
 
     [Header("Systems")]
     public Rigidbody rb;
     public RaycastWheel[] wheels = new RaycastWheel[4];
     public DrivetrainBrakeSystem drivetrain;
+    public AdvancedBrakingSystem advancedBraking;
     public DownforceSystem downforce;
     public SteeringSystem steering;
     public AdvancedSteeringAssist advancedSteeringAssist;
@@ -47,9 +49,17 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     [SerializeField] private float rawSteeringAssistAngle;
     [SerializeField] private float smoothedSteeringAssistAngle;
     [SerializeField] private float playerOverrideFactor;
+    [SerializeField] private float effectiveBrakePressure;
+    [SerializeField] private float frontBrakeLockup;
+    [SerializeField] private float rearBrakeLockup;
+    [SerializeField] private float trailBrakeBlend;
+    [SerializeField] private float rearBrakeInstability;
+    [SerializeField] private float dynamicFrontBrakeBias;
 
     private readonly ForceRequest[] _forceRequests = new ForceRequest[64];
+    private readonly TorqueRequest[] _torqueRequests = new TorqueRequest[16];
     private int _forceRequestCount;
+    private int _torqueRequestCount;
     private Vector3 _visualBodyBaseLocalPosition;
     private Quaternion _visualBodyBaseLocalRotation = Quaternion.identity;
     private Vector3 _visualBodyPositionVelocity;
@@ -60,6 +70,9 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     private float _visualBodyRoll;
     private float _visualBodyRollVelocity;
     private bool _visualBodyInitialized;
+    private float _externalSteeringInput;
+    private float _externalThrottleInput;
+    private float _externalBrakeInput;
 
     public float SpeedMs => speedMs;
     public float SpeedKmh => speedKmh;
@@ -73,6 +86,12 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     public float RawSteeringAssistAngle => rawSteeringAssistAngle;
     public float SmoothedSteeringAssistAngle => smoothedSteeringAssistAngle;
     public float PlayerOverrideFactor => playerOverrideFactor;
+    public float EffectiveBrakePressure => effectiveBrakePressure;
+    public float FrontBrakeLockup => frontBrakeLockup;
+    public float RearBrakeLockup => rearBrakeLockup;
+    public float TrailBrakeBlend => trailBrakeBlend;
+    public float RearBrakeInstability => rearBrakeInstability;
+    public float DynamicFrontBrakeBias => dynamicFrontBrakeBias;
 
     private void Awake()
     {
@@ -93,6 +112,14 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
 
     private void Update()
     {
+        if (UseExternalInput)
+        {
+            steeringInput = _externalSteeringInput;
+            throttleInput = _externalThrottleInput;
+            brakeInput = _externalBrakeInput;
+            return;
+        }
+
         float keyboardSteering = Input.GetAxisRaw("Horizontal");
         float keyboardVertical = Input.GetAxisRaw("Vertical");
         float keyboardThrottle = Mathf.Max(0f, keyboardVertical);
@@ -103,10 +130,25 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         brakeInput = keyboardBrake > 0.01f ? keyboardBrake : MobileTouchControls.Brake;
     }
 
+    public void SetExternalInput(float steering, float throttle, float brake)
+    {
+        _externalSteeringInput = Mathf.Clamp(steering, -1f, 1f);
+        _externalThrottleInput = Mathf.Clamp01(throttle);
+        _externalBrakeInput = Mathf.Clamp01(brake);
+
+        if (!UseExternalInput)
+            return;
+
+        steeringInput = _externalSteeringInput;
+        throttleInput = _externalThrottleInput;
+        brakeInput = _externalBrakeInput;
+    }
+
     private void FixedUpdate()
     {
         RefreshState();
         _forceRequestCount = 0;
+        _torqueRequestCount = 0;
 
         for (int i = 0; i < wheels.Length; i++)
         {
@@ -114,6 +156,8 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
                 wheels[i].Simulate(this);
         }
 
+        if (advancedBraking != null) advancedBraking.Simulate(this);
+        RefreshAdvancedBrakingState();
         if (drivetrain != null) drivetrain.Simulate(this);
         if (downforce != null) downforce.Simulate(this);
         if (steering != null) steering.Simulate(this);
@@ -143,6 +187,18 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         {
             force = force,
             position = position,
+            mode = mode
+        };
+    }
+
+    public void QueueTorque(Vector3 torque, ForceMode mode = ForceMode.Force)
+    {
+        if (torque.sqrMagnitude <= 0.000001f || _torqueRequestCount >= _torqueRequests.Length)
+            return;
+
+        _torqueRequests[_torqueRequestCount++] = new TorqueRequest
+        {
+            torque = torque,
             mode = mode
         };
     }
@@ -210,12 +266,15 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (steering != null) steering.ApplyProfile(profile.steering);
         if (advancedSteeringAssist != null) advancedSteeringAssist.ApplyProfile(profile.advancedSteering);
         if (drivetrain != null) drivetrain.ApplyProfile(profile.drivetrain);
+        if (advancedBraking != null) advancedBraking.ApplyProfile(profile.advancedBrake);
     }
 
     private void ResolveReferences()
     {
         if (rb == null) rb = GetComponent<Rigidbody>();
         if (drivetrain == null) drivetrain = GetComponent<DrivetrainBrakeSystem>();
+        if (advancedBraking == null) advancedBraking = GetComponent<AdvancedBrakingSystem>();
+        if (advancedBraking == null) advancedBraking = gameObject.AddComponent<AdvancedBrakingSystem>();
         if (downforce == null) downforce = GetComponent<DownforceSystem>();
         if (steering == null) steering = GetComponent<SteeringSystem>();
         if (advancedSteeringAssist == null) advancedSteeringAssist = GetComponent<AdvancedSteeringAssist>();
@@ -267,6 +326,17 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (traction != null) traction.wheels = wheels;
         if (weightTransfer != null) weightTransfer.wheels = wheels;
 
+        if (drivetrain != null)
+            drivetrain.advancedBraking = advancedBraking;
+
+        if (advancedBraking != null)
+        {
+            advancedBraking.rb = rb;
+            advancedBraking.drivetrain = drivetrain;
+            advancedBraking.tractionSystem = traction;
+            advancedBraking.weightTransfer = weightTransfer;
+        }
+
         if (steering != null)
         {
             steering.advancedAssist = advancedSteeringAssist;
@@ -281,6 +351,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     private void SetExternalSimulation(bool enabled)
     {
         if (drivetrain != null) drivetrain.UseExternalSimulation = enabled;
+        if (advancedBraking != null) advancedBraking.UseExternalSimulation = enabled;
         if (downforce != null) downforce.UseExternalSimulation = enabled;
         if (steering != null) steering.UseExternalSimulation = enabled;
         if (advancedSteeringAssist != null) advancedSteeringAssist.UseExternalSimulation = enabled;
@@ -301,6 +372,33 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
             ForceRequest request = _forceRequests[i];
             rb.AddForceAtPosition(request.force, request.position, request.mode);
         }
+
+        for (int i = 0; i < _torqueRequestCount; i++)
+        {
+            TorqueRequest request = _torqueRequests[i];
+            rb.AddTorque(request.torque, request.mode);
+        }
+    }
+
+    private void RefreshAdvancedBrakingState()
+    {
+        if (advancedBraking == null)
+        {
+            effectiveBrakePressure = drivetrain != null ? drivetrain.CurrentBrake : 0f;
+            frontBrakeLockup = 0f;
+            rearBrakeLockup = 0f;
+            trailBrakeBlend = 0f;
+            rearBrakeInstability = 0f;
+            dynamicFrontBrakeBias = drivetrain != null ? drivetrain.frontBrakeBias : 0.68f;
+            return;
+        }
+
+        effectiveBrakePressure = advancedBraking.EffectiveBrakePressure;
+        frontBrakeLockup = advancedBraking.FrontLockupAmount;
+        rearBrakeLockup = advancedBraking.RearLockupAmount;
+        trailBrakeBlend = advancedBraking.TrailBrakeBlend;
+        rearBrakeInstability = advancedBraking.RearInstabilityAmount;
+        dynamicFrontBrakeBias = advancedBraking.DynamicFrontBrakeBias;
     }
 
     private void RefreshAdvancedSteeringAssistState()
@@ -455,6 +553,12 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     {
         public Vector3 force;
         public Vector3 position;
+        public ForceMode mode;
+    }
+
+    private struct TorqueRequest
+    {
+        public Vector3 torque;
         public ForceMode mode;
     }
 }

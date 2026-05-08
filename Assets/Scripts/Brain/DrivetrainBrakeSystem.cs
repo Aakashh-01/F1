@@ -5,6 +5,7 @@ public class DrivetrainBrakeSystem : MonoBehaviour
     [Header("References")]
     public Rigidbody rb;
     public RaycastWheel[] wheels = new RaycastWheel[4];
+    public AdvancedBrakingSystem advancedBraking;
 
     [Header("Motor")]
     public float motorForce = 85000f;
@@ -74,8 +75,14 @@ public class DrivetrainBrakeSystem : MonoBehaviour
 
         DetermineBrakeAndReverseTargets(targetThrottle, targetBrakeInput, out float targetBrake, out float targetReverse);
 
+        bool useAdvancedBrake = advancedBraking != null && targetBrake > 0.01f && targetReverse <= 0.01f;
+        if (useAdvancedBrake)
+            targetBrake = advancedBraking.EffectiveBrakePressure;
+
         CurrentThrottle = Mathf.MoveTowards(CurrentThrottle, targetThrottle, throttleSpoolSpeed * Time.fixedDeltaTime);
-        CurrentBrake = Mathf.MoveTowards(CurrentBrake, targetBrake, brakeSpoolSpeed * Time.fixedDeltaTime);
+        CurrentBrake = useAdvancedBrake
+            ? targetBrake
+            : Mathf.MoveTowards(CurrentBrake, targetBrake, brakeSpoolSpeed * Time.fixedDeltaTime);
         CurrentReverse = Mathf.MoveTowards(CurrentReverse, targetReverse, throttleSpoolSpeed * Time.fixedDeltaTime);
 
         ApplyDrive(CurrentThrottle);
@@ -149,6 +156,9 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         float totalForce = brake * brakeForce * Mathf.Max(0f, speedScale);
         float steeringAmount = GetSteeringAmount();
         float stabilityBlend = Mathf.Clamp01(steeringAmount * Mathf.InverseLerp(0f, brakeSteerBlendSpeedKmh, speedKmh));
+        if (advancedBraking != null)
+            stabilityBlend = Mathf.Max(stabilityBlend, advancedBraking.TrailBrakeBlend);
+
         totalForce *= 1f - (brakeSteerStability * stabilityBlend);
         LastBrakeForce = totalForce;
 
@@ -165,8 +175,11 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         if (brakeForceVector.sqrMagnitude <= 0.0001f)
             return;
 
-        float stableFrontBias = Mathf.Lerp(frontBrakeBias, brakeSteerFrontBias, stabilityBlend);
+        float stableFrontBias = advancedBraking != null
+            ? advancedBraking.DynamicFrontBrakeBias
+            : Mathf.Lerp(frontBrakeBias, brakeSteerFrontBias, stabilityBlend);
         ApplyAxleDistributedForce(brakeForceVector, 1f - stableFrontBias, false);
+        ApplyRearInstabilityYaw();
     }
 
     private Vector3 CalculateBrakeForceVector(Vector3 planarVelocity, float totalForce)
@@ -303,6 +316,7 @@ public class DrivetrainBrakeSystem : MonoBehaviour
     private void ResolveReferences()
     {
         if (rb == null) rb = GetComponent<Rigidbody>();
+        if (advancedBraking == null) advancedBraking = GetComponent<AdvancedBrakingSystem>();
 
         RaycastWheel[] found = GetComponentsInChildren<RaycastWheel>();
         AssignWheelByName(found, "FL", 0);
@@ -331,5 +345,17 @@ public class DrivetrainBrakeSystem : MonoBehaviour
                 return;
             }
         }
+    }
+
+    private void ApplyRearInstabilityYaw()
+    {
+        if (advancedBraking == null || rb == null || Mathf.Abs(advancedBraking.RearInstabilityYawTorque) <= 0.001f)
+            return;
+
+        Vector3 yawTorque = transform.up * advancedBraking.RearInstabilityYawTorque;
+        if (_coordinator != null)
+            _coordinator.QueueTorque(yawTorque);
+        else
+            rb.AddTorque(yawTorque, ForceMode.Force);
     }
 }

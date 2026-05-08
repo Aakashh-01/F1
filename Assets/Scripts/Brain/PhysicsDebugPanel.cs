@@ -32,6 +32,7 @@ public class PhysicsDebugPanel : MonoBehaviour
     private DownforceSystem _downforce;
     private WeightTransfer _weightXfer;
     private DrivetrainBrakeSystem _drivetrain;
+    private AdvancedBrakingSystem _advancedBraking;
     private AdvancedSteeringAssist _advancedAssist;
     private VehiclePhysicsCoordinator _coordinator;
     private Rigidbody _rb;
@@ -162,6 +163,11 @@ public class PhysicsDebugPanel : MonoBehaviour
 
         if (_coordinator != null)
         {
+            Row("Brake pressure", $"{_coordinator.EffectiveBrakePressure:F2}");
+            Row("F/R lockup", $"{_coordinator.FrontBrakeLockup:P0} / {_coordinator.RearBrakeLockup:P0}");
+            Row("Trail brake", $"{_coordinator.TrailBrakeBlend:P0}");
+            Row("Rear instability", $"{_coordinator.RearBrakeInstability:P0}");
+            Row("Dynamic bias", $"{_coordinator.DynamicFrontBrakeBias:P0}");
             Row("Front / Rear slip", $"{_coordinator.AverageFrontSlipAngle:+0.0;-0.0} / {_coordinator.AverageRearSlipAngle:+0.0;-0.0} deg");
             Row("Assist level", _coordinator.CurrentSteeringAssistLevel.ToString());
             Row("Traction loss", _coordinator.TractionLossState.ToString());
@@ -329,6 +335,34 @@ public class PhysicsDebugPanel : MonoBehaviour
                 v => _drivetrain.frontBrakeBias = v);
         }
 
+        if (_advancedBraking != null)
+        {
+            AddSlider("Advanced Braking", "Brake press rate",
+                0.5f, 20f, _advancedBraking.brakePressRate,
+                v => _advancedBraking.brakePressRate = v);
+            AddSlider("Advanced Braking", "Brake release rate",
+                0.5f, 20f, _advancedBraking.brakeReleaseRate,
+                v => _advancedBraking.brakeReleaseRate = v);
+            AddSlider("Advanced Braking", "Front lock threshold",
+                0.1f, 1.5f, _advancedBraking.frontLockupThreshold,
+                v => _advancedBraking.frontLockupThreshold = v);
+            AddSlider("Advanced Braking", "Rear lock threshold",
+                0.1f, 1.5f, _advancedBraking.rearLockupThreshold,
+                v => _advancedBraking.rearLockupThreshold = v);
+            AddSlider("Advanced Braking", "Trail support",
+                0f, 1f, _advancedBraking.trailBrakeSupportStrength,
+                v => _advancedBraking.trailBrakeSupportStrength = v);
+            AddSlider("Advanced Braking", "Trail bias shift",
+                0f, 0.25f, _advancedBraking.trailBrakeFrontBiasShift,
+                v => _advancedBraking.trailBrakeFrontBiasShift = v);
+            AddSlider("Advanced Braking", "Rear instability",
+                0f, 1f, _advancedBraking.rearInstabilityStrength,
+                v => _advancedBraking.rearInstabilityStrength = v);
+            AddSlider("Advanced Braking", "Max yaw torque",
+                0f, 8000f, _advancedBraking.maxRearInstabilityYawTorque,
+                v => _advancedBraking.maxRearInstabilityYawTorque = v);
+        }
+
         if (_traction != null)
         {
             AddSlider("Traction", "Lateral D (peak grip)",
@@ -397,6 +431,7 @@ public class PhysicsDebugPanel : MonoBehaviour
         _rb = carRoot.GetComponent<Rigidbody>();
         _coordinator = carRoot.GetComponent<VehiclePhysicsCoordinator>();
         _drivetrain = carRoot.GetComponent<DrivetrainBrakeSystem>();
+        _advancedBraking = carRoot.GetComponent<AdvancedBrakingSystem>();
         _traction = carRoot.GetComponent<TractionSystem>();
         _downforce = carRoot.GetComponent<DownforceSystem>();
         _weightXfer = carRoot.GetComponent<WeightTransfer>();
@@ -407,6 +442,7 @@ public class PhysicsDebugPanel : MonoBehaviour
             _wheels[i] = found[i];
 
         if (_traction == null) Debug.LogWarning("[DebugPanel] TractionSystem not found on carRoot.");
+        if (_advancedBraking == null) Debug.LogWarning("[DebugPanel] AdvancedBrakingSystem not found on carRoot.");
         if (_downforce == null) Debug.LogWarning("[DebugPanel] DownforceSystem not found on carRoot.");
         if (_weightXfer == null) Debug.LogWarning("[DebugPanel] WeightTransfer not found on carRoot.");
         if (_advancedAssist == null) Debug.LogWarning("[DebugPanel] AdvancedSteeringAssist not found on carRoot.");
