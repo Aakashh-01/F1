@@ -14,7 +14,7 @@ public class CameraSpeedPerception : MonoBehaviour
     public float baseFov = 60f;
     public float maxFov = 72f;
     public float maxFovSpeedKmh = 260f;
-    public float fovSmoothTime = 0.18f;
+    public float fovSmoothTime = 0.25f;
 
     private float _fovVelocity;
 

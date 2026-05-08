@@ -60,12 +60,13 @@ public class SteeringAssistProfile
     [Range(5f, 35f)] public float maxSteerAngle = 16f;
     public AnimationCurve speedSensitivityCurve = new AnimationCurve(
         new Keyframe(0f, 1f),
-        new Keyframe(120f, 0.9f),
-        new Keyframe(220f, 0.68f),
-        new Keyframe(310f, 0.52f));
-    [Range(0.01f, 0.8f)] public float lowSpeedSmoothTime = 0.05f;
-    [Range(0.01f, 1.0f)] public float highSpeedSmoothTime = 0.1f;
-    [Range(10f, 250f)] public float speedThresholdKmh = 50f;
+        new Keyframe(80f, 0.82f),
+        new Keyframe(150f, 0.62f),
+        new Keyframe(220f, 0.44f),
+        new Keyframe(320f, 0.3f));
+    [Range(0.01f, 0.8f)] public float lowSpeedSmoothTime = 0.06f;
+    [Range(0.01f, 1.0f)] public float highSpeedSmoothTime = 0.18f;
+    [Range(10f, 250f)] public float speedThresholdKmh = 220f;
     [Range(0f, 0.2f)] public float ackermannFactor = 0.15f;
     [Range(0f, 1f)] public float oversteerAssistStrength = 0.3f;
     [Range(0f, 1f)] public float understeerAssistStrength = 0.15f;
@@ -100,7 +101,7 @@ public class CameraSpeedProfile
     [Range(40f, 90f)] public float baseFov = 60f;
     [Range(50f, 110f)] public float maxFov = 72f;
     [Range(10f, 350f)] public float maxFovSpeedKmh = 260f;
-    [Range(0.01f, 1f)] public float fovSmoothTime = 0.18f;
+    [Range(0.01f, 1f)] public float fovSmoothTime = 0.25f;
     [Range(0f, 2f)] public float shakeAmplitude = 0.15f;
     [Range(0f, 1f)] public float shakeAtSpeed = 0.35f;
     public bool enableShake;

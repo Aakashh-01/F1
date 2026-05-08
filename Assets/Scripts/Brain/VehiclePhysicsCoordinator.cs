@@ -17,6 +17,22 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     public TractionSystem traction;
     public WeightTransfer weightTransfer;
 
+    [Header("Visual Body Alignment")]
+    public Transform visualBody;
+    public bool alignVisualBodyToSuspension = true;
+    [Range(0f, 12f)] public float visualPitchFromSuspension = 1.8f;
+    [Range(0f, 12f)] public float visualRollFromSuspension = 1.45f;
+    [Range(0f, 6f)] public float visualPitchFromLoadTransfer = 1f;
+    [Range(0f, 6f)] public float visualRollFromLoadTransfer = 0.75f;
+    [Range(0f, 0.15f)] public float visualVerticalTravel = 0.024f;
+    [Range(1f, 30f)] public float visualBodyPositionSharpness = 5.5f;
+    [Range(1f, 30f)] public float visualBodyRotationSharpness = 4.6f;
+    [Range(20f, 320f)] public float visualSuspensionFadeStartKmh = 120f;
+    [Range(20f, 360f)] public float visualSuspensionFadeEndKmh = 220f;
+    [Range(0f, 1f)] public float highSpeedSuspensionInfluence = 0.14f;
+    [Range(0f, 2f)] public float highSpeedAeroPitchDegrees = 0.34f;
+    [Range(0f, 0.05f)] public float highSpeedAeroDrop = 0.012f;
+
     [Header("Runtime State")]
     [SerializeField] private float speedMs;
     [SerializeField] private float speedKmh;
@@ -28,6 +44,16 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
 
     private readonly ForceRequest[] _forceRequests = new ForceRequest[64];
     private int _forceRequestCount;
+    private Vector3 _visualBodyBaseLocalPosition;
+    private Quaternion _visualBodyBaseLocalRotation = Quaternion.identity;
+    private Vector3 _visualBodyPositionVelocity;
+    private Vector3 _visualBodyTargetLocalPosition;
+    private Vector3 _visualBodyTargetVelocity;
+    private float _visualBodyPitch;
+    private float _visualBodyPitchVelocity;
+    private float _visualBodyRoll;
+    private float _visualBodyRollVelocity;
+    private bool _visualBodyInitialized;
 
     public float SpeedMs => speedMs;
     public float SpeedKmh => speedKmh;
@@ -84,6 +110,11 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (weightTransfer != null) weightTransfer.Simulate(this);
 
         FlushForces();
+    }
+
+    private void LateUpdate()
+    {
+        UpdateVisualBodyAlignment();
     }
 
     public void QueueForce(Vector3 force, ForceMode mode = ForceMode.Force)
@@ -176,6 +207,12 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (steering == null) steering = GetComponent<SteeringSystem>();
         if (traction == null) traction = GetComponent<TractionSystem>();
         if (weightTransfer == null) weightTransfer = GetComponent<WeightTransfer>();
+        if (visualBody == null)
+        {
+            Transform foundVisual = transform.Find("Car_Model");
+            if (foundVisual != null)
+                visualBody = foundVisual;
+        }
 
         RaycastWheel[] foundWheels = GetComponentsInChildren<RaycastWheel>();
         AssignWheelByName(foundWheels, "FL", 0);
@@ -190,6 +227,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         }
 
         SyncSystemWheelReferences();
+        InitializeVisualBodyReference();
     }
 
     private void AssignWheelByName(RaycastWheel[] foundWheels, string wheelName, int index)
@@ -262,6 +300,84 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
             rb.inertiaTensor = tensor;
             Debug.LogWarning($"[VehiclePhysicsCoordinator] Corrected invalid inertia tensor on {name}: {tensor}");
         }
+    }
+
+    private void InitializeVisualBodyReference()
+    {
+        if (visualBody == null || _visualBodyInitialized)
+            return;
+
+        _visualBodyBaseLocalPosition = visualBody.localPosition;
+        _visualBodyBaseLocalRotation = visualBody.localRotation;
+        _visualBodyTargetLocalPosition = _visualBodyBaseLocalPosition;
+        _visualBodyInitialized = true;
+    }
+
+    private void UpdateVisualBodyAlignment()
+    {
+        if (!alignVisualBodyToSuspension || visualBody == null || !_visualBodyInitialized || wheels == null || wheels.Length < 4)
+            return;
+
+        float fl = GetCompressionDelta(0);
+        float fr = GetCompressionDelta(1);
+        float rl = GetCompressionDelta(2);
+        float rr = GetCompressionDelta(3);
+
+        float frontCompression = (fl + fr) * 0.5f;
+        float rearCompression = (rl + rr) * 0.5f;
+        float leftCompression = (fl + rl) * 0.5f;
+        float rightCompression = (fr + rr) * 0.5f;
+        float averageCompression = (fl + fr + rl + rr) * 0.25f;
+        float speedT = Mathf.InverseLerp(
+            visualSuspensionFadeStartKmh,
+            Mathf.Max(visualSuspensionFadeStartKmh + 1f, visualSuspensionFadeEndKmh),
+            speedKmh);
+        float suspensionInfluence = Mathf.Lerp(1f, highSpeedSuspensionInfluence, speedT);
+
+        float targetPitch = (frontCompression - rearCompression) * visualPitchFromSuspension * suspensionInfluence;
+        float targetRoll = (leftCompression - rightCompression) * visualRollFromSuspension * suspensionInfluence;
+        targetPitch += highSpeedAeroPitchDegrees * speedT;
+
+        if (weightTransfer != null)
+        {
+            targetPitch += weightTransfer.LongTransferG * visualPitchFromLoadTransfer * Mathf.Lerp(1f, 0.65f, speedT);
+            targetRoll += -weightTransfer.LatTransferG * visualRollFromLoadTransfer * Mathf.Lerp(1f, 0.55f, speedT);
+        }
+
+        float verticalOffset = (-averageCompression * visualVerticalTravel * suspensionInfluence) - (highSpeedAeroDrop * speedT);
+        Vector3 rawTargetLocalPosition = _visualBodyBaseLocalPosition + Vector3.up * verticalOffset;
+
+        float positionSmoothTime = 1f / Mathf.Max(0.01f, visualBodyPositionSharpness);
+        float rotationSmoothTime = 1f / Mathf.Max(0.01f, visualBodyRotationSharpness);
+        _visualBodyTargetLocalPosition = Vector3.SmoothDamp(
+            _visualBodyTargetLocalPosition,
+            rawTargetLocalPosition,
+            ref _visualBodyTargetVelocity,
+            positionSmoothTime,
+            Mathf.Infinity,
+            Time.deltaTime);
+        _visualBodyPitch = Mathf.SmoothDampAngle(_visualBodyPitch, targetPitch, ref _visualBodyPitchVelocity, rotationSmoothTime);
+        _visualBodyRoll = Mathf.SmoothDampAngle(_visualBodyRoll, targetRoll, ref _visualBodyRollVelocity, rotationSmoothTime);
+
+        Quaternion targetLocalRotation = _visualBodyBaseLocalRotation * Quaternion.Euler(_visualBodyPitch, 0f, _visualBodyRoll);
+
+        visualBody.localPosition = Vector3.SmoothDamp(
+            visualBody.localPosition,
+            _visualBodyTargetLocalPosition,
+            ref _visualBodyPositionVelocity,
+            positionSmoothTime,
+            Mathf.Infinity,
+            Time.deltaTime);
+        visualBody.localRotation = targetLocalRotation;
+    }
+
+    private float GetCompressionDelta(int wheelIndex)
+    {
+        if (wheelIndex < 0 || wheelIndex >= wheels.Length || wheels[wheelIndex] == null || !wheels[wheelIndex].IsGrounded)
+            return 0f;
+
+        RaycastWheel wheel = wheels[wheelIndex];
+        return Mathf.Clamp(wheel.SuspensionTravel - wheel.restLengthRatio, -1f, 1f);
     }
 
     private void AlignToGroundAtStartup()

@@ -313,6 +313,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9512a2bff40989c4e807e60a3500c421, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &260462162 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4721321230388028393, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -402,7 +407,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.4, z: -6.4800043}
+  m_LocalPosition: {x: 0, y: 1.15, z: -5.83}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -503,7 +508,12 @@ MonoBehaviour:
   baseFov: 60
   maxFov: 72
   maxFovSpeedKmh: 260
-  fovSmoothTime: 0.18
+  fovSmoothTime: 0.25
+--- !u!4 &397651588 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4021049904877953872, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -995,14 +1005,21 @@ MonoBehaviour:
   carRb: {fileID: 1543065703}
   steeringSystem: {fileID: 1543065708}
   localOffset: {x: 0, y: 0.62, z: -0.25}
-  positionSharpness: 40
-  rotationSharpness: 15
-  maxYawLead: 4.5
-  maxRollLean: 1.7
-  fullEffectSpeedKmh: 145
-  steeringInfluence: 0.38
-  yawRateInfluence: 0.55
-  lateralVelocityInfluence: 0.18
+  positionSharpness: 13
+  rotationSharpness: 8
+  highSpeedPullback: 0.7
+  highSpeedLift: 0.14
+  lateralFrameOffset: 0.28
+  velocityLookAhead: 0.6
+  lookAheadSharpness: 9
+  maxYawLead: 4.4
+  maxRollLean: 3.4
+  maxBrakePitch: 1.8
+  maxThrottlePitch: 1.1
+  fullEffectSpeedKmh: 160
+  steeringInfluence: 0.48
+  yawRateInfluence: 0.58
+  lateralVelocityInfluence: 0.22
 --- !u!4 &745128786
 Transform:
   m_ObjectHideFlags: 0
@@ -2174,6 +2191,20 @@ MonoBehaviour:
   steering: {fileID: 0}
   traction: {fileID: 0}
   weightTransfer: {fileID: 0}
+  visualBody: {fileID: 397651588}
+  alignVisualBodyToSuspension: 1
+  visualPitchFromSuspension: 1.8
+  visualRollFromSuspension: 1.45
+  visualPitchFromLoadTransfer: 1
+  visualRollFromLoadTransfer: 0.75
+  visualVerticalTravel: 0.024
+  visualBodyPositionSharpness: 5.5
+  visualBodyRotationSharpness: 4.6
+  visualSuspensionFadeStartKmh: 120
+  visualSuspensionFadeEndKmh: 220
+  highSpeedSuspensionInfluence: 0.14
+  highSpeedAeroPitchDegrees: 0.34
+  highSpeedAeroDrop: 0.012
   speedMs: 0
   speedKmh: 0
   throttleInput: 0
@@ -2620,19 +2651,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: speedThreshold
-      value: 150
+      value: 220
       objectReference: {fileID: 0}
     - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: lowSpeedSmoothTime
-      value: 0.02
+      value: 0.06
       objectReference: {fileID: 0}
     - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: highSpeedSmoothTime
-      value: 0.05
+      value: 0.18
       objectReference: {fileID: 0}
     - target: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: speedSensitivityCurve.m_Curve.Array.data[1].value
-      value: 0.9
+      value: 0.82
       objectReference: {fileID: 0}
     - target: {fileID: 3611491108134853229, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_Constraints
@@ -2695,6 +2726,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1543065708}
     - target: {fileID: 3896576848223821567, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: steeringYawScale
+      value: 1.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 3896576848223821567, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: maxSuspensionLength
       value: 0.19
       objectReference: {fileID: 0}
@@ -2749,7 +2784,7 @@ PrefabInstance:
     - target: {fileID: 4863463631117697222, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: wheelMesh
       value: 
-      objectReference: {fileID: 729403056}
+      objectReference: {fileID: 260462162}
     - target: {fileID: 4863463631117697222, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: wheelRadius
       value: 0.15
@@ -2804,7 +2839,7 @@ PrefabInstance:
       objectReference: {fileID: 1543065708}
     - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: steeringYawScale
-      value: 0.88
+      value: 1.35
       objectReference: {fileID: 0}
     - target: {fileID: 6516188067183021111, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: groundLayer.m_Bits

@@ -9,17 +9,18 @@ public class SteeringSystem : MonoBehaviour
     public Transform wheelFR;
 
     [Header("Steering Settings")]
-    public float maxSteerAngle;
+    public float maxSteerAngle = 16f;
     public AnimationCurve speedSensitivityCurve = new AnimationCurve(
         new Keyframe(0f, 1f),
-        new Keyframe(120f, 0.9f),
-        new Keyframe(220f, 0.68f),
-        new Keyframe(310f, 0.52f));
+        new Keyframe(80f, 0.82f),
+        new Keyframe(150f, 0.62f),
+        new Keyframe(220f, 0.44f),
+        new Keyframe(320f, 0.3f));
 
     [Header("Smoothing")]
-    public float lowSpeedSmoothTime;
-    public float highSpeedSmoothTime;
-    public float speedThreshold;
+    public float lowSpeedSmoothTime = 0.06f;
+    public float highSpeedSmoothTime = 0.18f;
+    public float speedThreshold = 220f;
 
     [Header("Ackermann & Assist")]
     [Range(0f, 0.2f)] public float ackermannFactor = 0.15f;

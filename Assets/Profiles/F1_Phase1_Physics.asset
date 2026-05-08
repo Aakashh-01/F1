@@ -52,34 +52,43 @@ MonoBehaviour:
         time: 0
         value: 1
         inSlope: 0
-        outSlope: -0.00083333335
+        outSlope: -0.00225
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 120
-        value: 0.9
-        inSlope: -0.00083333335
-        outSlope: -0.0022
+        time: 80
+        value: 0.82
+        inSlope: -0.00225
+        outSlope: -0.0028571428
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 150
+        value: 0.62
+        inSlope: -0.0028571428
+        outSlope: -0.0025714287
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 220
-        value: 0.68
-        inSlope: -0.0022
-        outSlope: -0.0017777778
+        value: 0.44
+        inSlope: -0.0025714287
+        outSlope: -0.0014
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
-        time: 310
-        value: 0.52
-        inSlope: -0.0017777778
-        outSlope: -0.0017777778
+        time: 320
+        value: 0.3
+        inSlope: -0.0014
+        outSlope: -0.0014
         tangentMode: 0
         weightedMode: 0
         inWeight: 0
@@ -87,13 +96,13 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    lowSpeedSmoothTime: 0.02
-    highSpeedSmoothTime: 0.3
-    speedThresholdKmh: 100
+    lowSpeedSmoothTime: 0.06
+    highSpeedSmoothTime: 0.18
+    speedThresholdKmh: 220
     ackermannFactor: 0.15
     oversteerAssistStrength: 0.3
     understeerAssistStrength: 0.15
-    slipThresholdDegrees: 15
+    slipThresholdDegrees: 8
   drivetrain:
     motorForce: 109296
     brakeForce: 90000
@@ -184,7 +193,7 @@ MonoBehaviour:
     baseFov: 60
     maxFov: 72
     maxFovSpeedKmh: 260
-    fovSmoothTime: 0.18
+    fovSmoothTime: 0.25
     shakeAmplitude: 0.15
     shakeAtSpeed: 0.35
     enableShake: 0

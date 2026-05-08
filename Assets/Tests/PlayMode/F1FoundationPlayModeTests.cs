@@ -176,7 +176,7 @@ public class F1FoundationPlayModeTests
         visual.steeringYawScale = 1f;
 
         visual.SendMessage("Start");
-        visual.SendMessage("Update");
+        visual.SendMessage("LateUpdate");
 
         Assert.AreEqual(12f, meshObject.transform.localEulerAngles.y, 0.01f);
         Object.DestroyImmediate(car);
