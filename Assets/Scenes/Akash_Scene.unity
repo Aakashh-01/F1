@@ -1938,8 +1938,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   carRoot: {fileID: 1543065696}
   toggleKey: 9
-  panelWidth: 340
-  panelAlpha: 0.88
+  panelWidth: 260
+  panelAlpha: 0.3
 --- !u!114 &1361618809
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2052,7 +2052,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1538597927
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2189,6 +2189,7 @@ MonoBehaviour:
   drivetrain: {fileID: 0}
   downforce: {fileID: 0}
   steering: {fileID: 0}
+  advancedSteeringAssist: {fileID: 0}
   traction: {fileID: 0}
   weightTransfer: {fileID: 0}
   visualBody: {fileID: 397651588}
@@ -2212,6 +2213,11 @@ MonoBehaviour:
   steeringInput: 0
   averageFrontSlipAngle: 0
   averageRearSlipAngle: 0
+  steeringAssistLevel: 0
+  tractionLossState: 0
+  rawSteeringAssistAngle: 0
+  smoothedSteeringAssistAngle: 0
+  playerOverrideFactor: 0
 --- !u!114 &1543065708 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2741609745239572151, guid: 093801ee528ac4249a0bec751c733059, type: 3}

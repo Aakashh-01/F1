@@ -14,6 +14,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     public DrivetrainBrakeSystem drivetrain;
     public DownforceSystem downforce;
     public SteeringSystem steering;
+    public AdvancedSteeringAssist advancedSteeringAssist;
     public TractionSystem traction;
     public WeightTransfer weightTransfer;
 
@@ -41,6 +42,11 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     [SerializeField] private float steeringInput;
     [SerializeField] private float averageFrontSlipAngle;
     [SerializeField] private float averageRearSlipAngle;
+    [SerializeField] private SteeringAssistLevel steeringAssistLevel;
+    [SerializeField] private TractionLossState tractionLossState;
+    [SerializeField] private float rawSteeringAssistAngle;
+    [SerializeField] private float smoothedSteeringAssistAngle;
+    [SerializeField] private float playerOverrideFactor;
 
     private readonly ForceRequest[] _forceRequests = new ForceRequest[64];
     private int _forceRequestCount;
@@ -62,6 +68,11 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     public float SteeringInput => steeringInput;
     public float AverageFrontSlipAngle => averageFrontSlipAngle;
     public float AverageRearSlipAngle => averageRearSlipAngle;
+    public SteeringAssistLevel CurrentSteeringAssistLevel => steeringAssistLevel;
+    public TractionLossState TractionLossState => tractionLossState;
+    public float RawSteeringAssistAngle => rawSteeringAssistAngle;
+    public float SmoothedSteeringAssistAngle => smoothedSteeringAssistAngle;
+    public float PlayerOverrideFactor => playerOverrideFactor;
 
     private void Awake()
     {
@@ -106,6 +117,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (drivetrain != null) drivetrain.Simulate(this);
         if (downforce != null) downforce.Simulate(this);
         if (steering != null) steering.Simulate(this);
+        RefreshAdvancedSteeringAssistState();
         if (traction != null) traction.Simulate(this);
         if (weightTransfer != null) weightTransfer.Simulate(this);
 
@@ -196,6 +208,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (traction != null) traction.ApplyProfile(profile.tireGrip);
         if (downforce != null) downforce.ApplyProfile(profile.aero);
         if (steering != null) steering.ApplyProfile(profile.steering);
+        if (advancedSteeringAssist != null) advancedSteeringAssist.ApplyProfile(profile.advancedSteering);
         if (drivetrain != null) drivetrain.ApplyProfile(profile.drivetrain);
     }
 
@@ -205,6 +218,8 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (drivetrain == null) drivetrain = GetComponent<DrivetrainBrakeSystem>();
         if (downforce == null) downforce = GetComponent<DownforceSystem>();
         if (steering == null) steering = GetComponent<SteeringSystem>();
+        if (advancedSteeringAssist == null) advancedSteeringAssist = GetComponent<AdvancedSteeringAssist>();
+        if (advancedSteeringAssist == null) advancedSteeringAssist = gameObject.AddComponent<AdvancedSteeringAssist>();
         if (traction == null) traction = GetComponent<TractionSystem>();
         if (weightTransfer == null) weightTransfer = GetComponent<WeightTransfer>();
         if (visualBody == null)
@@ -254,9 +269,13 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
 
         if (steering != null)
         {
+            steering.advancedAssist = advancedSteeringAssist;
             steering.wheelFL = wheels.Length > 0 && wheels[0] != null ? wheels[0].transform : steering.wheelFL;
             steering.wheelFR = wheels.Length > 1 && wheels[1] != null ? wheels[1].transform : steering.wheelFR;
         }
+
+        if (advancedSteeringAssist != null)
+            advancedSteeringAssist.tractionSystem = traction;
     }
 
     private void SetExternalSimulation(bool enabled)
@@ -264,6 +283,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (drivetrain != null) drivetrain.UseExternalSimulation = enabled;
         if (downforce != null) downforce.UseExternalSimulation = enabled;
         if (steering != null) steering.UseExternalSimulation = enabled;
+        if (advancedSteeringAssist != null) advancedSteeringAssist.UseExternalSimulation = enabled;
         if (traction != null) traction.UseExternalSimulation = enabled;
         if (weightTransfer != null) weightTransfer.UseExternalSimulation = enabled;
 
@@ -281,6 +301,25 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
             ForceRequest request = _forceRequests[i];
             rb.AddForceAtPosition(request.force, request.position, request.mode);
         }
+    }
+
+    private void RefreshAdvancedSteeringAssistState()
+    {
+        if (advancedSteeringAssist == null)
+        {
+            steeringAssistLevel = global::SteeringAssistLevel.Medium;
+            tractionLossState = TractionLossState.None;
+            rawSteeringAssistAngle = 0f;
+            smoothedSteeringAssistAngle = steering != null ? steering.LastAssistAngle : 0f;
+            playerOverrideFactor = 0f;
+            return;
+        }
+
+        steeringAssistLevel = advancedSteeringAssist.assistLevel;
+        tractionLossState = advancedSteeringAssist.CurrentTractionLossState;
+        rawSteeringAssistAngle = advancedSteeringAssist.RawAssistAngle;
+        smoothedSteeringAssistAngle = advancedSteeringAssist.SmoothedAssistAngle;
+        playerOverrideFactor = advancedSteeringAssist.PlayerOverrideFactor;
     }
 
     private void ValidateRigidbodyForHighSpeed()

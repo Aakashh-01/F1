@@ -38,7 +38,7 @@ MonoBehaviour:
     highSpeedGripMult: 0.88
   aero:
     downforceCoeff: 5
-    frontBias: 0.38
+    frontBias: 0.231
     fullDownforceSpeed: 70
     lateralDragCoeff: 1.8
     lateralDragOnsetSpeed: 20
@@ -103,6 +103,22 @@ MonoBehaviour:
     oversteerAssistStrength: 0.3
     understeerAssistStrength: 0.15
     slipThresholdDegrees: 8
+  advancedSteering:
+    assistLevel: 2
+    rearSlipThresholdDegrees: 8
+    frontSlipThresholdDegrees: 9
+    severeSlipDegrees: 18
+    tractionLossUtilisation: 0.92
+    minimumAssistSpeedKmh: 18
+    recoveryStrength: 0.28
+    countersteerStrength: 0.42
+    understeerStrength: 0.18
+    maxAssistAngle: 7
+    opposingInputRetention: 0.42
+    assistSmoothingTime: 0.14
+    mobileTapSmoothingTime: 0.12
+    overrideBlendInTime: 0.18
+    overrideBlendOutTime: 0.28
   drivetrain:
     motorForce: 109296
     brakeForce: 90000

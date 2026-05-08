@@ -32,6 +32,7 @@ public class PhysicsDebugPanel : MonoBehaviour
     private DownforceSystem _downforce;
     private WeightTransfer _weightXfer;
     private DrivetrainBrakeSystem _drivetrain;
+    private AdvancedSteeringAssist _advancedAssist;
     private VehiclePhysicsCoordinator _coordinator;
     private Rigidbody _rb;
 
@@ -157,6 +158,15 @@ public class PhysicsDebugPanel : MonoBehaviour
         {
             Row("Throttle / Brake", $"{_drivetrain.CurrentThrottle:F2} / {_drivetrain.CurrentBrake:F2}");
             Row("Motor / Brake F", $"{_drivetrain.LastMotorForce:F0} / {_drivetrain.LastBrakeForce:F0} N");
+        }
+
+        if (_coordinator != null)
+        {
+            Row("Front / Rear slip", $"{_coordinator.AverageFrontSlipAngle:+0.0;-0.0} / {_coordinator.AverageRearSlipAngle:+0.0;-0.0} deg");
+            Row("Assist level", _coordinator.CurrentSteeringAssistLevel.ToString());
+            Row("Traction loss", _coordinator.TractionLossState.ToString());
+            Row("Raw / Smooth assist", $"{_coordinator.RawSteeringAssistAngle:+0.0;-0.0} / {_coordinator.SmoothedSteeringAssistAngle:+0.0;-0.0} deg");
+            Row("Override", $"{_coordinator.PlayerOverrideFactor:P0}");
         }
 
         if (_weightXfer != null)
@@ -332,6 +342,34 @@ public class PhysicsDebugPanel : MonoBehaviour
                 v => _traction.loadSensitivity = v);
         }
 
+        if (_advancedAssist != null)
+        {
+            AddSlider("Advanced Steering", "Rear slip threshold",
+                1f, 30f, _advancedAssist.rearSlipThresholdDegrees,
+                v => _advancedAssist.rearSlipThresholdDegrees = v);
+            AddSlider("Advanced Steering", "Front slip threshold",
+                1f, 30f, _advancedAssist.frontSlipThresholdDegrees,
+                v => _advancedAssist.frontSlipThresholdDegrees = v);
+            AddSlider("Advanced Steering", "Recovery strength",
+                0f, 1f, _advancedAssist.recoveryStrength,
+                v => _advancedAssist.recoveryStrength = v);
+            AddSlider("Advanced Steering", "Countersteer strength",
+                0f, 1f, _advancedAssist.countersteerStrength,
+                v => _advancedAssist.countersteerStrength = v);
+            AddSlider("Advanced Steering", "Max assist angle",
+                0f, 18f, _advancedAssist.maxAssistAngle,
+                v => _advancedAssist.maxAssistAngle = v);
+            AddSlider("Advanced Steering", "Tap smoothing",
+                0.01f, 0.8f, _advancedAssist.mobileTapSmoothingTime,
+                v => _advancedAssist.mobileTapSmoothingTime = v);
+            AddSlider("Advanced Steering", "Override in",
+                0.01f, 0.8f, _advancedAssist.overrideBlendInTime,
+                v => _advancedAssist.overrideBlendInTime = v);
+            AddSlider("Advanced Steering", "Override out",
+                0.01f, 1.2f, _advancedAssist.overrideBlendOutTime,
+                v => _advancedAssist.overrideBlendOutTime = v);
+        }
+
         if (_weightXfer != null)
         {
             AddSlider("Weight Transfer", "CoM height",
@@ -362,6 +400,7 @@ public class PhysicsDebugPanel : MonoBehaviour
         _traction = carRoot.GetComponent<TractionSystem>();
         _downforce = carRoot.GetComponent<DownforceSystem>();
         _weightXfer = carRoot.GetComponent<WeightTransfer>();
+        _advancedAssist = carRoot.GetComponent<AdvancedSteeringAssist>();
 
         var found = carRoot.GetComponentsInChildren<RaycastWheel>();
         for (int i = 0; i < Mathf.Min(found.Length, 4); i++)
@@ -370,6 +409,7 @@ public class PhysicsDebugPanel : MonoBehaviour
         if (_traction == null) Debug.LogWarning("[DebugPanel] TractionSystem not found on carRoot.");
         if (_downforce == null) Debug.LogWarning("[DebugPanel] DownforceSystem not found on carRoot.");
         if (_weightXfer == null) Debug.LogWarning("[DebugPanel] WeightTransfer not found on carRoot.");
+        if (_advancedAssist == null) Debug.LogWarning("[DebugPanel] AdvancedSteeringAssist not found on carRoot.");
     }
 
     private bool WasTogglePressed()

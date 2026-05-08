@@ -5,6 +5,7 @@ public class SteeringSystem : MonoBehaviour
     [Header("References")]
     public Rigidbody rb;
     public TractionSystem tractionSystem;
+    public AdvancedSteeringAssist advancedAssist;
     public Transform wheelFL;
     public Transform wheelFR;
 
@@ -79,6 +80,7 @@ public class SteeringSystem : MonoBehaviour
         float sensitivity = speedSensitivityCurve != null ? speedSensitivityCurve.Evaluate(currentSpeed) : 1f;
         float targetAngle = _currentInput * maxSteerAngle * sensitivity;
         targetAngle += CalculateAssistAngle(coordinator, currentSpeed);
+        targetAngle = Mathf.Clamp(targetAngle, -maxSteerAngle, maxSteerAngle);
 
         ApplySteering(targetAngle);
     }
@@ -102,6 +104,13 @@ public class SteeringSystem : MonoBehaviour
     private float CalculateAssistAngle(VehiclePhysicsCoordinator coordinator, float speedKmh)
     {
         LastAssistAngle = 0f;
+
+        if (advancedAssist != null)
+        {
+            LastAssistAngle = advancedAssist.Simulate(coordinator);
+            return LastAssistAngle;
+        }
+
         if (speedKmh < 10f)
             return 0f;
 

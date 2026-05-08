@@ -7,6 +7,7 @@ public class VehiclePhysicsProfile : ScriptableObject
     public TireGripProfile tireGrip = new TireGripProfile();
     public AeroProfile aero = new AeroProfile();
     public SteeringAssistProfile steering = new SteeringAssistProfile();
+    public SteeringAssistAdvancedProfile advancedSteering = new SteeringAssistAdvancedProfile();
     public DrivetrainBrakeProfile drivetrain = new DrivetrainBrakeProfile();
     public CameraSpeedProfile camera = new CameraSpeedProfile();
 }
@@ -71,6 +72,26 @@ public class SteeringAssistProfile
     [Range(0f, 1f)] public float oversteerAssistStrength = 0.3f;
     [Range(0f, 1f)] public float understeerAssistStrength = 0.15f;
     [Range(1f, 20f)] public float slipThresholdDegrees = 8f;
+}
+
+[System.Serializable]
+public class SteeringAssistAdvancedProfile
+{
+    public SteeringAssistLevel assistLevel = SteeringAssistLevel.Medium;
+    [Range(1f, 30f)] public float rearSlipThresholdDegrees = 8f;
+    [Range(1f, 30f)] public float frontSlipThresholdDegrees = 9f;
+    [Range(2f, 45f)] public float severeSlipDegrees = 18f;
+    [Range(0.2f, 1.5f)] public float tractionLossUtilisation = 0.92f;
+    [Range(0f, 80f)] public float minimumAssistSpeedKmh = 18f;
+    [Range(0f, 1f)] public float recoveryStrength = 0.28f;
+    [Range(0f, 1f)] public float countersteerStrength = 0.42f;
+    [Range(0f, 1f)] public float understeerStrength = 0.18f;
+    [Range(0f, 18f)] public float maxAssistAngle = 7f;
+    [Range(0f, 1f)] public float opposingInputRetention = 0.42f;
+    [Range(0.01f, 0.8f)] public float assistSmoothingTime = 0.14f;
+    [Range(0.01f, 0.8f)] public float mobileTapSmoothingTime = 0.12f;
+    [Range(0.01f, 0.8f)] public float overrideBlendInTime = 0.18f;
+    [Range(0.01f, 1.2f)] public float overrideBlendOutTime = 0.28f;
 }
 
 [System.Serializable]

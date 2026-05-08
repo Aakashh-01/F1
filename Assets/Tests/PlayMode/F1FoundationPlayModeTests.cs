@@ -118,6 +118,120 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void AdvancedSteeringAssist_RearSlipProducesCountersteerAssist()
+    {
+        GameObject car = CreateAdvancedAssistTestCar(0f, 16f, out VehiclePhysicsCoordinator coordinator, out AdvancedSteeringAssist assist);
+        RunAdvancedAssistFrames(coordinator, assist, 24);
+
+        Assert.AreEqual(TractionLossState.RearOversteer, assist.CurrentTractionLossState);
+        Assert.Less(assist.RawAssistAngle, 0f);
+        Assert.Less(assist.SmoothedAssistAngle, 0f);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void AdvancedSteeringAssist_UndersteerReducesSteeringDemand()
+    {
+        GameObject car = CreateAdvancedAssistTestCar(15f, 0f, out VehiclePhysicsCoordinator coordinator, out AdvancedSteeringAssist assist);
+        MobileTouchControls.SetSteering(1f);
+        coordinator.SendMessage("Update");
+        RunAdvancedAssistFrames(coordinator, assist, 24);
+
+        Assert.AreEqual(TractionLossState.FrontUndersteer, assist.CurrentTractionLossState);
+        Assert.Less(assist.RawAssistAngle, 0f);
+        MobileTouchControls.ResetInputs();
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void AdvancedSteeringAssist_AssistLevelsIncreaseCorrectionButStayCapped()
+    {
+        GameObject car = CreateAdvancedAssistTestCar(0f, 18f, out VehiclePhysicsCoordinator coordinator, out AdvancedSteeringAssist assist);
+
+        assist.assistLevel = SteeringAssistLevel.Low;
+        RunAdvancedAssistFrames(coordinator, assist, 1);
+        float low = Mathf.Abs(assist.RawAssistAngle);
+
+        assist.assistLevel = SteeringAssistLevel.Medium;
+        RunAdvancedAssistFrames(coordinator, assist, 1);
+        float medium = Mathf.Abs(assist.RawAssistAngle);
+
+        assist.assistLevel = SteeringAssistLevel.High;
+        RunAdvancedAssistFrames(coordinator, assist, 1);
+        float high = Mathf.Abs(assist.RawAssistAngle);
+
+        Assert.Greater(medium, low);
+        Assert.Greater(high, medium);
+        Assert.LessOrEqual(high, assist.maxAssistAngle * 1.35f + 0.001f);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void AdvancedSteeringAssist_SkilledCountersteerSmoothlyReducesAssist()
+    {
+        GameObject neutralCar = CreateAdvancedAssistTestCar(0f, 16f, out VehiclePhysicsCoordinator neutralCoordinator, out AdvancedSteeringAssist neutralAssist);
+        RunAdvancedAssistFrames(neutralCoordinator, neutralAssist, 40);
+        float neutralMagnitude = Mathf.Abs(neutralAssist.SmoothedAssistAngle);
+
+        GameObject countersteerCar = CreateAdvancedAssistTestCar(0f, 16f, out VehiclePhysicsCoordinator countersteerCoordinator, out AdvancedSteeringAssist countersteerAssist);
+        MobileTouchControls.SetSteering(-1f);
+        countersteerCoordinator.SendMessage("Update");
+        RunAdvancedAssistFrames(countersteerCoordinator, countersteerAssist, 40);
+        float countersteerMagnitude = Mathf.Abs(countersteerAssist.SmoothedAssistAngle);
+
+        Assert.Greater(neutralMagnitude, 0.1f);
+        Assert.Less(countersteerMagnitude, neutralMagnitude);
+        Assert.Greater(countersteerAssist.PlayerOverrideFactor, 0f);
+
+        MobileTouchControls.ResetInputs();
+        Object.DestroyImmediate(neutralCar);
+        Object.DestroyImmediate(countersteerCar);
+    }
+
+    [Test]
+    public void AdvancedSteeringAssist_MobileTapDoesNotSnapAssistOff()
+    {
+        GameObject car = CreateAdvancedAssistTestCar(0f, 16f, out VehiclePhysicsCoordinator coordinator, out AdvancedSteeringAssist assist);
+        RunAdvancedAssistFrames(coordinator, assist, 20);
+        float beforeTap = Mathf.Abs(assist.SmoothedAssistAngle);
+
+        MobileTouchControls.SetSteering(-1f);
+        coordinator.SendMessage("Update");
+        RunAdvancedAssistFrames(coordinator, assist, 1);
+        float afterSingleTapFrame = Mathf.Abs(assist.SmoothedAssistAngle);
+
+        Assert.Greater(beforeTap, 0.1f);
+        Assert.Greater(afterSingleTapFrame, beforeTap * 0.65f);
+        Assert.Less(assist.PlayerOverrideFactor, 0.25f);
+
+        MobileTouchControls.ResetInputs();
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void AdvancedSteeringAssist_MobileReleaseSmoothsOverrideBackToZero()
+    {
+        GameObject car = CreateAdvancedAssistTestCar(0f, 16f, out VehiclePhysicsCoordinator coordinator, out AdvancedSteeringAssist assist);
+        MobileTouchControls.SetSteering(-1f);
+        coordinator.SendMessage("Update");
+        RunAdvancedAssistFrames(coordinator, assist, 30);
+        float heldOverride = assist.PlayerOverrideFactor;
+
+        MobileTouchControls.SetSteering(0f);
+        coordinator.SendMessage("Update");
+        RunAdvancedAssistFrames(coordinator, assist, 1);
+        float immediateReleaseOverride = assist.PlayerOverrideFactor;
+        RunAdvancedAssistFrames(coordinator, assist, 35);
+
+        Assert.Greater(heldOverride, 0.1f);
+        Assert.Greater(immediateReleaseOverride, 0f);
+        Assert.Less(assist.PlayerOverrideFactor, heldOverride);
+
+        MobileTouchControls.ResetInputs();
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
     public void RaycastWheel_ForwardVelocityDoesNotCreateLongitudinalSlip()
     {
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -232,5 +346,66 @@ public class F1FoundationPlayModeTests
         Assert.Greater(camera.fieldOfView, 60f);
         Object.DestroyImmediate(cameraObject);
         Object.DestroyImmediate(target);
+    }
+
+    private static GameObject CreateAdvancedAssistTestCar(
+        float frontSlip,
+        float rearSlip,
+        out VehiclePhysicsCoordinator coordinator,
+        out AdvancedSteeringAssist assist)
+    {
+        MobileTouchControls.ResetInputs();
+
+        GameObject car = new GameObject("Advanced Steering Assist Test Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        TractionSystem traction = car.AddComponent<TractionSystem>();
+        assist = car.AddComponent<AdvancedSteeringAssist>();
+        coordinator = car.AddComponent<VehiclePhysicsCoordinator>();
+
+        RaycastWheel[] wheels = new RaycastWheel[4];
+        for (int i = 0; i < wheels.Length; i++)
+        {
+            GameObject wheel = new GameObject(i == 0 ? "FL" : i == 1 ? "FR" : i == 2 ? "RL" : "RR");
+            wheel.transform.SetParent(car.transform);
+            wheel.AddComponent<WheelVisual>();
+            wheels[i] = wheel.AddComponent<RaycastWheel>();
+            wheels[i].IsGrounded = true;
+            wheels[i].LocalSlipVector = new Vector2(i < 2 ? frontSlip : rearSlip, 0f);
+        }
+
+        traction.wheels = wheels;
+        traction.GripUtilisation[0] = 0.96f;
+        traction.GripUtilisation[1] = 0.96f;
+        traction.GripUtilisation[2] = 0.96f;
+        traction.GripUtilisation[3] = 0.96f;
+
+        coordinator.rb = rb;
+        coordinator.wheels = wheels;
+        coordinator.traction = traction;
+        coordinator.advancedSteeringAssist = assist;
+        coordinator.applyProfileOnAwake = false;
+
+        assist.tractionSystem = traction;
+        assist.assistSmoothingTime = 0.08f;
+        assist.mobileTapSmoothingTime = 0.14f;
+        assist.overrideBlendInTime = 0.2f;
+        assist.overrideBlendOutTime = 0.32f;
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = car.transform.forward * 35f;
+#else
+        rb.velocity = car.transform.forward * 35f;
+#endif
+        coordinator.RefreshState();
+        return car;
+    }
+
+    private static void RunAdvancedAssistFrames(VehiclePhysicsCoordinator coordinator, AdvancedSteeringAssist assist, int frames)
+    {
+        for (int i = 0; i < frames; i++)
+        {
+            coordinator.RefreshState();
+            assist.Simulate(coordinator);
+        }
     }
 }
