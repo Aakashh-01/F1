@@ -12,6 +12,7 @@ public class AIPerceptionSensor : MonoBehaviour
 
     [Header("Mobile Performance")]
     [Range(1, 12)] public int fixedFrameStride = 3;
+    [Range(0, 11)] public int fixedFrameOffset;
     [Range(0.03f, 0.25f)] public float minimumUpdateInterval = 0.07f;
     [Range(3, 24)] public int hitBufferSize = 8;
 
@@ -40,6 +41,7 @@ public class AIPerceptionSensor : MonoBehaviour
     private void OnValidate()
     {
         hitBufferSize = Mathf.Max(3, hitBufferSize);
+        fixedFrameOffset = Mathf.Clamp(fixedFrameOffset, 0, Mathf.Max(0, fixedFrameStride - 1));
     }
 
     public bool Tick(bool forceUpdate = false)
@@ -47,7 +49,9 @@ public class AIPerceptionSensor : MonoBehaviour
         EnsureReady();
 
         _framesSinceUpdate++;
-        bool frameReady = _framesSinceUpdate >= Mathf.Max(1, fixedFrameStride);
+        int stride = Mathf.Max(1, fixedFrameStride);
+        int offset = Mathf.Clamp(fixedFrameOffset, 0, stride - 1);
+        bool frameReady = _framesSinceUpdate >= stride - offset;
         bool timeReady = Time.time >= _nextUpdateTime;
 
         if (!forceUpdate && (!frameReady || !timeReady))

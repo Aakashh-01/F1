@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e08afe54a0e6df84682983b92beddc01, type: 3}
+  m_Name: F1_AI_Easy
+  m_EditorClassIdentifier: 
+  preset: 0
+  speedMultiplier: 0.92
+  brakingMargin: 1.18
+  cornerConfidence: 0.86
+  reactionDelay: 0.16
+  overtakeWillingness: 0.35
+  avoidanceCaution: 0.76

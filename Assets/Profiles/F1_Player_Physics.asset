@@ -1,0 +1,332 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c6dfdbf282b450e9f0588f96ed8baf9, type: 3}
+  m_Name: F1_Player_Physics
+  m_EditorClassIdentifier: 
+  suspension:
+    suspensionLength: 0.3
+    springStiffness: 60000
+    damperStrength: 9000
+    restLengthRatio: 0.5
+    physicsWheelRadius: 0.34
+  tireGrip:
+    lateralC: 1.5
+    lateralD: 2
+    lateralB: 10
+    lateralE: 0.97
+    longC: 1.65
+    longD: 0.92
+    longB: 11
+    longE: 0.97
+    referenceLoad: 3500
+    loadSensitivity: 0.6
+    lateralRadius: 1.08
+    longRadius: 1.05
+    lowSpeedGripMult: 0.88
+    lowSpeedThreshold: 15
+    midSpeedGripMult: 1
+    highSpeedThreshold: 60
+    highSpeedGripMult: 0.96
+  aero:
+    downforceCoeff: 5
+    frontBias: 0.231
+    fullDownforceSpeed: 70
+    lateralDragCoeff: 1.8
+    lateralDragOnsetSpeed: 20
+    lateralDragCap: 18000
+  steering:
+    maxSteerAngle: 16
+    speedSensitivityCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: -0.00225
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 80
+        value: 0.82
+        inSlope: -0.00225
+        outSlope: -0.0028571428
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 150
+        value: 0.62
+        inSlope: -0.0028571428
+        outSlope: -0.0025714287
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 220
+        value: 0.44
+        inSlope: -0.0025714287
+        outSlope: -0.0014
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 320
+        value: 0.3
+        inSlope: -0.0014
+        outSlope: -0.0014
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    lowSpeedSmoothTime: 0.06
+    highSpeedSmoothTime: 0.18
+    speedThresholdKmh: 220
+    ackermannFactor: 0.15
+    oversteerAssistStrength: 0.42
+    understeerAssistStrength: 0.18
+    slipThresholdDegrees: 7.5
+  advancedSteering:
+    assistLevel: 2
+    rearSlipThresholdDegrees: 7
+    frontSlipThresholdDegrees: 9
+    severeSlipDegrees: 18
+    tractionLossUtilisation: 0.92
+    minimumAssistSpeedKmh: 18
+    recoveryStrength: 0.38
+    countersteerStrength: 0.52
+    understeerStrength: 0.18
+    maxAssistAngle: 7
+    opposingInputRetention: 0.42
+    assistSmoothingTime: 0.12
+    mobileTapSmoothingTime: 0.12
+    overrideBlendInTime: 0.18
+    overrideBlendOutTime: 0.28
+  drivetrain:
+    motorForce: 109296
+    brakeForce: 84000
+    throttleSpoolSpeed: 1.5
+    brakeSpoolSpeed: 6
+    rearDriveBias: 1
+    frontBrakeBias: 0.74
+    brakeSteerStability: 0.9
+    brakeSteerFrontBias: 0.84
+    brakeSteerBlendSpeedKmh: 55
+    reverseMaxSpeedKmh: 12
+    motorForceBySpeed:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: -0.0012222222
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 180
+        value: 0.78
+        inSlope: -0.0012222222
+        outSlope: -0.004
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 260
+        value: 0.46
+        inSlope: -0.004
+        outSlope: -0.0028888888
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 310
+        value: 0.2
+        inSlope: -0.0028888888
+        outSlope: -0.003
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 350
+        value: 0.08
+        inSlope: -0.003
+        outSlope: -0.003
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    brakeForceBySpeed:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.6
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 120
+        value: 0.72
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 220
+        value: 0.8
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 320
+        value: 0.86
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  advancedBrake:
+    brakePressRate: 5.4
+    brakeReleaseRate: 11.5
+    brakePressureCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.35
+        value: 0.2
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.75
+        value: 0.68
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.92
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    lateBrakeMultiplierBySpeed:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.88
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 120
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 220
+        value: 1.12
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 320
+        value: 1.18
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    maxLateBrakeMultiplier: 1.08
+    frontLockupThreshold: 1.06
+    rearLockupThreshold: 1.08
+    lockupBlendRange: 0.32
+    maxLockupEfficiencyLoss: 0.24
+    trailBrakeSupportStrength: 0.44
+    trailBrakeFrontBiasShift: 0.12
+    trailBrakeSteeringThreshold: 0.24
+    trailBrakeMinSpeedKmh: 45
+    rearInstabilityStrength: 0.06
+    maxRearInstabilityYawTorque: 650
+    rearInstabilityStartSpeedKmh: 130
+  camera:
+    baseFov: 60
+    maxFov: 72
+    maxFovSpeedKmh: 260
+    fovSmoothTime: 0.25
+    shakeAmplitude: 0.15
+    shakeAtSpeed: 0.35
+    enableShake: 0

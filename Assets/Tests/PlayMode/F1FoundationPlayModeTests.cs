@@ -529,6 +529,167 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void AIPerception_FrameOffsetStaggersFirstUpdate()
+    {
+        GameObject rig = CreateAIDriverTestRig(out _, out _, out AIPerceptionSensor sensor, out _);
+        sensor.fixedFrameStride = 3;
+        sensor.fixedFrameOffset = 1;
+        sensor.minimumUpdateInterval = 0.03f;
+
+        Assert.IsFalse(sensor.Tick(false));
+        Assert.AreEqual(0, sensor.SensorUpdateSerial);
+
+        Assert.IsTrue(sensor.Tick(false));
+        Assert.AreEqual(1, sensor.SensorUpdateSerial);
+
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void RaceGridManager_ConfiguresAIProfileDifficultyAndSensorOffset()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject managerObject = new GameObject("Race Grid Manager");
+        RaceGridManager manager = managerObject.AddComponent<RaceGridManager>();
+        VehiclePhysicsProfile physicsProfile = ScriptableObject.CreateInstance<VehiclePhysicsProfile>();
+        AIDifficultyProfile difficultyProfile = AIDifficultyProfile.CreateRuntimeProfile(AIDifficultyPreset.Hard);
+        RaceGridManager.RaceGridEntry entry = new RaceGridManager.RaceGridEntry
+        {
+            existingCar = driver.gameObject,
+            physicsProfileOverride = physicsProfile,
+            difficultyProfile = difficultyProfile,
+            preferRightOvertake = false
+        };
+
+        manager.racingLine = driver.racingLine;
+        manager.perceptionFrameStride = 4;
+        manager.ConfigureCar(driver.gameObject, entry, 6);
+
+        Assert.AreSame(physicsProfile, coordinator.physicsProfile);
+        Assert.IsTrue(coordinator.UseExternalInput);
+        Assert.AreSame(manager.racingLine, driver.racingLine);
+        Assert.AreSame(difficultyProfile, driver.difficultyProfile);
+        Assert.AreEqual(AIDifficultyPreset.Hard, driver.difficultyPreset);
+        Assert.IsFalse(driver.preferRightOvertake);
+        Assert.AreEqual(0f, driver.preferredLaneOffset01, 0.001f);
+        Assert.AreEqual(4, sensor.fixedFrameStride);
+        Assert.AreEqual(2, sensor.fixedFrameOffset);
+
+        Object.DestroyImmediate(physicsProfile);
+        Object.DestroyImmediate(difficultyProfile);
+        Object.DestroyImmediate(managerObject);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void RaceGridManager_AssignsPreferredLaneOffset()
+    {
+        GameObject rig = CreateAIDriverTestRig(out _, out AIDriverController driver, out _, out _);
+        GameObject managerObject = new GameObject("Race Grid Manager");
+        RaceGridManager manager = managerObject.AddComponent<RaceGridManager>();
+        RaceGridManager.RaceGridEntry entry = new RaceGridManager.RaceGridEntry
+        {
+            existingCar = driver.gameObject,
+            preferredLaneOffset01 = -0.55f
+        };
+
+        manager.ConfigureCar(driver.gameObject, entry, 1);
+
+        Assert.AreEqual(-0.55f, driver.preferredLaneOffset01, 0.001f);
+
+        Object.DestroyImmediate(managerObject);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void RaceGridManager_IncludesPlayerAndPlacesAIInAlternatingGridSlots()
+    {
+        GameObject player = new GameObject("Player Grid Car");
+        player.transform.position = new Vector3(10f, 0f, 20f);
+        player.AddComponent<Rigidbody>();
+        player.AddComponent<VehiclePhysicsCoordinator>().applyProfileOnAwake = false;
+
+        GameObject ai = new GameObject("AI Grid Car");
+        ai.AddComponent<Rigidbody>();
+        ai.AddComponent<VehiclePhysicsCoordinator>().applyProfileOnAwake = false;
+        ai.AddComponent<AIPerceptionSensor>();
+        ai.AddComponent<AIDriverController>();
+
+        GameObject managerObject = new GameObject("Race Grid Manager");
+        RaceGridManager manager = managerObject.AddComponent<RaceGridManager>();
+        manager.playerCar = player;
+        manager.includePlayerInGrid = true;
+        manager.playerGridPosition = 0;
+        manager.gridColumnSpacing = 6f;
+        manager.gridRowSpacing = 8f;
+        manager.gridVerticalOffset = 0f;
+        manager.poleOnRight = true;
+        manager.aiEntries = new[]
+        {
+            new RaceGridManager.RaceGridEntry
+            {
+                existingCar = ai,
+                gridPosition = -1
+            }
+        };
+
+        manager.SpawnGrid();
+
+        Assert.AreEqual(new Vector3(10f, 0f, 20f), player.transform.position);
+        Assert.AreEqual(new Vector3(4f, 0f, 20f), ai.transform.position);
+        Assert.AreEqual(Quaternion.identity.eulerAngles.y, ai.transform.rotation.eulerAngles.y, 0.01f);
+
+        Object.DestroyImmediate(managerObject);
+        Object.DestroyImmediate(ai);
+        Object.DestroyImmediate(player);
+    }
+
+    [Test]
+    public void RaceGridManager_SpawnsWhenExistingCarFieldContainsPrefabAsset()
+    {
+#if UNITY_EDITOR
+        GameObject rig = CreateAIDriverTestRig(out _, out AIDriverController prefabDriver, out _, out _);
+        const string folderPath = "Assets/TempTests";
+        const string prefabPath = "Assets/TempTests/RaceGridManager_AI_Test.prefab";
+        if (!UnityEditor.AssetDatabase.IsValidFolder(folderPath))
+            UnityEditor.AssetDatabase.CreateFolder("Assets", "TempTests");
+
+        GameObject prefabSource = Object.Instantiate(prefabDriver.gameObject);
+        GameObject prefab = UnityEditor.PrefabUtility.SaveAsPrefabAsset(prefabSource, prefabPath);
+        Object.DestroyImmediate(prefabSource);
+
+        GameObject managerObject = new GameObject("Race Grid Manager");
+        RaceGridManager manager = managerObject.AddComponent<RaceGridManager>();
+        manager.racingLine = prefabDriver.racingLine;
+        manager.aiEntries = new[]
+        {
+            new RaceGridManager.RaceGridEntry
+            {
+                driverName = "Spawned AI",
+                existingCar = prefab,
+                fallbackDifficulty = AIDifficultyPreset.Medium
+            }
+        };
+
+        manager.SpawnGrid();
+
+        Assert.AreEqual(1, manager.SpawnedCars.Count);
+        Assert.AreEqual("Spawned AI", manager.SpawnedCars[0].name);
+        Assert.IsTrue(manager.SpawnedCars[0].scene.IsValid());
+        Assert.AreSame(manager.racingLine, manager.SpawnedCars[0].GetComponent<AIDriverController>().racingLine);
+
+        manager.DestroySpawnedGrid();
+        Object.DestroyImmediate(managerObject);
+        UnityEditor.AssetDatabase.DeleteAsset(prefabPath);
+        if (UnityEditor.AssetDatabase.FindAssets(string.Empty, new[] { folderPath }).Length == 0)
+            UnityEditor.AssetDatabase.DeleteAsset(folderPath);
+        Object.DestroyImmediate(rig);
+#else
+        Assert.Ignore("Prefab asset regression requires the Unity Editor.");
+#endif
+    }
+
+    [Test]
     public void AIDriver_ForwardObstacleIncreasesBraking()
     {
         GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out Rigidbody rb);
@@ -589,6 +750,25 @@ public class F1FoundationPlayModeTests
         Assert.Greater(driver.DesiredLaneOffset, 0f);
 
         Object.DestroyImmediate(front);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_UsesPreferredLaneWhenTrackIsClear()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        driver.preferredLaneOffset01 = 0.5f;
+        driver.freeTrackLaneUse = 0.6f;
+        driver.laneVariationStrength = 0f;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsFalse(sensor.FrontBlocked);
+        Assert.AreEqual(2.1f, driver.DesiredLaneOffset, 0.001f);
+
         Object.DestroyImmediate(rig);
     }
 

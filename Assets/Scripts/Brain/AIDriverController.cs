@@ -31,6 +31,12 @@ public class AIDriverController : MonoBehaviour
     public bool preferRightOvertake = true;
     [Range(0f, 1f)] public float overtakeTrigger = 0.35f;
 
+    [Header("Race Craft")]
+    [Range(-1f, 1f)] public float preferredLaneOffset01;
+    [Range(0f, 1f)] public float freeTrackLaneUse = 0.62f;
+    [Range(0f, 1f)] public float laneVariationStrength = 0.18f;
+    [Range(0.01f, 0.5f)] public float laneVariationFrequency = 0.06f;
+
     [Header("Debug")]
     public bool drawDebug = true;
     [HideInInspector] public int CurrentWaypointIndex = -1;
@@ -45,6 +51,7 @@ public class AIDriverController : MonoBehaviour
 
     private AIDifficultyProfile _runtimeDifficulty;
     private bool _hasProgressIndex;
+    private float _laneVariationSeed;
 
     private AIDifficultyProfile Difficulty
     {
@@ -62,6 +69,7 @@ public class AIDriverController : MonoBehaviour
 
     private void Awake()
     {
+        _laneVariationSeed = Mathf.Abs(GetInstanceID() % 997) * 0.017f;
         ResolveReferences();
         if (coordinator != null)
             coordinator.UseExternalInput = true;
@@ -153,7 +161,16 @@ public class AIDriverController : MonoBehaviour
 
     private void UpdateLaneOffset(AIRacingWaypoint waypoint, AIDifficultyProfile difficulty)
     {
-        DesiredLaneOffset = 0f;
+        float laneLimit = Mathf.Max(0f, waypoint.laneWidth);
+        float clearTrackLane = preferredLaneOffset01;
+
+        if (laneVariationStrength > 0f)
+        {
+            float laneNoise = Mathf.PerlinNoise(_laneVariationSeed, Time.time * laneVariationFrequency) * 2f - 1f;
+            clearTrackLane += laneNoise * laneVariationStrength;
+        }
+
+        DesiredLaneOffset = Mathf.Clamp(clearTrackLane, -1f, 1f) * laneLimit * freeTrackLaneUse;
 
         if (perception != null && perception.FrontBlocked && difficulty.overtakeWillingness >= overtakeTrigger)
         {
