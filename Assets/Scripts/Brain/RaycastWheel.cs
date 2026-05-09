@@ -39,6 +39,7 @@ public class RaycastWheel : MonoBehaviour
     public bool UseExternalSimulation { get; set; }
 
     private Rigidbody _rb;
+    private DownforceSystem _downforce;
     private float _prevSuspTravel;
     private int _frameCount;
     private bool _hasPreviousSuspensionTravel;
@@ -51,6 +52,7 @@ public class RaycastWheel : MonoBehaviour
     private void Awake()
     {
         _rb = GetComponentInParent<Rigidbody>();
+        _downforce = GetComponentInParent<DownforceSystem>();
         _frameCount = 0;
         IsSettled = !useSettleFrames;
         SettleProgress = IsSettled ? 1f : 0f;
@@ -103,7 +105,7 @@ public class RaycastWheel : MonoBehaviour
             ? Mathf.Clamp(travelMetersDelta / Mathf.Max(dt, 0.001f), -maxSuspensionVelocity, maxSuspensionVelocity)
             : 0f;
         float damperForce = damperStrength * suspensionVelocity;
-        float maxForcePerWheel = staticWeightPerWheel * 3f;
+        float maxForcePerWheel = staticWeightPerWheel * 3f + GetAeroLoadPerWheel();
 
         SettleProgress = useSettleFrames ? Mathf.Clamp01((float)_frameCount / Mathf.Max(1, settleFrames)) : 1f;
         IsSettled = SettleProgress >= 1f;
@@ -150,6 +152,16 @@ public class RaycastWheel : MonoBehaviour
         return wheelRadius + suspensionLength * (1f - restLengthRatio);
     }
 
+    private float GetAeroLoadPerWheel()
+    {
+        if (_downforce == null)
+            return 0f;
+
+        bool frontWheel = transform.localPosition.z >= 0f;
+        float axleDownforce = frontWheel ? _downforce.FrontDownforce : _downforce.RearDownforce;
+        return Mathf.Max(0f, axleDownforce * 0.5f);
+    }
+
     private bool TryGetGroundHit(out RaycastHit bestHit, out float bestAnchorDistance)
     {
         Vector3 up = transform.up;
@@ -192,15 +204,18 @@ public class RaycastWheel : MonoBehaviour
                 continue;
 
             float anchorDistance = Vector3.Dot(transform.position - candidate.point, transform.up);
-            if (anchorDistance < -0.05f || anchorDistance > maxAnchorDistance + 0.05f)
+            // If downforce briefly drives the anchor below the road, keep the hit so the spring can recover.
+            float overCompressionTolerance = Mathf.Max(0.05f, maxAnchorDistance);
+            if (anchorDistance < -overCompressionTolerance || anchorDistance > maxAnchorDistance + 0.05f)
                 continue;
 
-            float score = Mathf.Abs(anchorDistance - GetRestAnchorDistance());
+            float clampedAnchorDistance = Mathf.Max(0f, anchorDistance);
+            float score = Mathf.Abs(clampedAnchorDistance - GetRestAnchorDistance());
             if (score < bestScore)
             {
                 bestScore = score;
                 bestHit = candidate;
-                bestAnchorDistance = Mathf.Max(0f, anchorDistance);
+                bestAnchorDistance = clampedAnchorDistance;
             }
         }
     }

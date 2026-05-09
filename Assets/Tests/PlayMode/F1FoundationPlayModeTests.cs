@@ -653,6 +653,73 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void RaycastWheel_RecoversGroundContactWhenOverCompressed()
+    {
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "Overcompressed Suspension Test Ground";
+        ground.transform.position = Vector3.zero;
+        ground.transform.localScale = new Vector3(4f, 0.02f, 4f);
+
+        GameObject car = new GameObject("Overcompressed Suspension Test Car");
+        car.AddComponent<Rigidbody>();
+
+        GameObject wheelObject = new GameObject("FL");
+        wheelObject.transform.SetParent(car.transform);
+        wheelObject.transform.localPosition = new Vector3(0f, -0.08f, 0f);
+        wheelObject.AddComponent<WheelVisual>();
+        RaycastWheel wheel = wheelObject.AddComponent<RaycastWheel>();
+        wheel.suspensionLength = 0.3f;
+        wheel.wheelRadius = 0.34f;
+        wheel.restLengthRatio = 0.5f;
+        wheel.useSettleFrames = false;
+
+        Physics.SyncTransforms();
+        wheel.Simulate(null);
+
+        Assert.IsTrue(wheel.IsGrounded);
+        Assert.AreEqual(1f, wheel.SuspensionTravel, 0.0001f);
+        Assert.Greater(wheel.NormalForce, 0f);
+
+        Object.DestroyImmediate(car);
+        Object.DestroyImmediate(ground);
+    }
+
+    [Test]
+    public void RaycastWheel_AeroLoadRaisesNormalForceClamp()
+    {
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "Aero Loaded Suspension Test Ground";
+        ground.transform.position = Vector3.zero;
+        ground.transform.localScale = new Vector3(4f, 0.02f, 4f);
+
+        GameObject car = new GameObject("Aero Loaded Suspension Test Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        DownforceSystem downforce = car.AddComponent<DownforceSystem>();
+        downforce.RearDownforce = 12000f;
+
+        GameObject wheelObject = new GameObject("RL");
+        wheelObject.transform.SetParent(car.transform);
+        wheelObject.transform.localPosition = new Vector3(0f, 0f, -1f);
+        wheelObject.AddComponent<WheelVisual>();
+        RaycastWheel wheel = wheelObject.AddComponent<RaycastWheel>();
+        wheel.suspensionLength = 0.3f;
+        wheel.wheelRadius = 0.34f;
+        wheel.restLengthRatio = 0.5f;
+        wheel.springStiffness = 60000f;
+        wheel.useSettleFrames = false;
+
+        Physics.SyncTransforms();
+        wheel.Simulate(null);
+
+        float oldClamp = rb.mass * Mathf.Abs(Physics.gravity.y) / 4f * 3f;
+        Assert.IsTrue(wheel.IsGrounded);
+        Assert.Greater(wheel.NormalForce, oldClamp);
+
+        Object.DestroyImmediate(car);
+        Object.DestroyImmediate(ground);
+    }
+
+    [Test]
     public void WheelVisual_AppliesSteeringYawToSteerableWheel()
     {
         GameObject car = new GameObject("Wheel Visual Steering Test Car");
