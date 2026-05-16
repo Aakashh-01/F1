@@ -11,6 +11,7 @@ public class VehiclePhysicsProfile : ScriptableObject
     public DrivetrainBrakeProfile drivetrain = new DrivetrainBrakeProfile();
     public AdvancedBrakeProfile advancedBrake = new AdvancedBrakeProfile();
     public CameraSpeedProfile camera = new CameraSpeedProfile();
+    public EngineAudioProfile engineAudio = new EngineAudioProfile();
 }
 
 [System.Serializable]
@@ -156,4 +157,29 @@ public class CameraSpeedProfile
     [Range(0f, 2f)] public float shakeAmplitude = 0.15f;
     [Range(0f, 1f)] public float shakeAtSpeed = 0.35f;
     public bool enableShake;
+}
+
+[System.Serializable]
+public class EngineAudioProfile
+{
+    [Range(500f, 9000f)] public float idleRpm = 4200f;
+    [Range(6000f, 18000f)] public float maxRpm = 13500f;
+    [Range(0.1f, 3f)] public float minPitch = 0.72f;
+    [Range(0.5f, 4f)] public float maxPitch = 2.05f;
+    [Range(0f, 1f)] public float idleVolume = 0.22f;
+    [Range(0f, 1f)] public float maxVolume = 0.82f;
+    [Range(0.01f, 1f)] public float rpmSmoothTime = 0.12f;
+    [Range(0.01f, 0.6f)] public float loadSmoothTime = 0.08f;
+    [Range(0.02f, 0.5f)] public float shiftDuration = 0.12f;
+    [Range(0f, 1f)] public float shiftPitchDip = 0.16f;
+    [Range(1, 8)] public int gearCount = 8;
+    public AnimationCurve speedToRpm = new AnimationCurve(
+        new Keyframe(0f, 0.28f),
+        new Keyframe(70f, 0.78f),
+        new Keyframe(120f, 0.5f),
+        new Keyframe(180f, 0.74f),
+        new Keyframe(240f, 0.68f),
+        new Keyframe(310f, 0.88f),
+        new Keyframe(350f, 1f));
+    public float[] upshiftSpeedsKmh = { 72f, 118f, 162f, 205f, 246f, 286f, 322f };
 }

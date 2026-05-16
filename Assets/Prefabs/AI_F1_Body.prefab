@@ -665,24 +665,34 @@ MonoBehaviour:
   racingLine: {fileID: 0}
   perception: {fileID: 3931683218923386670}
   difficultyProfile: {fileID: 0}
-  difficultyPreset: 1
+  difficultyPreset: 2
   baseLookaheadDistance: 8
   lookaheadPerKmh: 0.035
   curvatureLookaheadSteps: 3
   steeringAngleForFullInput: 32
-  laneOffsetMoveSpeed: 2.8
+  laneOffsetMoveSpeed: 4.2
   waypointReachDistance: 8
   forwardProgressSearchSteps: 4
-  throttleFullErrorKmh: 22
-  brakeFullErrorKmh: 34
+  throttleFullErrorKmh: 16
+  brakeFullErrorKmh: 42
   blockedTargetSpeedKmh: 45
-  steeringThrottleReduction: 0.22
+  steeringThrottleReduction: 0.16
+  baseCornerCautionStrength: 0.32
+  competitiveCornerCautionStrength: 0.14
+  overtakeSpeedBoost: 0.05
+  overtakeTrafficSlowdownScale: 0.45
+  overtakeSteeringThrottleScale: 0.6
   preferRightOvertake: 1
-  overtakeTrigger: 0.25
+  overtakeTrigger: 0.18
+  overtakeCommitSeconds: 1.1
   preferredLaneOffset01: 0
-  freeTrackLaneUse: 0.72
-  laneVariationStrength: 0.24
+  freeTrackLaneUse: 0.7
+  waypointLaneInfluence: 0.72
+  laneEdgeSafetyMargin: 1.4
+  laneVariationStrength: 0.12
   laneVariationFrequency: 0.08
+  trackRecoveryMargin: 1.25
+  trackRecoverySpeedKmh: 95
   drawDebug: 1
   CurrentWaypointIndex: -1
   LookaheadWaypointIndex: -1
@@ -693,6 +703,14 @@ MonoBehaviour:
   LastBrakeInput: 0
   DesiredLaneOffset: 0
   CurrentLaneOffset: 0
+  LastWaypointLaneIntent: 0
+  IsOvertaking: 0
+  IsRecoveringTrack: 0
+  LastLateralError: 0
+  LastLaneLimit: 0
+  LastUnblockedTargetSpeedKmh: 0
+  LastSpeedTargetKmh: 0
+  LastSpeedClampReason: 0
 --- !u!1 &2187702821501422602
 GameObject:
   m_ObjectHideFlags: 0

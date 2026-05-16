@@ -120,9 +120,9 @@ MonoBehaviour:
     overrideBlendInTime: 0.18
     overrideBlendOutTime: 0.28
   drivetrain:
-    motorForce: 122000
+    motorForce: 128000
     brakeForce: 95000
-    throttleSpoolSpeed: 2.4
+    throttleSpoolSpeed: 3.1
     brakeSpoolSpeed: 6
     rearDriveBias: 1
     frontBrakeBias: 0.68

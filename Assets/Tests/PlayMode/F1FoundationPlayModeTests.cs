@@ -1,5 +1,8 @@
 using NUnit.Framework;
+using System;
+using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 public class F1FoundationPlayModeTests
 {
@@ -474,8 +477,12 @@ public class F1FoundationPlayModeTests
     {
         GameObject straightRig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator straightCoordinator, out AIDriverController straightDriver, out _, out _);
         GameObject cornerRig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator cornerCoordinator, out AIDriverController cornerDriver, out _, out _);
+        AIDifficultyProfile medium = AIDifficultyProfile.CreateRuntimeProfile(AIDifficultyPreset.Medium);
         SetLineWaypoint(cornerDriver.racingLine, 2, new Vector3(22f, 0f, 28f), 160f);
         SetLineWaypoint(cornerDriver.racingLine, 3, new Vector3(44f, 0f, 28f), 160f);
+        SetAllLineCaution(cornerDriver.racingLine, 0.85f);
+        straightDriver.difficultyProfile = medium;
+        cornerDriver.difficultyProfile = medium;
 
         straightCoordinator.RefreshState();
         cornerCoordinator.RefreshState();
@@ -484,6 +491,7 @@ public class F1FoundationPlayModeTests
 
         Assert.Greater(cornerDriver.LastCornerCurvature, straightDriver.LastCornerCurvature);
         Assert.Less(cornerDriver.LastTargetSpeedKmh, straightDriver.LastTargetSpeedKmh);
+        Object.DestroyImmediate(medium);
         Object.DestroyImmediate(straightRig);
         Object.DestroyImmediate(cornerRig);
     }
@@ -500,6 +508,41 @@ public class F1FoundationPlayModeTests
 
         Object.DestroyImmediate(easy);
         Object.DestroyImmediate(hard);
+    }
+
+    [Test]
+    public void AIDriver_HardProfileCarriesMoreSpeedThroughCautionCorner()
+    {
+        GameObject easyRig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator easyCoordinator, out AIDriverController easyDriver, out _, out _);
+        GameObject mediumRig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator mediumCoordinator, out AIDriverController mediumDriver, out _, out _);
+        GameObject hardRig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator hardCoordinator, out AIDriverController hardDriver, out _, out _);
+        AIDifficultyProfile easy = AIDifficultyProfile.CreateRuntimeProfile(AIDifficultyPreset.Easy);
+        AIDifficultyProfile medium = AIDifficultyProfile.CreateRuntimeProfile(AIDifficultyPreset.Medium);
+        AIDifficultyProfile hard = AIDifficultyProfile.CreateRuntimeProfile(AIDifficultyPreset.Hard);
+
+        ConfigureCautionCorner(easyDriver.racingLine);
+        ConfigureCautionCorner(mediumDriver.racingLine);
+        ConfigureCautionCorner(hardDriver.racingLine);
+        easyDriver.difficultyProfile = easy;
+        mediumDriver.difficultyProfile = medium;
+        hardDriver.difficultyProfile = hard;
+
+        easyCoordinator.RefreshState();
+        mediumCoordinator.RefreshState();
+        hardCoordinator.RefreshState();
+        easyDriver.Simulate();
+        mediumDriver.Simulate();
+        hardDriver.Simulate();
+
+        Assert.Greater(mediumDriver.LastTargetSpeedKmh, easyDriver.LastTargetSpeedKmh);
+        Assert.Greater(hardDriver.LastTargetSpeedKmh, mediumDriver.LastTargetSpeedKmh);
+
+        Object.DestroyImmediate(easy);
+        Object.DestroyImmediate(medium);
+        Object.DestroyImmediate(hard);
+        Object.DestroyImmediate(easyRig);
+        Object.DestroyImmediate(mediumRig);
+        Object.DestroyImmediate(hardRig);
     }
 
     [Test]
@@ -706,6 +749,7 @@ public class F1FoundationPlayModeTests
 
         Assert.Greater(coordinator.BrakeInput, 0.1f);
         Assert.Less(coordinator.ThrottleInput, 0.5f);
+        Assert.AreEqual(AISpeedClampReason.EmergencyBrake, driver.LastSpeedClampReason);
 
         Object.DestroyImmediate(obstacle);
         Object.DestroyImmediate(rig);
@@ -748,6 +792,57 @@ public class F1FoundationPlayModeTests
         Assert.IsTrue(sensor.FrontBlocked);
         Assert.IsFalse(sensor.RightBlocked);
         Assert.Greater(driver.DesiredLaneOffset, 0f);
+        Assert.IsTrue(driver.IsOvertaking);
+
+        Object.DestroyImmediate(front);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_ClearOvertakeLaneAvoidsFullTrafficSpeedClamp()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject front = CreateObstacle("Overtake Speed Front Obstacle", new Vector3(0f, 0.8f, 8f));
+        AIDifficultyProfile hard = AIDifficultyProfile.CreateRuntimeProfile(AIDifficultyPreset.Hard);
+        driver.difficultyProfile = hard;
+        driver.blockedTargetSpeedKmh = 45f;
+        driver.preferRightOvertake = true;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsTrue(driver.IsOvertaking);
+        Assert.AreEqual(AISpeedClampReason.TrafficCaution, driver.LastSpeedClampReason);
+        Assert.Greater(driver.LastSpeedTargetKmh, driver.blockedTargetSpeedKmh);
+
+        Object.DestroyImmediate(hard);
+        Object.DestroyImmediate(front);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_OvertakeLaneCommitmentHoldsDirectionBriefly()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject front = CreateObstacle("Committed Overtake Front Obstacle", new Vector3(0f, 0.8f, 8f));
+        driver.preferRightOvertake = true;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+        float firstOffset = driver.DesiredLaneOffset;
+
+        driver.preferRightOvertake = false;
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.Greater(firstOffset, 0f);
+        Assert.Greater(driver.DesiredLaneOffset, 0f);
+        Assert.IsTrue(driver.IsOvertaking);
 
         Object.DestroyImmediate(front);
         Object.DestroyImmediate(rig);
@@ -767,7 +862,79 @@ public class F1FoundationPlayModeTests
         driver.Simulate();
 
         Assert.IsFalse(sensor.FrontBlocked);
-        Assert.AreEqual(2.1f, driver.DesiredLaneOffset, 0.001f);
+        Assert.AreEqual(1.68f, driver.DesiredLaneOffset, 0.001f);
+
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_BlendsWaypointLaneIntentWithDriverPreference()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        for (int i = 0; i < driver.racingLine.Count; i++)
+            driver.racingLine.GetWaypoint(i).preferredLaneOffset01 = -0.5f;
+
+        driver.preferredLaneOffset01 = 0.25f;
+        driver.waypointLaneInfluence = 0.5f;
+        driver.freeTrackLaneUse = 0.6f;
+        driver.laneVariationStrength = 0f;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.AreEqual(-0.5f, driver.LastWaypointLaneIntent, 0.001f);
+        Assert.AreEqual(0f, driver.DesiredLaneOffset, 0.001f);
+
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_OvertakeOffsetKeepsSafetyMarginFromTrackEdge()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject front = CreateObstacle("Track Edge Safety Front Obstacle", new Vector3(0f, 0.8f, 8f));
+        for (int i = 0; i < driver.racingLine.Count; i++)
+        {
+            AIRacingWaypoint waypoint = driver.racingLine.GetWaypoint(i);
+            waypoint.laneWidth = 7f;
+            waypoint.overtakeWidth = 10f;
+        }
+        driver.laneEdgeSafetyMargin = 1.4f;
+        driver.preferRightOvertake = true;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsTrue(driver.IsOvertaking);
+        Assert.AreEqual(5.6f, driver.DesiredLaneOffset, 0.001f);
+
+        Object.DestroyImmediate(front);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_OutsideTrackRecentersAndCapsSpeedForRecovery()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        driver.transform.position = new Vector3(10f, 0f, 14f);
+        driver.preferredLaneOffset01 = 0.8f;
+        driver.laneVariationStrength = 0f;
+        driver.trackRecoverySpeedKmh = 80f;
+        SetAllLineSpeeds(driver.racingLine, 180f);
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsTrue(driver.IsRecoveringTrack);
+        Assert.AreEqual(0f, driver.DesiredLaneOffset, 0.001f);
+        Assert.AreEqual(80f, driver.LastSpeedTargetKmh, 0.001f);
+        Assert.AreEqual(AISpeedClampReason.TrackRecovery, driver.LastSpeedClampReason);
 
         Object.DestroyImmediate(rig);
     }
@@ -952,6 +1119,60 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void EngineAudio_MapsSpeedToRpmAndGearWithoutChangingPhysicsInputs()
+    {
+        GameObject car = new GameObject("Engine Audio Test Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        VehiclePhysicsCoordinator coordinator = car.AddComponent<VehiclePhysicsCoordinator>();
+        VehiclePhysicsProfile profile = ScriptableObject.CreateInstance<VehiclePhysicsProfile>();
+        F1EngineAudioController engine = car.AddComponent<F1EngineAudioController>();
+
+        coordinator.applyProfileOnAwake = false;
+        coordinator.rb = rb;
+        coordinator.UseExternalInput = true;
+        coordinator.physicsProfile = profile;
+        coordinator.SetExternalInput(0.2f, 1f, 0f);
+
+        profile.engineAudio.gearCount = 4;
+        profile.engineAudio.upshiftSpeedsKmh = new[] { 60f, 110f, 170f };
+        engine.coordinator = coordinator;
+        engine.physicsProfile = profile;
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.forward * (130f / 3.6f);
+#else
+        rb.velocity = Vector3.forward * (130f / 3.6f);
+#endif
+        coordinator.RefreshState();
+        engine.RefreshTelemetry(true);
+
+        Assert.AreEqual(3, engine.CurrentGear);
+        Assert.Greater(engine.CurrentRpm, profile.engineAudio.idleRpm);
+        Assert.AreEqual(1f, coordinator.ThrottleInput, 0.001f);
+        Assert.AreEqual(0f, coordinator.BrakeInput, 0.001f);
+
+        Object.DestroyImmediate(profile);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void EngineAudio_GeneratesPlaceholderLoopWhenNoClipAssigned()
+    {
+        GameObject car = new GameObject("Generated Engine Audio Test Car");
+        car.AddComponent<Rigidbody>();
+        car.AddComponent<VehiclePhysicsCoordinator>().applyProfileOnAwake = false;
+        F1EngineAudioController engine = car.AddComponent<F1EngineAudioController>();
+
+        engine.SendMessage("Awake");
+
+        Assert.IsNotNull(engine.engineSource);
+        Assert.IsNotNull(engine.engineSource.clip);
+        Assert.IsTrue(engine.engineSource.loop);
+
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
     public void CameraSpeedPerception_IncreasesFovWithSpeed()
     {
         GameObject cameraObject = new GameObject("Speed Camera");
@@ -978,6 +1199,69 @@ public class F1FoundationPlayModeTests
         Assert.Greater(camera.fieldOfView, 60f);
         Object.DestroyImmediate(cameraObject);
         Object.DestroyImmediate(target);
+    }
+
+    [Test]
+    public void CameraSpeedPerception_IncreasesCinemachineFovWithSpeed()
+    {
+        Type cinemachineType = Type.GetType("Unity.Cinemachine.CinemachineCamera, Unity.Cinemachine");
+        if (cinemachineType == null)
+            Assert.Ignore("Cinemachine package type is not available in this test environment.");
+
+        GameObject cameraObject = new GameObject("Speed Cinemachine Camera");
+        Component cinemachineCamera = cameraObject.AddComponent(cinemachineType);
+        CameraSpeedPerception perception = cameraObject.AddComponent<CameraSpeedPerception>();
+        GameObject target = new GameObject("Target Car");
+        Rigidbody rb = target.AddComponent<Rigidbody>();
+
+        SetCinemachineTestFov(cinemachineCamera, 60f);
+        perception.cinemachineCamera = cinemachineCamera;
+        perception.targetRigidbody = rb;
+        perception.useProfileSettings = false;
+        perception.baseFov = 60f;
+        perception.maxFov = 80f;
+        perception.maxFovSpeedKmh = 200f;
+        perception.fovSmoothTime = 0.01f;
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.forward * 80f;
+#else
+        rb.velocity = Vector3.forward * 80f;
+#endif
+        perception.SendMessage("LateUpdate");
+
+        Assert.Greater(GetCinemachineTestFov(cinemachineCamera), 60f);
+        Object.DestroyImmediate(cameraObject);
+        Object.DestroyImmediate(target);
+    }
+
+    [Test]
+    public void F1CameraTargetRig_TracksPlayerWithoutUi()
+    {
+        GameObject car = new GameObject("Camera Target Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        SteeringSystem steering = car.AddComponent<SteeringSystem>();
+        GameObject target = new GameObject("Camera Target Rig");
+        F1CameraTargetRig rig = target.AddComponent<F1CameraTargetRig>();
+        rig.car = car.transform;
+        rig.carRb = rb;
+        rig.steeringSystem = steering;
+        rig.positionSharpness = 30f;
+        rig.rotationSharpness = 30f;
+        rig.SnapToTarget();
+
+        Vector3 initialPosition = target.transform.position;
+        car.transform.position = new Vector3(0f, 0f, 12f);
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.forward * 35f;
+#else
+        rb.velocity = Vector3.forward * 35f;
+#endif
+        rig.SendMessage("LateUpdate");
+
+        Assert.Greater(target.transform.position.z, initialPosition.z);
+        Object.DestroyImmediate(target);
+        Object.DestroyImmediate(car);
     }
 
     private static GameObject CreateAdvancedAssistTestCar(
@@ -1030,6 +1314,30 @@ public class F1FoundationPlayModeTests
 #endif
         coordinator.RefreshState();
         return car;
+    }
+
+    private static float GetCinemachineTestFov(Component cinemachineCamera)
+    {
+        object lens = GetCinemachineTestLens(cinemachineCamera, out _);
+        FieldInfo fovField = lens.GetType().GetField("FieldOfView");
+        return (float)fovField.GetValue(lens);
+    }
+
+    private static void SetCinemachineTestFov(Component cinemachineCamera, float fov)
+    {
+        object lens = GetCinemachineTestLens(cinemachineCamera, out FieldInfo lensField);
+        FieldInfo fovField = lens.GetType().GetField("FieldOfView");
+        fovField.SetValue(lens, fov);
+        lensField.SetValue(cinemachineCamera, lens);
+    }
+
+    private static object GetCinemachineTestLens(Component cinemachineCamera, out FieldInfo lensField)
+    {
+        lensField = cinemachineCamera.GetType().GetField("Lens", BindingFlags.Instance | BindingFlags.Public);
+        Assert.IsNotNull(lensField);
+        object lens = lensField.GetValue(cinemachineCamera);
+        Assert.IsNotNull(lens);
+        return lens;
     }
 
     private static void RunAdvancedAssistFrames(VehiclePhysicsCoordinator coordinator, AdvancedSteeringAssist assist, int frames)
@@ -1182,10 +1490,23 @@ public class F1FoundationPlayModeTests
         line.RefreshWaypoints();
     }
 
+    private static void ConfigureCautionCorner(AIRacingLine line)
+    {
+        SetLineWaypoint(line, 2, new Vector3(22f, 0f, 28f), 120f);
+        SetLineWaypoint(line, 3, new Vector3(44f, 0f, 28f), 120f);
+        SetAllLineCaution(line, 0.85f);
+    }
+
     private static void SetAllLineSpeeds(AIRacingLine line, float targetSpeedKmh)
     {
         for (int i = 0; i < line.Count; i++)
             line.GetWaypoint(i).targetSpeedKmh = targetSpeedKmh;
+    }
+
+    private static void SetAllLineCaution(AIRacingLine line, float brakingCaution)
+    {
+        for (int i = 0; i < line.Count; i++)
+            line.GetWaypoint(i).brakingCaution = brakingCaution;
     }
 
     private static GameObject CreateObstacle(string name, Vector3 position)

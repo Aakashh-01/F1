@@ -33,20 +33,20 @@ public class AIDifficultyProfile : ScriptableObject
                 avoidanceCaution = 0.9f;
                 break;
             case AIDifficultyPreset.Hard:
-                speedMultiplier = 1.05f;
-                brakingMargin = 0.88f;
-                cornerConfidence = 0.96f;
-                reactionDelay = 0.04f;
-                overtakeWillingness = 0.82f;
-                avoidanceCaution = 0.56f;
+                speedMultiplier = 1.18f;
+                brakingMargin = 0.74f;
+                cornerConfidence = 1.07f;
+                reactionDelay = 0.03f;
+                overtakeWillingness = 0.98f;
+                avoidanceCaution = 0.34f;
                 break;
             default:
-                speedMultiplier = 0.92f;
-                brakingMargin = 1.1f;
-                cornerConfidence = 0.82f;
-                reactionDelay = 0.12f;
-                overtakeWillingness = 0.45f;
-                avoidanceCaution = 0.72f;
+                speedMultiplier = 1.1f;
+                brakingMargin = 0.9f;
+                cornerConfidence = 1f;
+                reactionDelay = 0.08f;
+                overtakeWillingness = 0.74f;
+                avoidanceCaution = 0.5f;
                 break;
         }
     }

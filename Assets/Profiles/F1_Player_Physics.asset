@@ -323,10 +323,99 @@ MonoBehaviour:
     maxRearInstabilityYawTorque: 650
     rearInstabilityStartSpeedKmh: 130
   camera:
-    baseFov: 60
+    baseFov: 58
     maxFov: 72
-    maxFovSpeedKmh: 260
-    fovSmoothTime: 0.25
+    maxFovSpeedKmh: 310
+    fovSmoothTime: 0.22
     shakeAmplitude: 0.15
     shakeAtSpeed: 0.35
     enableShake: 0
+  engineAudio:
+    idleRpm: 4300
+    maxRpm: 13600
+    minPitch: 0.76
+    maxPitch: 2.08
+    idleVolume: 0.24
+    maxVolume: 0.8
+    rpmSmoothTime: 0.1
+    loadSmoothTime: 0.07
+    shiftDuration: 0.11
+    shiftPitchDip: 0.14
+    gearCount: 8
+    speedToRpm:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0.28
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 70
+        value: 0.78
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 120
+        value: 0.5
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 180
+        value: 0.74
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 240
+        value: 0.68
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 310
+        value: 0.88
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 350
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    upshiftSpeedsKmh:
+    - 74
+    - 120
+    - 164
+    - 207
+    - 248
+    - 288
+    - 324

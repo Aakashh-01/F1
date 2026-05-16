@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: F1_AI_Medium
   m_EditorClassIdentifier: 
   preset: 1
-  speedMultiplier: 1.06
-  brakingMargin: 0.96
-  cornerConfidence: 0.94
+  speedMultiplier: 1.1
+  brakingMargin: 0.9
+  cornerConfidence: 1
   reactionDelay: 0.08
-  overtakeWillingness: 0.68
-  avoidanceCaution: 0.55
+  overtakeWillingness: 0.74
+  avoidanceCaution: 0.5

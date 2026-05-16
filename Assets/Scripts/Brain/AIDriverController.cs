@@ -1,5 +1,13 @@
 using UnityEngine;
 
+public enum AISpeedClampReason
+{
+    None,
+    TrafficCaution,
+    EmergencyBrake,
+    TrackRecovery
+}
+
 [DefaultExecutionOrder(-150)]
 public class AIDriverController : MonoBehaviour
 {
@@ -27,15 +35,29 @@ public class AIDriverController : MonoBehaviour
     [Range(10f, 160f)] public float blockedTargetSpeedKmh = 45f;
     [Range(0f, 1f)] public float steeringThrottleReduction = 0.35f;
 
+    [Header("Competitive Pace")]
+    [Range(0f, 0.5f)] public float baseCornerCautionStrength = 0.35f;
+    [Range(0f, 0.5f)] public float competitiveCornerCautionStrength = 0.16f;
+    [Range(0f, 0.25f)] public float overtakeSpeedBoost = 0.08f;
+    [Range(0f, 1f)] public float overtakeTrafficSlowdownScale = 0.35f;
+    [Range(0f, 1f)] public float overtakeSteeringThrottleScale = 0.55f;
+
     [Header("Overtaking")]
     public bool preferRightOvertake = true;
     [Range(0f, 1f)] public float overtakeTrigger = 0.35f;
+    [Range(0.1f, 4f)] public float overtakeCommitSeconds = 1.25f;
 
     [Header("Race Craft")]
     [Range(-1f, 1f)] public float preferredLaneOffset01;
     [Range(0f, 1f)] public float freeTrackLaneUse = 0.62f;
+    [Range(0f, 1f)] public float waypointLaneInfluence = 0.72f;
+    [Range(0f, 4f)] public float laneEdgeSafetyMargin = 1.4f;
     [Range(0f, 1f)] public float laneVariationStrength = 0.18f;
     [Range(0.01f, 0.5f)] public float laneVariationFrequency = 0.06f;
+
+    [Header("Track Recovery")]
+    [Range(0f, 8f)] public float trackRecoveryMargin = 1.25f;
+    [Range(20f, 180f)] public float trackRecoverySpeedKmh = 95f;
 
     [Header("Debug")]
     public bool drawDebug = true;
@@ -48,10 +70,20 @@ public class AIDriverController : MonoBehaviour
     [HideInInspector] public float LastBrakeInput;
     [HideInInspector] public float DesiredLaneOffset;
     [HideInInspector] public float CurrentLaneOffset;
+    [HideInInspector] public float LastWaypointLaneIntent;
+    [HideInInspector] public bool IsOvertaking;
+    [HideInInspector] public bool IsRecoveringTrack;
+    [HideInInspector] public float LastLateralError;
+    [HideInInspector] public float LastLaneLimit;
+    [HideInInspector] public float LastUnblockedTargetSpeedKmh;
+    [HideInInspector] public float LastSpeedTargetKmh;
+    [HideInInspector] public AISpeedClampReason LastSpeedClampReason;
 
     private AIDifficultyProfile _runtimeDifficulty;
     private bool _hasProgressIndex;
     private float _laneVariationSeed;
+    private float _overtakeCommitTimer;
+    private int _overtakeDirection;
 
     private AIDifficultyProfile Difficulty
     {
@@ -104,10 +136,19 @@ public class AIDriverController : MonoBehaviour
 
         LastCornerCurvature = racingLine.CalculateCurvature01(CurrentWaypointIndex, curvatureLookaheadSteps);
         float cornerScale = Mathf.Lerp(1f, difficulty.cornerConfidence, LastCornerCurvature);
+        float cautionStrength = Mathf.Lerp(baseCornerCautionStrength, competitiveCornerCautionStrength, GetCompetitiveness01(difficulty));
         LastTargetSpeedKmh = waypoint.targetSpeedKmh * difficulty.speedMultiplier * cornerScale;
-        LastTargetSpeedKmh *= Mathf.Lerp(1f, 1f - waypoint.brakingCaution * 0.35f, LastCornerCurvature);
+        LastTargetSpeedKmh *= Mathf.Lerp(1f, 1f - waypoint.brakingCaution * cautionStrength, LastCornerCurvature);
 
+        UpdateTrackRecoveryState(waypoint);
         UpdateLaneOffset(waypoint, difficulty);
+        if (IsOvertaking)
+            LastTargetSpeedKmh *= 1f + overtakeSpeedBoost * GetCompetitiveness01(difficulty);
+
+        if (IsRecoveringTrack)
+            LastTargetSpeedKmh = Mathf.Min(LastTargetSpeedKmh, trackRecoverySpeedKmh);
+
+        LastUnblockedTargetSpeedKmh = LastTargetSpeedKmh;
         Vector3 targetPoint = lookaheadPoint + racingLine.GetSegmentRight(lookaheadSegmentIndex) * CurrentLaneOffset;
         CalculateInputs(targetPoint, LastTargetSpeedKmh, speedKmh, difficulty);
         coordinator.SetExternalInput(LastSteeringInput, LastThrottleInput, LastBrakeInput);
@@ -159,10 +200,25 @@ public class AIDriverController : MonoBehaviour
         return Vector3.ProjectOnPlane(transform.position - closest, Vector3.up).sqrMagnitude;
     }
 
+    private void UpdateTrackRecoveryState(AIRacingWaypoint waypoint)
+    {
+        LastLateralError = Mathf.Sqrt(DistanceToSegmentSq(CurrentWaypointIndex));
+        LastLaneLimit = waypoint != null ? Mathf.Max(0f, waypoint.laneWidth) : 0f;
+        IsRecoveringTrack = LastLaneLimit > 0f && LastLateralError > LastLaneLimit + trackRecoveryMargin;
+    }
+
     private void UpdateLaneOffset(AIRacingWaypoint waypoint, AIDifficultyProfile difficulty)
     {
         float laneLimit = Mathf.Max(0f, waypoint.laneWidth);
-        float clearTrackLane = preferredLaneOffset01;
+        float usableLaneLimit = Mathf.Max(0f, laneLimit - laneEdgeSafetyMargin);
+        LastWaypointLaneIntent = waypoint != null ? waypoint.preferredLaneOffset01 : 0f;
+        float clearTrackLane = Mathf.Clamp(
+            preferredLaneOffset01 + LastWaypointLaneIntent * waypointLaneInfluence,
+            -1f,
+            1f);
+        _overtakeCommitTimer = Mathf.Max(0f, _overtakeCommitTimer - Time.fixedDeltaTime);
+        if (_overtakeCommitTimer <= 0f)
+            _overtakeDirection = 0;
 
         if (laneVariationStrength > 0f)
         {
@@ -170,20 +226,30 @@ public class AIDriverController : MonoBehaviour
             clearTrackLane += laneNoise * laneVariationStrength;
         }
 
-        DesiredLaneOffset = Mathf.Clamp(clearTrackLane, -1f, 1f) * laneLimit * freeTrackLaneUse;
+        DesiredLaneOffset = Mathf.Clamp(clearTrackLane, -1f, 1f) * usableLaneLimit * freeTrackLaneUse;
+        IsOvertaking = false;
 
-        if (perception != null && perception.FrontBlocked && difficulty.overtakeWillingness >= overtakeTrigger)
+        if (IsRecoveringTrack)
         {
-            float overtakeOffset = Mathf.Min(waypoint.overtakeWidth, waypoint.laneWidth);
+            DesiredLaneOffset = 0f;
+            _overtakeDirection = 0;
+            _overtakeCommitTimer = 0f;
+        }
+
+        if (!IsRecoveringTrack && perception != null && perception.FrontBlocked && difficulty.overtakeWillingness >= overtakeTrigger)
+        {
+            float overtakeOffset = Mathf.Min(waypoint.overtakeWidth, usableLaneLimit);
             bool canGoRight = !perception.RightBlocked;
             bool canGoLeft = !perception.LeftBlocked;
+            int selectedDirection = SelectOvertakeDirection(canGoLeft, canGoRight);
 
-            if (preferRightOvertake && canGoRight)
-                DesiredLaneOffset = overtakeOffset;
-            else if (canGoLeft)
-                DesiredLaneOffset = -overtakeOffset;
-            else if (canGoRight)
-                DesiredLaneOffset = overtakeOffset;
+            if (selectedDirection != 0)
+            {
+                _overtakeDirection = selectedDirection;
+                _overtakeCommitTimer = Mathf.Max(_overtakeCommitTimer, overtakeCommitSeconds);
+                DesiredLaneOffset = overtakeOffset * selectedDirection;
+                IsOvertaking = true;
+            }
         }
 
         CurrentLaneOffset = Mathf.MoveTowards(
@@ -199,25 +265,66 @@ public class AIDriverController : MonoBehaviour
         LastSteeringInput = Mathf.Clamp(targetAngle / Mathf.Max(1f, steeringAngleForFullInput), -1f, 1f);
 
         float speedTarget = targetSpeedKmh;
+        LastSpeedClampReason = AISpeedClampReason.None;
         if (perception != null && perception.FrontBlocked)
         {
             float distanceBlend = Mathf.InverseLerp(perception.forwardDistance, 3f, perception.FrontDistance);
             float cautionTarget = Mathf.Lerp(blockedTargetSpeedKmh, 0f, distanceBlend * difficulty.avoidanceCaution);
+            if (IsOvertaking)
+                cautionTarget = Mathf.Lerp(speedTarget, cautionTarget, overtakeTrafficSlowdownScale);
+
             speedTarget = Mathf.Min(speedTarget, cautionTarget);
+            if (speedTarget < targetSpeedKmh - 0.01f)
+                LastSpeedClampReason = AISpeedClampReason.TrafficCaution;
         }
 
+        LastSpeedTargetKmh = speedTarget;
         float speedError = speedTarget - speedKmh;
         LastThrottleInput = Mathf.Clamp01(speedError / throttleFullErrorKmh);
         LastBrakeInput = Mathf.Clamp01(-speedError / (brakeFullErrorKmh * Mathf.Max(0.2f, difficulty.brakingMargin)));
 
         float steeringLoad = Mathf.Abs(LastSteeringInput);
-        LastThrottleInput *= 1f - steeringLoad * steeringThrottleReduction;
+        float steeringThrottleScale = IsOvertaking
+            ? steeringThrottleReduction * overtakeSteeringThrottleScale
+            : steeringThrottleReduction;
+        LastThrottleInput *= 1f - steeringLoad * steeringThrottleScale;
 
         if (perception != null && perception.FrontBlocked && perception.FrontDistance < 6f)
         {
             LastThrottleInput = 0f;
             LastBrakeInput = Mathf.Max(LastBrakeInput, 0.85f);
+            LastSpeedClampReason = AISpeedClampReason.EmergencyBrake;
         }
+
+        if (IsRecoveringTrack && LastSpeedClampReason == AISpeedClampReason.None)
+            LastSpeedClampReason = AISpeedClampReason.TrackRecovery;
+    }
+
+    private int SelectOvertakeDirection(bool canGoLeft, bool canGoRight)
+    {
+        if (_overtakeDirection > 0 && canGoRight)
+            return 1;
+        if (_overtakeDirection < 0 && canGoLeft)
+            return -1;
+        if (preferRightOvertake && canGoRight)
+            return 1;
+        if (canGoLeft)
+            return -1;
+        if (canGoRight)
+            return 1;
+
+        return 0;
+    }
+
+    private static float GetCompetitiveness01(AIDifficultyProfile difficulty)
+    {
+        if (difficulty == null)
+            return 0f;
+
+        float pace = Mathf.InverseLerp(0.85f, 1.2f, difficulty.speedMultiplier);
+        float corner = Mathf.InverseLerp(0.75f, 1.08f, difficulty.cornerConfidence);
+        float overtake = Mathf.InverseLerp(0.3f, 0.98f, difficulty.overtakeWillingness);
+        return Mathf.Clamp01((pace + corner + overtake) / 3f);
     }
 
     private void ResolveReferences()

@@ -328,7 +328,7 @@ Transform:
   m_GameObject: {fileID: 19948996}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.002786577, z: -0, w: 0.9999961}
-  m_LocalPosition: {x: 464.6074, y: 0.45, z: 190.46982}
+  m_LocalPosition: {x: 427.4388, y: 0.45, z: 175.23224}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -347,9 +347,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &21882932
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +377,7 @@ Transform:
   m_GameObject: {fileID: 21882932}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.34365848, z: -0, w: 0.9390947}
-  m_LocalPosition: {x: 387.85324, y: 0.45, z: 849.85785}
+  m_LocalPosition: {x: 356.82498, y: 0.45, z: 781.86926}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -395,9 +396,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 130.98158
-  laneWidth: 9.729114
+  laneWidth: 7.199544
   brakingCaution: 0.5482022
-  overtakeWidth: 5.812453
+  overtakeWidth: 4.1757355
+  preferredLaneOffset01: -0.028339246
 --- !u!1 &36354014
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,7 +426,7 @@ Transform:
   m_GameObject: {fileID: 36354014}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.97163725, z: -0, w: -0.23647632}
-  m_LocalPosition: {x: 86.903915, y: 0.45, z: 874.6084}
+  m_LocalPosition: {x: 79.95161, y: 0.45, z: 804.6398}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -443,9 +445,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 110.89913
-  laneWidth: 9.267818
+  laneWidth: 6.858186
   brakingCaution: 0.6405126
-  overtakeWidth: 5.4010267
+  overtakeWidth: 3.8887393
+  preferredLaneOffset01: 0.074488096
 --- !u!1 &45520011
 GameObject:
   m_ObjectHideFlags: 0
@@ -472,7 +475,7 @@ Transform:
   m_GameObject: {fileID: 45520011}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7075927, z: -0, w: 0.7066205}
-  m_LocalPosition: {x: -131.42462, y: 0.45, z: 0.016629338}
+  m_LocalPosition: {x: -120.91065, y: 0.45, z: 0.015298991}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -491,9 +494,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &49835297
 GameObject:
   m_ObjectHideFlags: 0
@@ -520,7 +524,7 @@ Transform:
   m_GameObject: {fileID: 49835297}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.99978733, z: -0, w: -0.020622363}
-  m_LocalPosition: {x: -374.35837, y: 0.45, z: 474.8249}
+  m_LocalPosition: {x: -344.4097, y: 0.45, z: 436.8389}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -539,9 +543,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &51598285
 GameObject:
   m_ObjectHideFlags: 0
@@ -568,7 +573,7 @@ Transform:
   m_GameObject: {fileID: 51598285}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.0014490287, z: -0, w: 0.999999}
-  m_LocalPosition: {x: 464.91348, y: 0.45, z: 351.15878}
+  m_LocalPosition: {x: 427.7204, y: 0.45, z: 323.0661}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -587,9 +592,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &52617869
 GameObject:
   m_ObjectHideFlags: 0
@@ -616,7 +622,7 @@ Transform:
   m_GameObject: {fileID: 52617869}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7085598, z: -0, w: 0.7056508}
-  m_LocalPosition: {x: 61.41604, y: 0.45, z: -0.64915884}
+  m_LocalPosition: {x: 56.502758, y: 0.45, z: -0.59722614}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -635,9 +641,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &85157868
 GameObject:
   m_ObjectHideFlags: 0
@@ -664,7 +671,7 @@ Transform:
   m_GameObject: {fileID: 85157868}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999998, z: -0, w: -0.00062284915}
-  m_LocalPosition: {x: -378.64487, y: 0.45, z: 185.61665}
+  m_LocalPosition: {x: -348.35327, y: 0.45, z: 170.76732}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -682,10 +689,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &91834084
 GameObject:
   m_ObjectHideFlags: 0
@@ -712,7 +720,7 @@ Transform:
   m_GameObject: {fileID: 91834084}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7646637, z: -0, w: 0.64442956}
-  m_LocalPosition: {x: 4.2374487, y: 0.45, z: 791.19366}
+  m_LocalPosition: {x: 3.8984528, y: 0.45, z: 727.8982}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -730,10 +738,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 122.343155
-  laneWidth: 10.081266
+  targetSpeedKmh: 122
+  laneWidth: 7.4601374
   brakingCaution: 0.5872629
-  overtakeWidth: 6.1265354
+  overtakeWidth: 4.3268795
+  preferredLaneOffset01: -0.2724037
 --- !u!1 &112478628
 GameObject:
   m_ObjectHideFlags: 0
@@ -760,7 +769,7 @@ Transform:
   m_GameObject: {fileID: 112478628}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70909756, z: -0, w: 0.7051104}
-  m_LocalPosition: {x: 125.692955, y: 0.45, z: -0.9554904}
+  m_LocalPosition: {x: 115.63752, y: 0.45, z: -0.8790512}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -779,9 +788,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 130.05365
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.55234987
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &124121003
 GameObject:
   m_ObjectHideFlags: 0
@@ -808,7 +818,7 @@ Transform:
   m_GameObject: {fileID: 124121003}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.28523257, z: -0, w: 0.95845836}
-  m_LocalPosition: {x: 405.07388, y: 0.45, z: 823.48724}
+  m_LocalPosition: {x: 372.66797, y: 0.45, z: 757.6083}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -827,9 +837,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 138.36716
-  laneWidth: 9.768712
+  laneWidth: 7.228847
   brakingCaution: 0.5156139
-  overtakeWidth: 5.84777
+  overtakeWidth: 4.1927314
+  preferredLaneOffset01: -0.015024342
 --- !u!1 &127607268
 GameObject:
   m_ObjectHideFlags: 0
@@ -856,7 +867,7 @@ Transform:
   m_GameObject: {fileID: 127607268}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70901966, z: -0, w: 0.70518875}
-  m_LocalPosition: {x: 93.55442, y: 0.45, z: -0.7813742}
+  m_LocalPosition: {x: 86.07007, y: 0.45, z: -0.71886426}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -875,9 +886,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 215.5273
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.229146
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &129255204
 GameObject:
   m_ObjectHideFlags: 0
@@ -904,7 +916,7 @@ Transform:
   m_GameObject: {fileID: 129255204}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7101884, z: -0, w: 0.70401174}
-  m_LocalPosition: {x: 29.277132, y: 0.45, z: -0.36841536}
+  m_LocalPosition: {x: 26.934961, y: 0.45, z: -0.33894214}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -923,9 +935,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &154596953
 GameObject:
   m_ObjectHideFlags: 0
@@ -952,7 +965,7 @@ Transform:
   m_GameObject: {fileID: 154596953}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.3912509, z: -0, w: 0.9202841}
-  m_LocalPosition: {x: 367.02567, y: 0.45, z: 874.5041}
+  m_LocalPosition: {x: 337.6636, y: 0.45, z: 804.54376}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -971,9 +984,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 134.34758
-  laneWidth: 9.573653
+  laneWidth: 7.0845037
   brakingCaution: 0.5332559
-  overtakeWidth: 5.6737986
+  overtakeWidth: 4.085135
+  preferredLaneOffset01: -0.042138834
 --- !u!1 &156851884
 GameObject:
   m_ObjectHideFlags: 0
@@ -1000,7 +1014,7 @@ Transform:
   m_GameObject: {fileID: 156851884}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.82148546, z: -0, w: 0.5702295}
-  m_LocalPosition: {x: 162.45987, y: 0.45, z: 928.89813}
+  m_LocalPosition: {x: 149.46309, y: 0.45, z: 854.5863}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1019,9 +1033,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 116.86386
-  laneWidth: 8.964246
+  laneWidth: 6.633542
   brakingCaution: 0.61254907
-  overtakeWidth: 5.1302733
+  overtakeWidth: 3.6937969
+  preferredLaneOffset01: -0.16185845
 --- !u!1 &213369734
 GameObject:
   m_ObjectHideFlags: 0
@@ -1048,7 +1063,7 @@ Transform:
   m_GameObject: {fileID: 213369734}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.008945522, z: -0, w: 0.99996}
-  m_LocalPosition: {x: 464.0578, y: 0.45, z: 479.71548}
+  m_LocalPosition: {x: 426.9332, y: 0.45, z: 441.33826}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1067,9 +1082,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &219553898
 GameObject:
   m_ObjectHideFlags: 0
@@ -1096,7 +1112,7 @@ Transform:
   m_GameObject: {fileID: 219553898}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.055160645, z: -0, w: 0.9984775}
-  m_LocalPosition: {x: 457.89545, y: 0.45, z: 639.61444}
+  m_LocalPosition: {x: 421.26382, y: 0.45, z: 588.4453}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1115,9 +1131,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 199.9797
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.27748486
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &229832802
 GameObject:
   m_ObjectHideFlags: 0
@@ -1144,7 +1161,7 @@ Transform:
   m_GameObject: {fileID: 229832802}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.00378886, z: -0, w: 0.99999285}
-  m_LocalPosition: {x: 464.36386, y: 0.45, z: 158.33284}
+  m_LocalPosition: {x: 427.21475, y: 0.45, z: 145.66621}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1163,9 +1180,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &230247034
 GameObject:
   m_ObjectHideFlags: 0
@@ -1192,7 +1210,7 @@ Transform:
   m_GameObject: {fileID: 230247034}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9935239, z: -0, w: 0.11362336}
-  m_LocalPosition: {x: -377.85333, y: 0.45, z: 57.03401}
+  m_LocalPosition: {x: -347.62506, y: 0.45, z: 52.47129}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1210,10 +1228,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 8.387264
-  brakingCaution: 0.732
-  overtakeWidth: 4.6156683
+  targetSpeedKmh: 112
+  laneWidth: 6.2065754
+  brakingCaution: 0.63199997
+  overtakeWidth: 3.3232813
+  preferredLaneOffset01: -0.42
 --- !u!1 &330854631
 GameObject:
   m_ObjectHideFlags: 0
@@ -1240,7 +1259,7 @@ Transform:
   m_GameObject: {fileID: 330854631}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.037875682, z: -0, w: 0.9992825}
-  m_LocalPosition: {x: 460.30368, y: 0.45, z: 607.8916}
+  m_LocalPosition: {x: 423.4794, y: 0.45, z: 559.26025}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1259,9 +1278,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 203.87627
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.26483068
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &337789327
 GameObject:
   m_ObjectHideFlags: 0
@@ -1288,7 +1308,7 @@ Transform:
   m_GameObject: {fileID: 337789327}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.52993417, z: -0, w: 0.8480388}
-  m_LocalPosition: {x: 317.05307, y: 0.45, z: 915.0015}
+  m_LocalPosition: {x: 291.68884, y: 0.45, z: 841.8014}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1307,9 +1327,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 134.34758
-  laneWidth: 9.105035
+  laneWidth: 6.7377257
   brakingCaution: 0.5332559
-  overtakeWidth: 5.2558417
+  overtakeWidth: 3.7842062
+  preferredLaneOffset01: -0.090740554
 --- !u!1 &408194961
 GameObject:
   m_ObjectHideFlags: 0
@@ -1336,7 +1357,7 @@ Transform:
   m_GameObject: {fileID: 408194961}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.89245474, z: -0, w: -0.45113704}
-  m_LocalPosition: {x: 132.22104, y: 0.45, z: 917.6118}
+  m_LocalPosition: {x: 121.64336, y: 0.45, z: 844.2029}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1355,9 +1376,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 110.89913
-  laneWidth: 8.3010235
+  laneWidth: 6.1427574
   brakingCaution: 0.6405126
-  overtakeWidth: 4.5387506
+  overtakeWidth: 3.2679007
+  preferredLaneOffset01: -0.113527216
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1505,7 +1527,7 @@ Transform:
   m_GameObject: {fileID: 415900632}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7410315, z: -0, w: 0.6714702}
-  m_LocalPosition: {x: 254.21942, y: 0.45, z: -2.9263902}
+  m_LocalPosition: {x: 233.88187, y: 0.45, z: -2.692279}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1523,10 +1545,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 9.516082
-  brakingCaution: 0.732
-  overtakeWidth: 5.622451
+  targetSpeedKmh: 112
+  laneWidth: 7.0419006
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.048165
+  preferredLaneOffset01: 0.42
 --- !u!1 &422146495
 GameObject:
   m_ObjectHideFlags: 0
@@ -1553,7 +1576,7 @@ Transform:
   m_GameObject: {fileID: 422146495}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999996, z: -0, w: -0.0009599272}
-  m_LocalPosition: {x: -378.49988, y: 0.45, z: 249.89859}
+  m_LocalPosition: {x: -348.21988, y: 0.45, z: 229.90671}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1572,9 +1595,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &451514789
 GameObject:
   m_ObjectHideFlags: 0
@@ -1601,7 +1625,7 @@ Transform:
   m_GameObject: {fileID: 451514789}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7067424, z: -0, w: 0.707471}
-  m_LocalPosition: {x: -99.28237, y: 0.45, z: -0.02756542}
+  m_LocalPosition: {x: -91.33978, y: 0.45, z: -0.025360186}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1620,9 +1644,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &458858220
 GameObject:
   m_ObjectHideFlags: 0
@@ -1649,7 +1674,7 @@ Transform:
   m_GameObject: {fileID: 458858220}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7977646, z: -0, w: 0.6029691}
-  m_LocalPosition: {x: -235.65588, y: 0.45, z: 657.3523}
+  m_LocalPosition: {x: -216.80342, y: 0.45, z: 604.7641}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1667,10 +1692,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0.021580517
 --- !u!1 &461710404
 GameObject:
   m_ObjectHideFlags: 0
@@ -2034,7 +2060,7 @@ Transform:
   m_GameObject: {fileID: 480243878}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.707599, z: -0, w: 0.70661426}
-  m_LocalPosition: {x: -195.70787, y: 0.45, z: 0.028281927}
+  m_LocalPosition: {x: -180.05124, y: 0.45, z: 0.026019374}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2053,9 +2079,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &487890570
 GameObject:
   m_ObjectHideFlags: 0
@@ -2082,7 +2109,7 @@ Transform:
   m_GameObject: {fileID: 487890570}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9933241, z: -0, w: 0.11535699}
-  m_LocalPosition: {x: 330.88373, y: 0.45, z: -79.51552}
+  m_LocalPosition: {x: 304.41302, y: 0.45, z: -73.15428}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2100,10 +2127,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0.42
 --- !u!1 &489360888
 GameObject:
   m_ObjectHideFlags: 0
@@ -2130,7 +2158,7 @@ Transform:
   m_GameObject: {fileID: 489360888}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9759706, z: -0, w: -0.21790212}
-  m_LocalPosition: {x: -347.067, y: 0.45, z: 598.46625}
+  m_LocalPosition: {x: -319.30164, y: 0.45, z: 550.5889}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2148,10 +2176,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 122.04046
-  laneWidth: 7.69594
+  targetSpeedKmh: 112
+  laneWidth: 5.694996
   brakingCaution: 0.700812
-  overtakeWidth: 3.9990816
+  overtakeWidth: 2.879339
+  preferredLaneOffset01: -0.041704893
 --- !u!1 &508740663
 GameObject:
   m_ObjectHideFlags: 0
@@ -2178,7 +2207,7 @@ Transform:
   m_GameObject: {fileID: 508740663}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.6140173, z: -0, w: 0.78929263}
-  m_LocalPosition: {x: 288.5729, y: 0.45, z: 928.891}
+  m_LocalPosition: {x: 265.4871, y: 0.45, z: 854.5797}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2197,9 +2226,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 129.47766
-  laneWidth: 8.8099
+  laneWidth: 6.519326
   brakingCaution: 0.5549304
-  overtakeWidth: 4.9926133
+  overtakeWidth: 3.5946817
+  preferredLaneOffset01: -0.04137128
 --- !u!1 &518187138
 GameObject:
   m_ObjectHideFlags: 0
@@ -2226,7 +2256,7 @@ Transform:
   m_GameObject: {fileID: 518187138}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.23978876, z: -0, w: 0.97082514}
-  m_LocalPosition: {x: 420.04962, y: 0.45, z: 795.0208}
+  m_LocalPosition: {x: 386.44565, y: 0.45, z: 731.4192}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2245,9 +2275,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 150.11581
-  laneWidth: 9.93625
+  laneWidth: 7.3528247
   brakingCaution: 0.4653799
-  overtakeWidth: 5.9971957
+  overtakeWidth: 4.2646384
+  preferredLaneOffset01: -0.0131044565
 --- !u!1 &530264403
 GameObject:
   m_ObjectHideFlags: 0
@@ -2274,7 +2305,7 @@ Transform:
   m_GameObject: {fileID: 530264403}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.46234468, z: -0, w: 0.88670033}
-  m_LocalPosition: {x: 415.2979, y: 0.45, z: -143.1351}
+  m_LocalPosition: {x: 382.0741, y: 0.45, z: -131.6843}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2292,10 +2323,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.3518956
 --- !u!1 &542654777
 GameObject:
   m_ObjectHideFlags: 0
@@ -2322,7 +2354,7 @@ Transform:
   m_GameObject: {fileID: 542654777}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.18278134, z: -0, w: 0.98315364}
-  m_LocalPosition: {x: 431.63278, y: 0.45, z: 764.9455}
+  m_LocalPosition: {x: 397.10217, y: 0.45, z: 703.7499}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2341,9 +2373,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 164.94377
-  laneWidth: 10.131481
+  laneWidth: 7.4972963
   brakingCaution: 0.4049762
-  overtakeWidth: 6.1713214
+  overtakeWidth: 4.3484316
+  preferredLaneOffset01: -0.011658623
 --- !u!1 &548398811
 GameObject:
   m_ObjectHideFlags: 0
@@ -2370,7 +2403,7 @@ Transform:
   m_GameObject: {fileID: 548398811}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.99999917, z: -0, w: -0.0012955881}
-  m_LocalPosition: {x: -378.56158, y: 0.45, z: 217.75737}
+  m_LocalPosition: {x: -348.27667, y: 0.45, z: 200.33678}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2389,9 +2422,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 183.84265
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.33331904
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &549276554
 GameObject:
   m_ObjectHideFlags: 0
@@ -2418,7 +2452,7 @@ Transform:
   m_GameObject: {fileID: 549276554}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.024594303, z: -0, w: 0.9996975}
-  m_LocalPosition: {x: 461.86688, y: 0.45, z: 576.1407}
+  m_LocalPosition: {x: 424.91754, y: 0.45, z: 530.04944}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2437,9 +2471,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 214.63203
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.23176654
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &558040199
 GameObject:
   m_ObjectHideFlags: 0
@@ -2466,7 +2501,7 @@ Transform:
   m_GameObject: {fileID: 558040199}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.8078184, z: -0, w: 0.58943146}
-  m_LocalPosition: {x: -142.75613, y: 0.45, z: 682.4326}
+  m_LocalPosition: {x: -131.33565, y: 0.45, z: 627.838}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2484,10 +2519,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 170.8318
-  laneWidth: 8.987623
-  brakingCaution: 0.44247535
-  overtakeWidth: 5.1511235
+  targetSpeedKmh: 148
+  laneWidth: 6.650841
+  brakingCaution: 0.52
+  overtakeWidth: 3.7088091
+  preferredLaneOffset01: 0
 --- !u!1 &563288494
 GameObject:
   m_ObjectHideFlags: 0
@@ -2514,7 +2550,7 @@ Transform:
   m_GameObject: {fileID: 563288494}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.8483015, z: -0, w: 0.5295136}
-  m_LocalPosition: {x: 283.9352, y: 0.45, z: -5.8603263}
+  m_LocalPosition: {x: 261.2204, y: 0.45, z: -5.3915005}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2532,10 +2568,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.898544
-  brakingCaution: 0.8602913
-  overtakeWidth: 3.2878902
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.7802913
+  overtakeWidth: 2.8
+  preferredLaneOffset01: 0.42
 --- !u!1001 &591396721
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2594,11 +2631,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 431926, guid: 9234b507bb1d424449c1997fe6847ae0, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.1
+      value: 0.092
       objectReference: {fileID: 0}
     - target: {fileID: 431926, guid: 9234b507bb1d424449c1997fe6847ae0, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.1
+      value: 0.092
       objectReference: {fileID: 0}
     - target: {fileID: 431926, guid: 9234b507bb1d424449c1997fe6847ae0, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2675,7 +2712,7 @@ Transform:
   m_GameObject: {fileID: 594134815}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7107685, z: -0, w: 0.703426}
-  m_LocalPosition: {x: -2.8619602, y: 0.45, z: -0.034676068}
+  m_LocalPosition: {x: -2.6330035, y: 0.45, z: -0.03190198}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2694,9 +2731,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &611105550
 GameObject:
   m_ObjectHideFlags: 0
@@ -2723,7 +2761,7 @@ Transform:
   m_GameObject: {fileID: 611105550}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.0010535435, z: -0, w: 0.99999946}
-  m_LocalPosition: {x: 464.9812, y: 0.45, z: 319.0204}
+  m_LocalPosition: {x: 427.7827, y: 0.45, z: 293.49875}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2742,9 +2780,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &674664962
 GameObject:
   m_ObjectHideFlags: 0
@@ -2771,7 +2810,7 @@ Transform:
   m_GameObject: {fileID: 674664962}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.004421851, z: -0, w: 0.9999902}
-  m_LocalPosition: {x: 464.669, y: 0.45, z: 415.43628}
+  m_LocalPosition: {x: 427.49548, y: 0.45, z: 382.2014}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2790,9 +2829,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &674891840
 GameObject:
   m_ObjectHideFlags: 0
@@ -2811,7 +2851,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &674891841
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2819,7 +2859,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 674891840}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
   m_Name: 
@@ -2834,9 +2874,9 @@ MonoBehaviour:
   Target:
     TrackingTarget: {fileID: 745128786}
     LookAtTarget: {fileID: 745128786}
-    CustomLookAtTarget: 0
+    CustomLookAtTarget: 1
   Lens:
-    FieldOfView: 60.000004
+    FieldOfView: 62.19667
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -2935,7 +2975,7 @@ Transform:
   m_GameObject: {fileID: 688097076}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.012304738, z: -0, w: 0.9999243}
-  m_LocalPosition: {x: 462.2552, y: 0.45, z: 29.790846}
+  m_LocalPosition: {x: 425.27478, y: 0.45, z: 27.40758}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2954,9 +2994,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &689709123
 GameObject:
   m_ObjectHideFlags: 0
@@ -2983,7 +3024,7 @@ Transform:
   m_GameObject: {fileID: 689709123}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7067425, z: -0, w: 0.7074709}
-  m_LocalPosition: {x: -163.56569, y: 0.45, z: -0.016480327}
+  m_LocalPosition: {x: -150.48044, y: 0.45, z: -0.015161901}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3002,9 +3043,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!134 &695016632
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -3044,7 +3086,7 @@ Transform:
   m_GameObject: {fileID: 697916400}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.023565311, z: -0, w: 0.9997223}
-  m_LocalPosition: {x: 459.77185, y: 0.45, z: -34.44139}
+  m_LocalPosition: {x: 422.9901, y: 0.45, z: -31.68608}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3062,10 +3104,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 258
-  laneWidth: 10.5
-  brakingCaution: 0.14
-  overtakeWidth: 6.5
+  targetSpeedKmh: 178
+  laneWidth: 7.77
+  brakingCaution: 0.42
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &727675270
 GameObject:
   m_ObjectHideFlags: 0
@@ -3092,7 +3135,7 @@ Transform:
   m_GameObject: {fileID: 727675270}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999957, z: -0, w: -0.0029269406}
-  m_LocalPosition: {x: -378.31174, y: 0.45, z: 282.0377}
+  m_LocalPosition: {x: -348.0468, y: 0.45, z: 259.47467}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3111,9 +3154,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &745128784
 GameObject:
   m_ObjectHideFlags: 0
@@ -3146,18 +3190,18 @@ MonoBehaviour:
   car: {fileID: 1543065704}
   carRb: {fileID: 1543065703}
   steeringSystem: {fileID: 1543065708}
-  localOffset: {x: 0, y: 0.62, z: -0.25}
+  localOffset: {x: 0, y: 0.72, z: -0.42}
   positionSharpness: 13
   rotationSharpness: 8
-  highSpeedPullback: 0.7
-  highSpeedLift: 0.14
-  lateralFrameOffset: 0.28
-  velocityLookAhead: 0.6
+  highSpeedPullback: 0.9
+  highSpeedLift: 0.16
+  lateralFrameOffset: 0.2
+  velocityLookAhead: 0.85
   lookAheadSharpness: 9
-  maxYawLead: 4.4
-  maxRollLean: 3.4
-  maxBrakePitch: 1.8
-  maxThrottlePitch: 1.1
+  maxYawLead: 4
+  maxRollLean: 2.4
+  maxBrakePitch: 1.5
+  maxThrottlePitch: 0.9
   fullEffectSpeedKmh: 160
   steeringInfluence: 0.48
   yawRateInfluence: 0.58
@@ -3171,7 +3215,7 @@ Transform:
   m_GameObject: {fileID: 745128784}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071067}
-  m_LocalPosition: {x: -0.2966513, y: 1.62, z: 0.046108916}
+  m_LocalPosition: {x: -0.2729192, y: 1.62, z: 0.042420205}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3203,7 +3247,7 @@ Transform:
   m_GameObject: {fileID: 825305194}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.80530095, z: -0, w: 0.5928663}
-  m_LocalPosition: {x: 34.98474, y: 0.45, z: 800.7578}
+  m_LocalPosition: {x: 32.185963, y: 0.45, z: 736.6972}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3221,10 +3265,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 108.09903
-  laneWidth: 7.288789
+  targetSpeedKmh: 102
+  laneWidth: 5.393704
   brakingCaution: 0.78224224
-  overtakeWidth: 3.6359468
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.0052892677
 --- !u!1 &831135113
 GameObject:
   m_ObjectHideFlags: 0
@@ -3251,7 +3296,7 @@ Transform:
   m_GameObject: {fileID: 831135113}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.002354393, z: -0, w: 0.99999726}
-  m_LocalPosition: {x: 464.82034, y: 0.45, z: 383.29733}
+  m_LocalPosition: {x: 427.63474, y: 0.45, z: 352.63354}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3270,9 +3315,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -3348,7 +3394,7 @@ Transform:
   m_GameObject: {fileID: 838092156}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.0065425755, z: -0, w: 0.9999786}
-  m_LocalPosition: {x: 463.5841, y: 0.45, z: 94.06047}
+  m_LocalPosition: {x: 426.49738, y: 0.45, z: 86.53564}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3367,9 +3413,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &842531645
 GameObject:
   m_ObjectHideFlags: 0
@@ -3475,7 +3522,7 @@ Transform:
   m_GameObject: {fileID: 870844611}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.008368907, z: -0, w: 0.999965}
-  m_LocalPosition: {x: 463.04617, y: 0.45, z: 61.925034}
+  m_LocalPosition: {x: 426.00247, y: 0.45, z: 56.97103}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3494,9 +3541,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &878694609
 GameObject:
   m_ObjectHideFlags: 0
@@ -3523,7 +3571,7 @@ Transform:
   m_GameObject: {fileID: 878694609}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70993817, z: -0, w: 0.70426404}
-  m_LocalPosition: {x: -292.11685, y: 0.45, z: 0.2907796}
+  m_LocalPosition: {x: -268.7475, y: 0.45, z: 0.26751724}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3541,10 +3589,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 230.4858
-  laneWidth: 10.195138
-  brakingCaution: 0.20097236
-  overtakeWidth: 6.228096
+  targetSpeedKmh: 178
+  laneWidth: 7.544402
+  brakingCaution: 0.44
+  overtakeWidth: 4.375753
+  preferredLaneOffset01: -0
 --- !u!4 &888901854 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 431926, guid: 9234b507bb1d424449c1997fe6847ae0, type: 3}
@@ -3576,7 +3625,7 @@ Transform:
   m_GameObject: {fileID: 904744710}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999945, z: -0, w: -0.0033129551}
-  m_LocalPosition: {x: -378.0988, y: 0.45, z: 314.1764}
+  m_LocalPosition: {x: -347.8509, y: 0.45, z: 289.0423}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3595,9 +3644,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &932490387
 GameObject:
   m_ObjectHideFlags: 0
@@ -3624,7 +3674,7 @@ Transform:
   m_GameObject: {fileID: 932490387}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.99988246, z: -0, w: -0.015332856}
-  m_LocalPosition: {x: -375.684, y: 0.45, z: 442.705}
+  m_LocalPosition: {x: -345.62927, y: 0.45, z: 407.2886}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3643,9 +3693,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &953588483
 GameObject:
   m_ObjectHideFlags: 0
@@ -3672,7 +3723,7 @@ Transform:
   m_GameObject: {fileID: 953588483}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.0000028487295, z: -0, w: 1}
-  m_LocalPosition: {x: 464.98102, y: 0.45, z: 286.8823}
+  m_LocalPosition: {x: 427.78253, y: 0.45, z: 263.9317}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3691,9 +3742,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &954064445
 GameObject:
   m_ObjectHideFlags: 0
@@ -3720,7 +3772,7 @@ Transform:
   m_GameObject: {fileID: 954064445}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999752, z: -0, w: -0.007041342}
-  m_LocalPosition: {x: -377.29935, y: 0.45, z: 378.4477}
+  m_LocalPosition: {x: -347.11542, y: 0.45, z: 348.17188}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3739,9 +3791,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &956359523
 GameObject:
   m_ObjectHideFlags: 0
@@ -3878,7 +3931,7 @@ Transform:
   m_GameObject: {fileID: 978658915}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.015073763, z: -0, w: 0.9998864}
-  m_LocalPosition: {x: 461.2864, y: 0.45, z: -2.3328602}
+  m_LocalPosition: {x: 424.3835, y: 0.45, z: -2.1462314}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3896,10 +3949,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 258
-  laneWidth: 10.5
-  brakingCaution: 0.14
-  overtakeWidth: 6.5
+  targetSpeedKmh: 220
+  laneWidth: 7.77
+  brakingCaution: 0.26
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &979414409
 GameObject:
   m_ObjectHideFlags: 0
@@ -3926,7 +3980,7 @@ Transform:
   m_GameObject: {fileID: 979414409}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9424596, z: -0, w: -0.3343201}
-  m_LocalPosition: {x: 106.33454, y: 0.45, z: 898.54987}
+  m_LocalPosition: {x: 97.82778, y: 0.45, z: 826.6659}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3945,9 +3999,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 109.36007
-  laneWidth: 8.147994
+  laneWidth: 6.0295157
   brakingCaution: 0.6478005
-  overtakeWidth: 4.402265
+  overtakeWidth: 3.169631
+  preferredLaneOffset01: -0.00014334428
 --- !u!134 &1046536571
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -3987,7 +4042,7 @@ Transform:
   m_GameObject: {fileID: 1054140748}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.46836543, z: -0, w: 0.8835349}
-  m_LocalPosition: {x: 343.86786, y: 0.45, z: 896.81683}
+  m_LocalPosition: {x: 316.35843, y: 0.45, z: 825.0715}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4006,9 +4061,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 130.98158
-  laneWidth: 9.324341
+  laneWidth: 6.9000125
   brakingCaution: 0.5482022
-  overtakeWidth: 5.451439
+  overtakeWidth: 3.9250362
+  preferredLaneOffset01: -0.056017768
 --- !u!1 &1063630821
 GameObject:
   m_ObjectHideFlags: 0
@@ -4035,7 +4091,7 @@ Transform:
   m_GameObject: {fileID: 1063630821}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.78882945, z: -0, w: 0.61461216}
-  m_LocalPosition: {x: -173.40085, y: 0.45, z: 672.61334}
+  m_LocalPosition: {x: -159.52878, y: 0.45, z: 618.80426}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4054,9 +4110,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 133.89166
-  laneWidth: 10.038489
+  laneWidth: 7.428482
   brakingCaution: 0.53527117
-  overtakeWidth: 6.088382
+  overtakeWidth: 4.3085194
+  preferredLaneOffset01: -0
 --- !u!1 &1086652953
 GameObject:
   m_ObjectHideFlags: 0
@@ -4083,7 +4140,7 @@ Transform:
   m_GameObject: {fileID: 1086652953}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.001876863, z: -0, w: 0.9999983}
-  m_LocalPosition: {x: 464.7865, y: 0.45, z: 222.60703}
+  m_LocalPosition: {x: 427.60358, y: 0.45, z: 204.79846}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4102,9 +4159,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1111363403
 GameObject:
   m_ObjectHideFlags: 0
@@ -4131,7 +4189,7 @@ Transform:
   m_GameObject: {fileID: 1111363403}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999987, z: -0, w: 0.0016372364}
-  m_LocalPosition: {x: -378.6849, y: 0.45, z: 153.47481}
+  m_LocalPosition: {x: -348.3901, y: 0.45, z: 141.19682}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4149,10 +4207,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1134057152
 GameObject:
   m_ObjectHideFlags: 0
@@ -4179,7 +4238,7 @@ Transform:
   m_GameObject: {fileID: 1134057152}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7177443, z: -0, w: 0.6963068}
-  m_LocalPosition: {x: 222.08696, y: 0.45, z: -1.9518924}
+  m_LocalPosition: {x: 204.32, y: 0.45, z: -1.795741}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4197,10 +4256,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0.09380825
 --- !u!1 &1151703034
 GameObject:
   m_ObjectHideFlags: 0
@@ -4379,7 +4439,7 @@ Transform:
   m_GameObject: {fileID: 1165446813}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.93432105, z: -0, w: -0.35643268}
-  m_LocalPosition: {x: -55.979115, y: 0.45, z: 770.93115}
+  m_LocalPosition: {x: -51.500786, y: 0.45, z: 709.25665}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4397,10 +4457,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 109.58387
-  laneWidth: 7.3328824
+  targetSpeedKmh: 102
+  laneWidth: 5.426333
   brakingCaution: 0.7734236
-  overtakeWidth: 3.6752732
+  overtakeWidth: 2.8
+  preferredLaneOffset01: 0
 --- !u!1 &1175968235
 GameObject:
   m_ObjectHideFlags: 0
@@ -4610,7 +4671,7 @@ Transform:
   m_GameObject: {fileID: 1184639105}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.005086433, z: -0, w: 0.99998707}
-  m_LocalPosition: {x: 464.38477, y: 0.45, z: 447.5758}
+  m_LocalPosition: {x: 427.23398, y: 0.45, z: 411.76974}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4629,9 +4690,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1193984790
 GameObject:
   m_ObjectHideFlags: 0
@@ -4658,7 +4720,7 @@ Transform:
   m_GameObject: {fileID: 1193984790}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9193138, z: -0, w: 0.39352542}
-  m_LocalPosition: {x: -370.48547, y: 0.45, z: 25.242998}
+  m_LocalPosition: {x: -340.84665, y: 0.45, z: 23.223558}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4676,10 +4738,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.30411643
 --- !u!1 &1252863529
 GameObject:
   m_ObjectHideFlags: 0
@@ -4706,7 +4769,7 @@ Transform:
   m_GameObject: {fileID: 1252863529}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7068406, z: -0, w: 0.7073729}
-  m_LocalPosition: {x: -227.8435, y: 0.45, z: 0.0040860176}
+  m_LocalPosition: {x: -209.61603, y: 0.45, z: 0.0037591362}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4725,9 +4788,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1255669684
 GameObject:
   m_ObjectHideFlags: 0
@@ -5016,7 +5080,7 @@ Transform:
   m_GameObject: {fileID: 1303090921}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.96365994, z: -0, w: -0.26713216}
-  m_LocalPosition: {x: 72.0877, y: 0.45, z: 845.97284}
+  m_LocalPosition: {x: 66.32069, y: 0.45, z: 778.29504}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5035,9 +5099,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 109.36007
-  laneWidth: 10.370689
+  laneWidth: 7.67431
   brakingCaution: 0.6478005
-  overtakeWidth: 6.384669
+  overtakeWidth: 4.4511
+  preferredLaneOffset01: 0.30145305
 --- !u!1 &1318661975
 GameObject:
   m_ObjectHideFlags: 0
@@ -5064,7 +5129,7 @@ Transform:
   m_GameObject: {fileID: 1318661975}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.99797136, z: -0, w: -0.06366514}
-  m_LocalPosition: {x: -368.2565, y: 0.45, z: 539.0069}
+  m_LocalPosition: {x: -338.796, y: 0.45, z: 495.88635}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5083,9 +5148,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 197.13414
-  laneWidth: 9.581635
+  laneWidth: 7.09041
   brakingCaution: 0.32367295
-  overtakeWidth: 5.680918
+  overtakeWidth: 4.0902615
+  preferredLaneOffset01: -0
 --- !u!1 &1320816974
 GameObject:
   m_ObjectHideFlags: 0
@@ -5112,7 +5178,7 @@ Transform:
   m_GameObject: {fileID: 1320816974}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.16061613, z: -0, w: 0.987017}
-  m_LocalPosition: {x: 441.75, y: 0.45, z: 734.68256}
+  m_LocalPosition: {x: 406.41, y: 0.45, z: 675.90796}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5131,9 +5197,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 170.89857
-  laneWidth: 10.151899
+  laneWidth: 7.5124054
   brakingCaution: 0.38172293
-  overtakeWidth: 6.189532
+  overtakeWidth: 4.357195
+  preferredLaneOffset01: -0.002765442
 --- !u!1 &1322097527
 GameObject:
   m_ObjectHideFlags: 0
@@ -5160,7 +5227,7 @@ Transform:
   m_GameObject: {fileID: 1322097527}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.90794945, z: -0, w: -0.41907972}
-  m_LocalPosition: {x: 55.36984, y: 0.45, z: 818.13574}
+  m_LocalPosition: {x: 50.940254, y: 0.45, z: 752.6849}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5178,10 +5245,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 122.05621
-  laneWidth: 7.6963916
+  targetSpeedKmh: 112
+  laneWidth: 5.6953297
   brakingCaution: 0.70072174
-  overtakeWidth: 3.999484
+  overtakeWidth: 2.8796287
+  preferredLaneOffset01: 0.16465798
 --- !u!1 &1328113530
 GameObject:
   m_ObjectHideFlags: 0
@@ -5208,7 +5276,7 @@ Transform:
   m_GameObject: {fileID: 1328113530}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.71059304, z: -0, w: 0.70360327}
-  m_LocalPosition: {x: 157.81526, y: 0.45, z: -1.1366252}
+  m_LocalPosition: {x: 145.19005, y: 0.45, z: -1.0456952}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5226,10 +5294,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &1361618807
 GameObject:
   m_ObjectHideFlags: 0
@@ -5374,7 +5443,7 @@ Transform:
   m_GameObject: {fileID: 1391152609}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7854203, z: -0, w: 0.6189628}
-  m_LocalPosition: {x: 354.81226, y: 0.45, z: -139.03441}
+  m_LocalPosition: {x: 326.42728, y: 0.45, z: -127.91166}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5392,10 +5461,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.3613978
 --- !u!1 &1394431053
 GameObject:
   m_ObjectHideFlags: 0
@@ -5422,7 +5492,7 @@ Transform:
   m_GameObject: {fileID: 1394431053}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9999986, z: -0, w: 0.0016756824}
-  m_LocalPosition: {x: -378.57965, y: 0.45, z: 121.33079}
+  m_LocalPosition: {x: -348.29327, y: 0.45, z: 111.62433}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5440,10 +5510,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0.014760343
 --- !u!1 &1409443701
 GameObject:
   m_ObjectHideFlags: 0
@@ -5470,7 +5541,7 @@ Transform:
   m_GameObject: {fileID: 1409443701}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9995197, z: -0, w: -0.030989645}
-  m_LocalPosition: {x: -372.36542, y: 0.45, z: 506.93365}
+  m_LocalPosition: {x: -342.5762, y: 0.45, z: 466.37897}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5489,9 +5560,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 233.5954
-  laneWidth: 10.241916
+  laneWidth: 7.5790176
   brakingCaution: 0.19161695
-  overtakeWidth: 6.2698164
+  overtakeWidth: 4.39583
+  preferredLaneOffset01: -0
 --- !u!1 &1470503996
 GameObject:
   m_ObjectHideFlags: 0
@@ -5518,7 +5590,7 @@ Transform:
   m_GameObject: {fileID: 1470503996}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7170314, z: -0, w: 0.69704086}
-  m_LocalPosition: {x: -323.2686, y: 0.45, z: 1.1717315}
+  m_LocalPosition: {x: -297.4071, y: 0.45, z: 1.0779929}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5536,10 +5608,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 147.66109
-  laneWidth: 8.401826
-  brakingCaution: 0.5596348
-  overtakeWidth: 4.6286554
+  targetSpeedKmh: 128
+  laneWidth: 6.2173514
+  brakingCaution: 0.66
+  overtakeWidth: 3.332632
+  preferredLaneOffset01: -0
 --- !u!1 &1498525637
 GameObject:
   m_ObjectHideFlags: 0
@@ -5566,7 +5639,7 @@ Transform:
   m_GameObject: {fileID: 1498525637}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.0011494716, z: -0, w: 0.99999934}
-  m_LocalPosition: {x: 464.90714, y: 0.45, z: 254.74452}
+  m_LocalPosition: {x: 427.71457, y: 0.45, z: 234.36496}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5585,9 +5658,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1506365846
 GameObject:
   m_ObjectHideFlags: 0
@@ -5614,7 +5688,7 @@ Transform:
   m_GameObject: {fileID: 1506365846}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.005588781, z: -0, w: 0.9999844}
-  m_LocalPosition: {x: 464.00464, y: 0.45, z: 126.19653}
+  m_LocalPosition: {x: 426.88428, y: 0.45, z: 116.100815}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5633,9 +5707,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1515583719
 GameObject:
   m_ObjectHideFlags: 0
@@ -5662,7 +5737,7 @@ Transform:
   m_GameObject: {fileID: 1515583719}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9225381, z: -0, w: -0.38590613}
-  m_LocalPosition: {x: -324.5016, y: 0.45, z: 620.71875}
+  m_LocalPosition: {x: -298.54147, y: 0.45, z: 571.0613}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5681,9 +5756,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 114.296936
-  laneWidth: 8.089822
+  laneWidth: 5.9864683
   brakingCaution: 0.62452793
-  overtakeWidth: 4.350382
+  overtakeWidth: 3.132275
+  preferredLaneOffset01: -0.17513002
 --- !u!1 &1522851856
 GameObject:
   m_ObjectHideFlags: 0
@@ -5710,7 +5786,7 @@ Transform:
   m_GameObject: {fileID: 1522851856}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.03242224, z: -0, w: 0.9994743}
-  m_LocalPosition: {x: 457.6872, y: 0.45, z: -66.53922}
+  m_LocalPosition: {x: 421.07224, y: 0.45, z: -61.216087}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5728,10 +5804,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 199.7793
-  laneWidth: 9.636595
-  brakingCaution: 0.31268108
-  overtakeWidth: 5.7299356
+  targetSpeedKmh: 142
+  laneWidth: 7.13108
+  brakingCaution: 0.58
+  overtakeWidth: 4.1255536
+  preferredLaneOffset01: -0
 --- !u!1 &1531129112
 GameObject:
   m_ObjectHideFlags: 0
@@ -5758,7 +5835,7 @@ Transform:
   m_GameObject: {fileID: 1531129112}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9648089, z: -0, w: 0.2629521}
-  m_LocalPosition: {x: 338.29077, y: 0.45, z: -110.97597}
+  m_LocalPosition: {x: 311.2275, y: 0.45, z: -102.09789}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5776,10 +5853,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8540096
-  brakingCaution: 0.86919814
-  overtakeWidth: 3.2481706
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.78919816
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.42
 --- !u!1 &1538597926
 GameObject:
   m_ObjectHideFlags: 0
@@ -5924,6 +6002,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bac6ded6a1b1b8a46a4ba2b9b41d41fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1543065710 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4735810791306045409, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1543065696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e9dbd3ab2da45ca98f7f6d8ade355c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1557704626
 GameObject:
   m_ObjectHideFlags: 0
@@ -5950,7 +6039,7 @@ Transform:
   m_GameObject: {fileID: 1557704626}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.010350034, z: -0, w: 0.9999465}
-  m_LocalPosition: {x: 463.4827, y: 0.45, z: 511.8564}
+  m_LocalPosition: {x: 426.40408, y: 0.45, z: 470.9079}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5969,9 +6058,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 239.99312
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.1670709
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1560015395
 GameObject:
   m_ObjectHideFlags: 0
@@ -5998,7 +6088,7 @@ Transform:
   m_GameObject: {fileID: 1560015395}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9926628, z: -0, w: -0.12091568}
-  m_LocalPosition: {x: -360.75583, y: 0.45, z: 569.3386}
+  m_LocalPosition: {x: -331.89536, y: 0.45, z: 523.79156}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6017,9 +6107,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 152.67827
-  laneWidth: 8.533151
+  laneWidth: 6.314532
   brakingCaution: 0.53336984
-  overtakeWidth: 4.7457833
+  overtakeWidth: 3.416964
+  preferredLaneOffset01: -0.0057146694
 --- !u!1 &1571915629
 GameObject:
   m_ObjectHideFlags: 0
@@ -6046,7 +6137,7 @@ Transform:
   m_GameObject: {fileID: 1571915629}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.86686265, z: -0, w: -0.49854708}
-  m_LocalPosition: {x: -296.71884, y: 0.45, z: 636.8836}
+  m_LocalPosition: {x: -272.98135, y: 0.45, z: 585.9329}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6064,10 +6155,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 9.118661
-  brakingCaution: 0.732
-  overtakeWidth: 5.267995
+  targetSpeedKmh: 112
+  laneWidth: 6.7478094
+  brakingCaution: 0.63199997
+  overtakeWidth: 3.7929564
+  preferredLaneOffset01: -0.2181028
 --- !u!1 &1572687122
 GameObject:
   m_ObjectHideFlags: 0
@@ -6094,7 +6186,7 @@ Transform:
   m_GameObject: {fileID: 1572687122}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.6946444, z: -0, w: 0.7193534}
-  m_LocalPosition: {x: 257.36618, y: 0.45, z: 936.81006}
+  m_LocalPosition: {x: 236.77689, y: 0.45, z: 861.8653}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6113,9 +6205,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 105.783104
-  laneWidth: 8.908811
+  laneWidth: 6.5925198
   brakingCaution: 0.6648518
-  overtakeWidth: 5.0808306
+  overtakeWidth: 3.658198
+  preferredLaneOffset01: -0.022475641
 --- !u!1 &1578802206
 GameObject:
   m_ObjectHideFlags: 0
@@ -6142,7 +6235,7 @@ Transform:
   m_GameObject: {fileID: 1578802206}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.78008586, z: -0, w: 0.62567246}
-  m_LocalPosition: {x: 193.84944, y: 0.45, z: 935.87823}
+  m_LocalPosition: {x: 178.34149, y: 0.45, z: 861.008}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6161,9 +6254,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 105.783104
-  laneWidth: 9.433088
+  laneWidth: 6.9804854
   brakingCaution: 0.6648518
-  overtakeWidth: 5.54843
+  overtakeWidth: 3.9948697
+  preferredLaneOffset01: -0.08917742
 --- !u!1 &1582828562
 GameObject:
   m_ObjectHideFlags: 0
@@ -6190,7 +6284,7 @@ Transform:
   m_GameObject: {fileID: 1582828562}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.8251861, z: -0, w: 0.564861}
-  m_LocalPosition: {x: -266.58917, y: 0.45, z: 648.57904}
+  m_LocalPosition: {x: -245.26204, y: 0.45, z: 596.69275}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6209,9 +6303,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 100.4041
-  laneWidth: 9.892487
+  laneWidth: 7.3204403
   brakingCaution: 0.6907873
-  overtakeWidth: 5.9581633
+  overtakeWidth: 4.2458553
+  preferredLaneOffset01: -0.08505674
 --- !u!1 &1618069158
 GameObject:
   m_ObjectHideFlags: 0
@@ -6238,7 +6333,7 @@ Transform:
   m_GameObject: {fileID: 1618069158}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.014778809, z: -0, w: 0.9998908}
-  m_LocalPosition: {x: 462.81726, y: 0.45, z: 543.9978}
+  m_LocalPosition: {x: 425.7919, y: 0.45, z: 500.478}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6257,9 +6352,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 223.47104
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.20686585
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1638497969
 GameObject:
   m_ObjectHideFlags: 0
@@ -6286,7 +6382,7 @@ Transform:
   m_GameObject: {fileID: 1638497969}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.728857, z: -0, w: 0.684666}
-  m_LocalPosition: {x: 226.16568, y: 0.45, z: 937.9008}
+  m_LocalPosition: {x: 208.07243, y: 0.45, z: 862.8688}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6305,9 +6401,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 116.86386
-  laneWidth: 9.374131
+  laneWidth: 6.936857
   brakingCaution: 0.61254907
-  overtakeWidth: 5.495847
+  overtakeWidth: 3.9570103
+  preferredLaneOffset01: -0.03547411
 --- !u!1 &1642877222
 GameObject:
   m_ObjectHideFlags: 0
@@ -6334,7 +6431,7 @@ Transform:
   m_GameObject: {fileID: 1642877222}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.8547908, z: -0, w: 0.51897275}
-  m_LocalPosition: {x: -27.505026, y: 0.45, z: 785.73694}
+  m_LocalPosition: {x: -25.304625, y: 0.45, z: 722.878}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6353,9 +6450,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 129.95421
-  laneWidth: 8.596085
+  laneWidth: 6.3611026
   brakingCaution: 0.5527951
-  overtakeWidth: 4.8019137
+  overtakeWidth: 3.457378
+  preferredLaneOffset01: -0.21478862
 --- !u!1 &1654818512
 GameObject:
   m_ObjectHideFlags: 0
@@ -6382,7 +6480,7 @@ Transform:
   m_GameObject: {fileID: 1654818512}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.67627996, z: -0, w: 0.73664474}
-  m_LocalPosition: {x: 383.2707, y: 0.45, z: -145.87672}
+  m_LocalPosition: {x: 352.60904, y: 0.45, z: -134.20659}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6400,10 +6498,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.42
 --- !u!1 &1677378340
 GameObject:
   m_ObjectHideFlags: 0
@@ -6430,7 +6529,7 @@ Transform:
   m_GameObject: {fileID: 1677378340}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9734138, z: -0, w: 0.2290536}
-  m_LocalPosition: {x: 312.39288, y: 0.45, z: -19.773773}
+  m_LocalPosition: {x: 287.40146, y: 0.45, z: -18.191872}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6448,10 +6547,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: 0.016376374
 --- !u!1 &1711978373
 GameObject:
   m_ObjectHideFlags: 0
@@ -6478,7 +6578,7 @@ Transform:
   m_GameObject: {fileID: 1711978373}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.1129547, z: -0, w: 0.99360013}
-  m_LocalPosition: {x: 448.96945, y: 0.45, z: 703.34015}
+  m_LocalPosition: {x: 413.0519, y: 0.45, z: 647.07294}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6497,9 +6597,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 182.39957
-  laneWidth: 10.225608
+  laneWidth: 7.56695
   brakingCaution: 0.3385637
-  overtakeWidth: 6.2552714
+  overtakeWidth: 4.3888307
+  preferredLaneOffset01: -0.00017649627
 --- !u!1 &1751010273
 GameObject:
   m_ObjectHideFlags: 0
@@ -6526,7 +6627,7 @@ Transform:
   m_GameObject: {fileID: 1751010273}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.999952, z: -0, w: -0.009799716}
-  m_LocalPosition: {x: -376.6695, y: 0.45, z: 410.5793}
+  m_LocalPosition: {x: -346.53595, y: 0.45, z: 377.73297}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6545,9 +6646,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1768138502
 GameObject:
   m_ObjectHideFlags: 0
@@ -6757,7 +6859,7 @@ Transform:
   m_GameObject: {fileID: 1788473357}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.99995375, z: -0, w: 0.00961826}
-  m_LocalPosition: {x: -378.47192, y: 0.45, z: 89.18668}
+  m_LocalPosition: {x: -348.19418, y: 0.45, z: 82.05175}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6775,10 +6877,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.3070545
-  brakingCaution: 0.732
-  overtakeWidth: 6.3279138
+  targetSpeedKmh: 112
+  laneWidth: 7.6272206
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.423788
+  preferredLaneOffset01: -0.33283514
 --- !u!1 &1789652574
 GameObject:
   m_ObjectHideFlags: 0
@@ -6805,7 +6908,7 @@ Transform:
   m_GameObject: {fileID: 1789652574}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.99998546, z: -0, w: -0.005396449}
-  m_LocalPosition: {x: -377.75192, y: 0.45, z: 346.31305}
+  m_LocalPosition: {x: -347.53177, y: 0.45, z: 318.608}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6824,9 +6927,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1811288062
 GameObject:
   m_ObjectHideFlags: 0
@@ -6853,7 +6957,7 @@ Transform:
   m_GameObject: {fileID: 1811288062}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9974391, z: -0, w: 0.071521066}
-  m_LocalPosition: {x: 326.2941, y: 0.45, z: -47.67637}
+  m_LocalPosition: {x: 300.19058, y: 0.45, z: -43.86226}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6871,10 +6975,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 7.5362053
-  brakingCaution: 0.732759
-  overtakeWidth: 3.8566153
+  targetSpeedKmh: 112
+  laneWidth: 5.576792
+  brakingCaution: 0.632759
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.07528324
 --- !u!1 &1840133227
 GameObject:
   m_ObjectHideFlags: 0
@@ -6980,7 +7085,7 @@ Transform:
   m_GameObject: {fileID: 1849614240}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.7847606, z: -0, w: 0.619799}
-  m_LocalPosition: {x: -204.39078, y: 0.45, z: 664.799}
+  m_LocalPosition: {x: -188.03952, y: 0.45, z: 611.6151}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6999,9 +7104,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 100.4041
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.6907873
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: -0
 --- !u!1 &1860256277
 GameObject:
   m_ObjectHideFlags: 0
@@ -7028,7 +7134,7 @@ Transform:
   m_GameObject: {fileID: 1860256277}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.91726726, z: -0, w: -0.39827234}
-  m_LocalPosition: {x: -91.35553, y: 0.45, z: 719.9002}
+  m_LocalPosition: {x: -84.04709, y: 0.45, z: 662.3082}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7047,9 +7153,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 134.30746
-  laneWidth: 9.082059
+  laneWidth: 6.7207236
   brakingCaution: 0.53343314
-  overtakeWidth: 5.2353497
+  overtakeWidth: 3.7694519
+  preferredLaneOffset01: 0.10340113
 --- !u!1 &1864758590
 GameObject:
   m_ObjectHideFlags: 0
@@ -7076,7 +7183,7 @@ Transform:
   m_GameObject: {fileID: 1864758590}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.08391557, z: -0, w: 0.9964729}
-  m_LocalPosition: {x: 454.34506, y: 0.45, z: 671.6496}
+  m_LocalPosition: {x: 417.99747, y: 0.45, z: 617.91766}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7095,9 +7202,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 187.78258
-  laneWidth: 10.4039345
+  laneWidth: 7.6989117
   brakingCaution: 0.3192029
-  overtakeWidth: 6.41432
+  overtakeWidth: 4.4653687
+  preferredLaneOffset01: -0.0017965905
 --- !u!1 &1875633755
 GameObject:
   m_ObjectHideFlags: 0
@@ -7124,7 +7232,7 @@ Transform:
   m_GameObject: {fileID: 1875633755}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.06712871, z: -0, w: 0.9977443}
-  m_LocalPosition: {x: 453.5481, y: 0.45, z: -97.16002}
+  m_LocalPosition: {x: 417.26425, y: 0.45, z: -89.38722}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7142,10 +7250,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 118.38693
-  laneWidth: 7.590742
+  targetSpeedKmh: 112
+  laneWidth: 5.6171494
   brakingCaution: 0.72185165
-  overtakeWidth: 3.9052563
+  overtakeWidth: 2.8117847
+  preferredLaneOffset01: -0
 --- !u!1 &1877691301
 GameObject:
   m_ObjectHideFlags: 0
@@ -7176,9 +7285,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!4 &1877691303
 Transform:
   m_ObjectHideFlags: 0
@@ -7188,7 +7298,7 @@ Transform:
   m_GameObject: {fileID: 1877691301}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70690686, z: -0, w: 0.7073067}
-  m_LocalPosition: {x: -67.14135, y: 0.45, z: 0.005548477}
+  m_LocalPosition: {x: -61.770042, y: 0.45, z: 0.005104599}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7220,7 +7330,7 @@ Transform:
   m_GameObject: {fileID: 1952033927}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7928503, z: -0, w: 0.6094164}
-  m_LocalPosition: {x: -353.7619, y: 0.45, z: 9.288431}
+  m_LocalPosition: {x: -325.46097, y: 0.45, z: 8.545357}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7238,10 +7348,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.0220119
 --- !u!1 &1970457389
 GameObject:
   m_ObjectHideFlags: 0
@@ -7347,7 +7458,7 @@ Transform:
   m_GameObject: {fileID: 1984843380}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7125595, z: -0, w: 0.7016117}
-  m_LocalPosition: {x: 189.95166, y: 0.45, z: -1.4543079}
+  m_LocalPosition: {x: 174.75552, y: 0.45, z: -1.3379633}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7365,10 +7476,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 10.5
-  brakingCaution: 0.732
-  overtakeWidth: 6.5
+  targetSpeedKmh: 112
+  laneWidth: 7.77
+  brakingCaution: 0.63199997
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &1991917757
 GameObject:
   m_ObjectHideFlags: 0
@@ -7395,7 +7507,7 @@ Transform:
   m_GameObject: {fileID: 1991917757}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.8618924, z: -0, w: 0.5070913}
-  m_LocalPosition: {x: -114.866974, y: 0.45, z: 697.9297}
+  m_LocalPosition: {x: -105.67762, y: 0.45, z: 642.09534}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7413,10 +7525,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 136.12929
-  laneWidth: 8.0912
+  targetSpeedKmh: 122
+  laneWidth: 5.987488
   brakingCaution: 0.62176
-  overtakeWidth: 4.3516107
+  overtakeWidth: 3.1331599
+  preferredLaneOffset01: 0.024341328
 --- !u!1 &2084479999
 GameObject:
   m_ObjectHideFlags: 0
@@ -7443,7 +7556,7 @@ Transform:
   m_GameObject: {fileID: 2084479999}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.22181773, z: -0, w: 0.9750882}
-  m_LocalPosition: {x: 439.6458, y: 0.45, z: -126.13525}
+  m_LocalPosition: {x: 404.47415, y: 0.45, z: -116.044426}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7461,10 +7574,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 92
-  laneWidth: 6.8
-  brakingCaution: 0.88
-  overtakeWidth: 3.2
+  targetSpeedKmh: 102
+  laneWidth: 5.2
+  brakingCaution: 0.8
+  overtakeWidth: 2.8
+  preferredLaneOffset01: -0.07209738
 --- !u!1 &2089417019
 GameObject:
   m_ObjectHideFlags: 0
@@ -7491,7 +7605,7 @@ Transform:
   m_GameObject: {fileID: 2089417019}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70742327, z: -0, w: 0.7067902}
-  m_LocalPosition: {x: -259.9746, y: 0.45, z: 0.03285241}
+  m_LocalPosition: {x: -239.17665, y: 0.45, z: 0.030224219}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7509,10 +7623,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edd41c763714fc542894e3649c889ed4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetSpeedKmh: 258
-  laneWidth: 10.5
-  brakingCaution: 0.14
-  overtakeWidth: 6.5
+  targetSpeedKmh: 220
+  laneWidth: 7.77
+  brakingCaution: 0.26
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &2091453107
 GameObject:
   m_ObjectHideFlags: 0
@@ -7539,7 +7654,7 @@ Transform:
   m_GameObject: {fileID: 2091453107}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.9700415, z: -0, w: -0.24293917}
-  m_LocalPosition: {x: -76.16596, y: 0.45, z: 748.32367}
+  m_LocalPosition: {x: -70.072685, y: 0.45, z: 688.45776}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7558,9 +7673,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 129.95421
-  laneWidth: 9.507826
+  laneWidth: 7.0357914
   brakingCaution: 0.5527951
-  overtakeWidth: 5.615088
+  overtakeWidth: 4.0428634
+  preferredLaneOffset01: 0.19257914
 --- !u!1 &2107852439
 GameObject:
   m_ObjectHideFlags: 0
@@ -7587,7 +7703,7 @@ Transform:
   m_GameObject: {fileID: 2107852439}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.70774895, z: -0, w: 0.70646405}
-  m_LocalPosition: {x: -35.000225, y: 0.45, z: 0.023722535}
+  m_LocalPosition: {x: -32.200207, y: 0.45, z: 0.021824732}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7606,9 +7722,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 10.5
+  laneWidth: 7.77
   brakingCaution: 0.14
-  overtakeWidth: 6.5
+  overtakeWidth: 4.5066
+  preferredLaneOffset01: 0
 --- !u!1 &2132935404
 GameObject:
   m_ObjectHideFlags: 0
@@ -7649,12 +7766,12 @@ MonoBehaviour:
   includePlayerInGrid: 1
   playerGridPosition: 7
   gridAnchor: {fileID: 0}
-  gridRowSpacing: 8.8
-  gridColumnSpacing: 5.8
+  gridRowSpacing: 8.2
+  gridColumnSpacing: 5.2
   gridCenterOffset: 0
   gridVerticalOffset: 0.05
   poleOnRight: 1
-  fallbackGridOrigin: {x: -52.4, y: 1, z: 4.2}
+  fallbackGridOrigin: {x: -48.208004, y: 1, z: 3.8639998}
   aiEntries:
   - driverName: AI_F1_Body_01
     gridPosition: 0
@@ -7751,7 +7868,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1160965959864833045, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -199.4
+      value: -183.448
       objectReference: {fileID: 0}
     - target: {fileID: 1160965959864833045, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7759,7 +7876,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1160965959864833045, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 5.5
+      value: 5.06
       objectReference: {fileID: 0}
     - target: {fileID: 1160965959864833045, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7789,6 +7906,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1413247300981744825, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: physicsProfile
+      value: 
+      objectReference: {fileID: 11400000, guid: c9ba836afee3f40468aaa21c9a105a7f, type: 2}
+    - target: {fileID: 1413247300981744825, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      propertyPath: cinemachineCamera
+      value: 
+      objectReference: {fileID: 674891841}
     - target: {fileID: 3825563487021001714, guid: 093801ee528ac4249a0bec751c733059, type: 3}
       propertyPath: m_Material
       value: 
@@ -7800,8 +7925,43 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6317130275601892748, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5762442114198320270}
   m_SourcePrefab: {fileID: 100100000, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+--- !u!82 &5762442114198320266 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 5394436518178896446, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &5762442114198320267 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 3601270903563523820, guid: 093801ee528ac4249a0bec751c733059, type: 3}
+  m_PrefabInstance: {fileID: 5762442114198320265}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5762442114198320270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1543065696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e0a041fd67433348abe97896dbb5e5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coordinator: {fileID: 1543065710}
+  physicsProfile: {fileID: 11400000, guid: c9ba836afee3f40468aaa21c9a105a7f, type: 2}
+  engineSource: {fileID: 5762442114198320267}
+  shiftSource: {fileID: 5762442114198320266}
+  engineLoopClip: {fileID: 0}
+  shiftBlipClip: {fileID: 0}
+  generatePlaceholderClip: 1
+  placeholderSampleRate: 22050
+  placeholderLoopSeconds: 0.55
+  masterVolume: 0.75
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
