@@ -2,7 +2,9 @@
     "name": "F1.PlayModeTests",
     "rootNamespace": "",
     "references": [
-        "F1.Gameplay"
+        "F1.Gameplay",
+        "F1.ClientDemoUI",
+        "Unity.ugui"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

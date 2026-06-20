@@ -347,9 +347,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &21882932
 GameObject:
@@ -396,9 +396,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 130.98158
-  laneWidth: 7.199544
+  laneWidth: 6.047617
   brakingCaution: 0.5482022
-  overtakeWidth: 4.1757355
+  overtakeWidth: 3.424103
   preferredLaneOffset01: -0.028339246
 --- !u!1 &36354014
 GameObject:
@@ -445,9 +445,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 110.89913
-  laneWidth: 6.858186
+  laneWidth: 5.760876
   brakingCaution: 0.6405126
-  overtakeWidth: 3.8887393
+  overtakeWidth: 3.188766
   preferredLaneOffset01: 0.074488096
 --- !u!1 &45520011
 GameObject:
@@ -494,9 +494,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &49835297
 GameObject:
@@ -543,9 +543,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &51598285
 GameObject:
@@ -592,9 +592,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &52617869
 GameObject:
@@ -641,9 +641,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &85157868
 GameObject:
@@ -690,9 +690,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &91834084
 GameObject:
@@ -739,9 +739,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 122
-  laneWidth: 7.4601374
+  laneWidth: 6.266515
   brakingCaution: 0.5872629
-  overtakeWidth: 4.3268795
+  overtakeWidth: 3.548041
   preferredLaneOffset01: -0.2724037
 --- !u!1 &112478628
 GameObject:
@@ -788,9 +788,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 130.05365
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.55234987
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &124121003
 GameObject:
@@ -837,9 +837,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 138.36716
-  laneWidth: 7.228847
+  laneWidth: 6.072231
   brakingCaution: 0.5156139
-  overtakeWidth: 4.1927314
+  overtakeWidth: 3.43804
   preferredLaneOffset01: -0.015024342
 --- !u!1 &127607268
 GameObject:
@@ -886,9 +886,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 215.5273
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.229146
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &129255204
 GameObject:
@@ -935,9 +935,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &154596953
 GameObject:
@@ -984,9 +984,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 134.34758
-  laneWidth: 7.0845037
+  laneWidth: 5.950983
   brakingCaution: 0.5332559
-  overtakeWidth: 4.085135
+  overtakeWidth: 3.349811
   preferredLaneOffset01: -0.042138834
 --- !u!1 &156851884
 GameObject:
@@ -1033,9 +1033,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 116.86386
-  laneWidth: 6.633542
+  laneWidth: 5.572175
   brakingCaution: 0.61254907
-  overtakeWidth: 3.6937969
+  overtakeWidth: 3.028913
   preferredLaneOffset01: -0.16185845
 --- !u!1 &213369734
 GameObject:
@@ -1082,9 +1082,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &219553898
 GameObject:
@@ -1131,9 +1131,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 199.9797
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.27748486
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &229832802
 GameObject:
@@ -1180,9 +1180,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &230247034
 GameObject:
@@ -1229,9 +1229,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 6.2065754
+  laneWidth: 5.213523
   brakingCaution: 0.63199997
-  overtakeWidth: 3.3232813
+  overtakeWidth: 2.725091
   preferredLaneOffset01: -0.42
 --- !u!1 &330854631
 GameObject:
@@ -1278,9 +1278,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 203.87627
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.26483068
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &337789327
 GameObject:
@@ -1327,9 +1327,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 134.34758
-  laneWidth: 6.7377257
+  laneWidth: 5.65969
   brakingCaution: 0.5332559
-  overtakeWidth: 3.7842062
+  overtakeWidth: 3.103049
   preferredLaneOffset01: -0.090740554
 --- !u!1 &408194961
 GameObject:
@@ -1376,9 +1376,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 110.89913
-  laneWidth: 6.1427574
+  laneWidth: 5.159916
   brakingCaution: 0.6405126
-  overtakeWidth: 3.2679007
+  overtakeWidth: 2.679679
   preferredLaneOffset01: -0.113527216
 --- !u!1 &410087039
 GameObject:
@@ -1546,9 +1546,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.0419006
+  laneWidth: 5.915197
   brakingCaution: 0.63199997
-  overtakeWidth: 4.048165
+  overtakeWidth: 3.319495
   preferredLaneOffset01: 0.42
 --- !u!1 &422146495
 GameObject:
@@ -1595,9 +1595,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &451514789
 GameObject:
@@ -1644,9 +1644,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &458858220
 GameObject:
@@ -1693,9 +1693,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.021580517
 --- !u!1 &461710404
 GameObject:
@@ -2079,9 +2079,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &487890570
 GameObject:
@@ -2128,9 +2128,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.42
 --- !u!1 &489360888
 GameObject:
@@ -2177,9 +2177,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 5.694996
+  laneWidth: 4.783797
   brakingCaution: 0.700812
-  overtakeWidth: 2.879339
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.041704893
 --- !u!1 &508740663
 GameObject:
@@ -2226,9 +2226,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 129.47766
-  laneWidth: 6.519326
+  laneWidth: 5.476234
   brakingCaution: 0.5549304
-  overtakeWidth: 3.5946817
+  overtakeWidth: 2.947639
   preferredLaneOffset01: -0.04137128
 --- !u!1 &518187138
 GameObject:
@@ -2275,9 +2275,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 150.11581
-  laneWidth: 7.3528247
+  laneWidth: 6.176373
   brakingCaution: 0.4653799
-  overtakeWidth: 4.2646384
+  overtakeWidth: 3.497003
   preferredLaneOffset01: -0.0131044565
 --- !u!1 &530264403
 GameObject:
@@ -2324,9 +2324,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.3518956
 --- !u!1 &542654777
 GameObject:
@@ -2373,9 +2373,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 164.94377
-  laneWidth: 7.4972963
+  laneWidth: 6.297729
   brakingCaution: 0.4049762
-  overtakeWidth: 4.3484316
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.011658623
 --- !u!1 &548398811
 GameObject:
@@ -2422,9 +2422,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 183.84265
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.33331904
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &549276554
 GameObject:
@@ -2471,9 +2471,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 214.63203
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.23176654
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &558040199
 GameObject:
@@ -2520,9 +2520,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 148
-  laneWidth: 6.650841
+  laneWidth: 5.586706
   brakingCaution: 0.52
-  overtakeWidth: 3.7088091
+  overtakeWidth: 3.041223
   preferredLaneOffset01: 0
 --- !u!1 &563288494
 GameObject:
@@ -2569,9 +2569,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.7802913
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: 0.42
 --- !u!1001 &591396721
 PrefabInstance:
@@ -2731,9 +2731,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &611105550
 GameObject:
@@ -2780,9 +2780,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &674664962
 GameObject:
@@ -2829,9 +2829,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &674891840
 GameObject:
@@ -2876,7 +2876,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 745128786}
     CustomLookAtTarget: 1
   Lens:
-    FieldOfView: 62.68411
+    FieldOfView: 63.99467
     OrthographicSize: 5
     NearClipPlane: 0.3
     FarClipPlane: 1000
@@ -2994,9 +2994,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &689709123
 GameObject:
@@ -3043,9 +3043,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!134 &695016632
 PhysicsMaterial:
@@ -3105,9 +3105,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 178
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.42
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &727675270
 GameObject:
@@ -3154,9 +3154,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &745128784
 GameObject:
@@ -3266,9 +3266,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.393704
+  laneWidth: 4.6
   brakingCaution: 0.78224224
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.0052892677
 --- !u!1 &831135113
 GameObject:
@@ -3315,9 +3315,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &832575517
 GameObject:
@@ -3413,9 +3413,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &842531645
 GameObject:
@@ -3541,9 +3541,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &878694609
 GameObject:
@@ -3590,9 +3590,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 178
-  laneWidth: 7.544402
+  laneWidth: 6.337298
   brakingCaution: 0.44
-  overtakeWidth: 4.375753
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!4 &888901854 stripped
 Transform:
@@ -3644,9 +3644,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &932490387
 GameObject:
@@ -3693,9 +3693,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &953588483
 GameObject:
@@ -3742,9 +3742,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &954064445
 GameObject:
@@ -3791,9 +3791,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &956359523
 GameObject:
@@ -3950,9 +3950,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 220
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.26
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &979414409
 GameObject:
@@ -3999,9 +3999,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 109.36007
-  laneWidth: 6.0295157
+  laneWidth: 5.064793
   brakingCaution: 0.6478005
-  overtakeWidth: 3.169631
+  overtakeWidth: 2.599097
   preferredLaneOffset01: -0.00014334428
 --- !u!134 &1046536571
 PhysicsMaterial:
@@ -4061,9 +4061,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 130.98158
-  laneWidth: 6.9000125
+  laneWidth: 5.796011
   brakingCaution: 0.5482022
-  overtakeWidth: 3.9250362
+  overtakeWidth: 3.21853
   preferredLaneOffset01: -0.056017768
 --- !u!1 &1063630821
 GameObject:
@@ -4110,9 +4110,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 133.89166
-  laneWidth: 7.428482
+  laneWidth: 6.239925
   brakingCaution: 0.53527117
-  overtakeWidth: 4.3085194
+  overtakeWidth: 3.532986
   preferredLaneOffset01: -0
 --- !u!1 &1086652953
 GameObject:
@@ -4159,9 +4159,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1111363403
 GameObject:
@@ -4208,9 +4208,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1134057152
 GameObject:
@@ -4257,9 +4257,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0.09380825
 --- !u!1 &1151703034
 GameObject:
@@ -4458,9 +4458,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.426333
+  laneWidth: 4.6
   brakingCaution: 0.7734236
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: 0
 --- !u!1 &1175968235
 GameObject:
@@ -4690,9 +4690,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1193984790
 GameObject:
@@ -4739,9 +4739,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.30411643
 --- !u!1 &1252863529
 GameObject:
@@ -4788,9 +4788,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1255669684
 GameObject:
@@ -5099,9 +5099,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 109.36007
-  laneWidth: 7.67431
+  laneWidth: 6.44642
   brakingCaution: 0.6478005
-  overtakeWidth: 4.4511
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0.30145305
 --- !u!1 &1318661975
 GameObject:
@@ -5148,9 +5148,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 197.13414
-  laneWidth: 7.09041
+  laneWidth: 5.955944
   brakingCaution: 0.32367295
-  overtakeWidth: 4.0902615
+  overtakeWidth: 3.354014
   preferredLaneOffset01: -0
 --- !u!1 &1320816974
 GameObject:
@@ -5197,9 +5197,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 170.89857
-  laneWidth: 7.5124054
+  laneWidth: 6.310421
   brakingCaution: 0.38172293
-  overtakeWidth: 4.357195
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.002765442
 --- !u!1 &1322097527
 GameObject:
@@ -5246,9 +5246,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 5.6953297
+  laneWidth: 4.784077
   brakingCaution: 0.70072174
-  overtakeWidth: 2.8796287
+  overtakeWidth: 2.4
   preferredLaneOffset01: 0.16465798
 --- !u!1 &1328113530
 GameObject:
@@ -5295,9 +5295,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &1361618807
 GameObject:
@@ -5462,9 +5462,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.3613978
 --- !u!1 &1394431053
 GameObject:
@@ -5511,9 +5511,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.014760343
 --- !u!1 &1409443701
 GameObject:
@@ -5560,9 +5560,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 233.5954
-  laneWidth: 7.5790176
+  laneWidth: 6.366375
   brakingCaution: 0.19161695
-  overtakeWidth: 4.39583
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1470503996
 GameObject:
@@ -5609,9 +5609,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 128
-  laneWidth: 6.2173514
+  laneWidth: 5.222575
   brakingCaution: 0.66
-  overtakeWidth: 3.332632
+  overtakeWidth: 2.732758
   preferredLaneOffset01: -0
 --- !u!1 &1498525637
 GameObject:
@@ -5658,9 +5658,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1506365846
 GameObject:
@@ -5707,9 +5707,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1515583719
 GameObject:
@@ -5756,9 +5756,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 114.296936
-  laneWidth: 5.9864683
+  laneWidth: 5.028633
   brakingCaution: 0.62452793
-  overtakeWidth: 3.132275
+  overtakeWidth: 2.568466
   preferredLaneOffset01: -0.17513002
 --- !u!1 &1522851856
 GameObject:
@@ -5805,9 +5805,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 142
-  laneWidth: 7.13108
+  laneWidth: 5.990107
   brakingCaution: 0.58
-  overtakeWidth: 4.1255536
+  overtakeWidth: 3.382954
   preferredLaneOffset01: -0
 --- !u!1 &1531129112
 GameObject:
@@ -5854,9 +5854,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.78919816
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.42
 --- !u!1 &1538597926
 GameObject:
@@ -5877,7 +5877,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1538597927
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6058,9 +6058,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 239.99312
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.1670709
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1560015395
 GameObject:
@@ -6107,9 +6107,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 152.67827
-  laneWidth: 6.314532
+  laneWidth: 5.304207
   brakingCaution: 0.53336984
-  overtakeWidth: 3.416964
+  overtakeWidth: 2.80191
   preferredLaneOffset01: -0.0057146694
 --- !u!1 &1571915629
 GameObject:
@@ -6156,9 +6156,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 6.7478094
+  laneWidth: 5.66816
   brakingCaution: 0.63199997
-  overtakeWidth: 3.7929564
+  overtakeWidth: 3.110224
   preferredLaneOffset01: -0.2181028
 --- !u!1 &1572687122
 GameObject:
@@ -6205,9 +6205,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 105.783104
-  laneWidth: 6.5925198
+  laneWidth: 5.537717
   brakingCaution: 0.6648518
-  overtakeWidth: 3.658198
+  overtakeWidth: 2.999722
   preferredLaneOffset01: -0.022475641
 --- !u!1 &1578802206
 GameObject:
@@ -6254,9 +6254,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 105.783104
-  laneWidth: 6.9804854
+  laneWidth: 5.863608
   brakingCaution: 0.6648518
-  overtakeWidth: 3.9948697
+  overtakeWidth: 3.275793
   preferredLaneOffset01: -0.08917742
 --- !u!1 &1582828562
 GameObject:
@@ -6303,9 +6303,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 100.4041
-  laneWidth: 7.3204403
+  laneWidth: 6.14917
   brakingCaution: 0.6907873
-  overtakeWidth: 4.2458553
+  overtakeWidth: 3.481601
   preferredLaneOffset01: -0.08505674
 --- !u!1 &1618069158
 GameObject:
@@ -6352,9 +6352,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 223.47104
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.20686585
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1638497969
 GameObject:
@@ -6401,9 +6401,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 116.86386
-  laneWidth: 6.936857
+  laneWidth: 5.82696
   brakingCaution: 0.61254907
-  overtakeWidth: 3.9570103
+  overtakeWidth: 3.244748
   preferredLaneOffset01: -0.03547411
 --- !u!1 &1642877222
 GameObject:
@@ -6450,9 +6450,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 129.95421
-  laneWidth: 6.3611026
+  laneWidth: 5.343326
   brakingCaution: 0.5527951
-  overtakeWidth: 3.457378
+  overtakeWidth: 2.83505
   preferredLaneOffset01: -0.21478862
 --- !u!1 &1654818512
 GameObject:
@@ -6499,9 +6499,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.42
 --- !u!1 &1677378340
 GameObject:
@@ -6548,9 +6548,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: 0.016376374
 --- !u!1 &1711978373
 GameObject:
@@ -6597,9 +6597,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 182.39957
-  laneWidth: 7.56695
+  laneWidth: 6.356238
   brakingCaution: 0.3385637
-  overtakeWidth: 4.3888307
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.00017649627
 --- !u!1 &1751010273
 GameObject:
@@ -6646,9 +6646,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1768138502
 GameObject:
@@ -6878,9 +6878,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.6272206
+  laneWidth: 6.406865
   brakingCaution: 0.63199997
-  overtakeWidth: 4.423788
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.33283514
 --- !u!1 &1789652574
 GameObject:
@@ -6927,9 +6927,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1811288062
 GameObject:
@@ -6976,9 +6976,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 5.576792
+  laneWidth: 4.684505
   brakingCaution: 0.632759
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.07528324
 --- !u!1 &1840133227
 GameObject:
@@ -7104,9 +7104,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 100.4041
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.6907873
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0
 --- !u!1 &1860256277
 GameObject:
@@ -7153,9 +7153,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 134.30746
-  laneWidth: 6.7207236
+  laneWidth: 5.645408
   brakingCaution: 0.53343314
-  overtakeWidth: 3.7694519
+  overtakeWidth: 3.090951
   preferredLaneOffset01: 0.10340113
 --- !u!1 &1864758590
 GameObject:
@@ -7202,9 +7202,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 187.78258
-  laneWidth: 7.6989117
+  laneWidth: 6.467086
   brakingCaution: 0.3192029
-  overtakeWidth: 4.4653687
+  overtakeWidth: 3.55
   preferredLaneOffset01: -0.0017965905
 --- !u!1 &1875633755
 GameObject:
@@ -7251,9 +7251,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 5.6171494
+  laneWidth: 4.718405
   brakingCaution: 0.72185165
-  overtakeWidth: 2.8117847
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0
 --- !u!1 &1877691301
 GameObject:
@@ -7285,9 +7285,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!4 &1877691303
 Transform:
@@ -7349,9 +7349,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.0220119
 --- !u!1 &1970457389
 GameObject:
@@ -7477,9 +7477,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 112
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.63199997
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &1991917757
 GameObject:
@@ -7526,9 +7526,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 122
-  laneWidth: 5.987488
+  laneWidth: 5.02949
   brakingCaution: 0.62176
-  overtakeWidth: 3.1331599
+  overtakeWidth: 2.569191
   preferredLaneOffset01: 0.024341328
 --- !u!1 &2084479999
 GameObject:
@@ -7575,9 +7575,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 102
-  laneWidth: 5.2
+  laneWidth: 4.6
   brakingCaution: 0.8
-  overtakeWidth: 2.8
+  overtakeWidth: 2.4
   preferredLaneOffset01: -0.07209738
 --- !u!1 &2089417019
 GameObject:
@@ -7624,9 +7624,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 220
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.26
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &2091453107
 GameObject:
@@ -7673,9 +7673,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 129.95421
-  laneWidth: 7.0357914
+  laneWidth: 5.910065
   brakingCaution: 0.5527951
-  overtakeWidth: 4.0428634
+  overtakeWidth: 3.315148
   preferredLaneOffset01: 0.19257914
 --- !u!1 &2107852439
 GameObject:
@@ -7722,9 +7722,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetSpeedKmh: 258
-  laneWidth: 7.77
+  laneWidth: 6.5268
   brakingCaution: 0.14
-  overtakeWidth: 4.5066
+  overtakeWidth: 3.55
   preferredLaneOffset01: 0
 --- !u!1 &2132935404
 GameObject:
@@ -7762,12 +7762,14 @@ MonoBehaviour:
   defaultAIPhysicsProfile: {fileID: 11400000, guid: b2d1af3fef01ee4468d466af3d1e6827, type: 2}
   defaultDifficultyProfile: {fileID: 11400000, guid: d36a323d3c859e74ca5d8d4810b7aff5, type: 2}
   perceptionFrameStride: 3
+  autoAssignCenteredLanes: 1
+  autoPreferredLaneOffset01: 0.42
   spawnOnStart: 1
   includePlayerInGrid: 1
   playerGridPosition: 7
   gridAnchor: {fileID: 0}
   gridRowSpacing: 8.2
-  gridColumnSpacing: 5.2
+  gridColumnSpacing: 4.6
   gridCenterOffset: 0
   gridVerticalOffset: 0.05
   poleOnRight: 1
@@ -7782,7 +7784,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d3e01040d8eb24144b6a212310565293, type: 2}
     fallbackDifficulty: 2
     preferRightOvertake: 1
-    preferredLaneOffset01: 0.34
+    preferredLaneOffset01: 0.44
   - driverName: AI_F1_Body_02
     gridPosition: 1
     existingCar: {fileID: 0}
@@ -7792,7 +7794,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d3e01040d8eb24144b6a212310565293, type: 2}
     fallbackDifficulty: 2
     preferRightOvertake: 0
-    preferredLaneOffset01: -0.42000002
+    preferredLaneOffset01: -0.48
   - driverName: AI_F1_Body_03
     gridPosition: 2
     existingCar: {fileID: 0}
@@ -7802,7 +7804,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d3e01040d8eb24144b6a212310565293, type: 2}
     fallbackDifficulty: 2
     preferRightOvertake: 1
-    preferredLaneOffset01: 0.5
+    preferredLaneOffset01: 0.52
   - driverName: AI_F1_Body_04
     gridPosition: 3
     existingCar: {fileID: 0}
@@ -7812,7 +7814,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d36a323d3c859e74ca5d8d4810b7aff5, type: 2}
     fallbackDifficulty: 1
     preferRightOvertake: 0
-    preferredLaneOffset01: -0.34
+    preferredLaneOffset01: -0.44
   - driverName: AI_F1_Body_05
     gridPosition: 4
     existingCar: {fileID: 0}
@@ -7822,7 +7824,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d36a323d3c859e74ca5d8d4810b7aff5, type: 2}
     fallbackDifficulty: 1
     preferRightOvertake: 1
-    preferredLaneOffset01: 0.42000002
+    preferredLaneOffset01: 0.48
   - driverName: AI_F1_Body_06
     gridPosition: 5
     existingCar: {fileID: 0}
@@ -7832,7 +7834,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d36a323d3c859e74ca5d8d4810b7aff5, type: 2}
     fallbackDifficulty: 1
     preferRightOvertake: 0
-    preferredLaneOffset01: -0.5
+    preferredLaneOffset01: -0.52
   - driverName: AI_F1_Body_07
     gridPosition: 6
     existingCar: {fileID: 0}
@@ -7842,7 +7844,7 @@ MonoBehaviour:
     difficultyProfile: {fileID: 11400000, guid: d36a323d3c859e74ca5d8d4810b7aff5, type: 2}
     fallbackDifficulty: 1
     preferRightOvertake: 1
-    preferredLaneOffset01: 0.34
+    preferredLaneOffset01: 0.44
 --- !u!4 &2132935406
 Transform:
   m_ObjectHideFlags: 0
@@ -7961,6 +7963,7 @@ MonoBehaviour:
   generatePlaceholderClip: 1
   placeholderSampleRate: 22050
   placeholderLoopSeconds: 0.55
+  placeholderShiftSeconds: 0.12
   masterVolume: 0.75
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

@@ -5,7 +5,8 @@ public enum AISpeedClampReason
     None,
     TrafficCaution,
     EmergencyBrake,
-    TrackRecovery
+    TrackRecovery,
+    SideTraffic
 }
 
 [DefaultExecutionOrder(-150)]
@@ -33,14 +34,14 @@ public class AIDriverController : MonoBehaviour
     [Range(1f, 80f)] public float throttleFullErrorKmh = 22f;
     [Range(1f, 100f)] public float brakeFullErrorKmh = 34f;
     [Range(10f, 160f)] public float blockedTargetSpeedKmh = 45f;
-    [Range(0f, 1f)] public float steeringThrottleReduction = 0.35f;
+    [Range(0f, 1f)] public float steeringThrottleReduction = 0.24f;
 
     [Header("Competitive Pace")]
-    [Range(0f, 0.5f)] public float baseCornerCautionStrength = 0.35f;
-    [Range(0f, 0.5f)] public float competitiveCornerCautionStrength = 0.16f;
+    [Range(0f, 0.5f)] public float baseCornerCautionStrength = 0.28f;
+    [Range(0f, 0.5f)] public float competitiveCornerCautionStrength = 0.1f;
     [Range(0f, 0.25f)] public float overtakeSpeedBoost = 0.08f;
     [Range(0f, 1f)] public float overtakeTrafficSlowdownScale = 0.35f;
-    [Range(0f, 1f)] public float overtakeSteeringThrottleScale = 0.55f;
+    [Range(0f, 1f)] public float overtakeSteeringThrottleScale = 0.5f;
 
     [Header("Overtaking")]
     public bool preferRightOvertake = true;
@@ -54,6 +55,14 @@ public class AIDriverController : MonoBehaviour
     [Range(0f, 4f)] public float laneEdgeSafetyMargin = 1.4f;
     [Range(0f, 1f)] public float laneVariationStrength = 0.18f;
     [Range(0.01f, 0.5f)] public float laneVariationFrequency = 0.06f;
+
+    [Header("Traffic Safety")]
+    [Range(0f, 2f)] public float sideTrafficLaneHoldBuffer = 0.35f;
+    [Range(0f, 1f)] public float sideTrafficTurnThrottleScale = 0.74f;
+    [Range(0f, 0.5f)] public float sideTrafficTurnBrake = 0.12f;
+    [Range(0f, 1f)] public float sideTrafficSteeringThreshold = 0.32f;
+    [Range(0f, 1f)] public float packCornerCurvatureThreshold = 0.42f;
+    [Range(0.2f, 1f)] public float packCornerSpeedScale = 0.82f;
 
     [Header("Track Recovery")]
     [Range(0f, 8f)] public float trackRecoveryMargin = 1.25f;
@@ -252,10 +261,43 @@ public class AIDriverController : MonoBehaviour
             }
         }
 
+        ApplySideTrafficLaneGuard();
         CurrentLaneOffset = Mathf.MoveTowards(
             CurrentLaneOffset,
             DesiredLaneOffset,
             laneOffsetMoveSpeed * Time.fixedDeltaTime);
+    }
+
+    private void ApplySideTrafficLaneGuard()
+    {
+        if (perception == null || IsRecoveringTrack)
+            return;
+
+        float laneDelta = DesiredLaneOffset - CurrentLaneOffset;
+        bool movingRight = laneDelta > sideTrafficLaneHoldBuffer;
+        bool movingLeft = laneDelta < -sideTrafficLaneHoldBuffer;
+
+        if (perception.RightBlocked && movingRight)
+        {
+            DesiredLaneOffset = Mathf.Min(DesiredLaneOffset, CurrentLaneOffset);
+            CancelBlockedOvertake(1);
+        }
+
+        if (perception.LeftBlocked && movingLeft)
+        {
+            DesiredLaneOffset = Mathf.Max(DesiredLaneOffset, CurrentLaneOffset);
+            CancelBlockedOvertake(-1);
+        }
+    }
+
+    private void CancelBlockedOvertake(int blockedDirection)
+    {
+        if (_overtakeDirection != blockedDirection)
+            return;
+
+        _overtakeDirection = 0;
+        _overtakeCommitTimer = 0f;
+        IsOvertaking = false;
     }
 
     private void CalculateInputs(Vector3 targetPoint, float targetSpeedKmh, float speedKmh, AIDifficultyProfile difficulty)
@@ -278,6 +320,13 @@ public class AIDriverController : MonoBehaviour
                 LastSpeedClampReason = AISpeedClampReason.TrafficCaution;
         }
 
+        if (HasPackCornerRisk())
+        {
+            speedTarget = Mathf.Min(speedTarget, targetSpeedKmh * packCornerSpeedScale);
+            if (LastSpeedClampReason == AISpeedClampReason.None)
+                LastSpeedClampReason = AISpeedClampReason.SideTraffic;
+        }
+
         LastSpeedTargetKmh = speedTarget;
         float speedError = speedTarget - speedKmh;
         LastThrottleInput = Mathf.Clamp01(speedError / throttleFullErrorKmh);
@@ -289,6 +338,15 @@ public class AIDriverController : MonoBehaviour
             : steeringThrottleReduction;
         LastThrottleInput *= 1f - steeringLoad * steeringThrottleScale;
 
+        if (HasSideTrafficTurnRisk(steeringLoad))
+        {
+            float sideCaution = Mathf.InverseLerp(sideTrafficSteeringThreshold, 1f, steeringLoad);
+            LastThrottleInput *= Mathf.Lerp(1f, sideTrafficTurnThrottleScale, sideCaution);
+            LastBrakeInput = Mathf.Max(LastBrakeInput, sideTrafficTurnBrake * sideCaution);
+            if (LastSpeedClampReason == AISpeedClampReason.None)
+                LastSpeedClampReason = AISpeedClampReason.SideTraffic;
+        }
+
         if (perception != null && perception.FrontBlocked && perception.FrontDistance < 6f)
         {
             LastThrottleInput = 0f;
@@ -298,6 +356,28 @@ public class AIDriverController : MonoBehaviour
 
         if (IsRecoveringTrack && LastSpeedClampReason == AISpeedClampReason.None)
             LastSpeedClampReason = AISpeedClampReason.TrackRecovery;
+    }
+
+    private bool HasSideTrafficTurnRisk(float steeringLoad)
+    {
+        if (perception == null || steeringLoad < sideTrafficSteeringThreshold)
+            return false;
+
+        float laneDelta = DesiredLaneOffset - CurrentLaneOffset;
+        bool rightRisk = perception.RightBlocked
+            && (LastSteeringInput > sideTrafficSteeringThreshold || laneDelta > sideTrafficLaneHoldBuffer);
+        bool leftRisk = perception.LeftBlocked
+            && (LastSteeringInput < -sideTrafficSteeringThreshold || laneDelta < -sideTrafficLaneHoldBuffer);
+
+        return rightRisk || leftRisk;
+    }
+
+    private bool HasPackCornerRisk()
+    {
+        if (perception == null || LastCornerCurvature < packCornerCurvatureThreshold)
+            return false;
+
+        return perception.FrontBlocked || perception.LeftBlocked || perception.RightBlocked;
     }
 
     private int SelectOvertakeDirection(bool canGoLeft, bool canGoRight)

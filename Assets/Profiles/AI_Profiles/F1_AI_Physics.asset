@@ -20,7 +20,7 @@ MonoBehaviour:
     physicsWheelRadius: 0.34
   tireGrip:
     lateralC: 1.5
-    lateralD: 2
+    lateralD: 2.12
     lateralB: 10
     lateralE: 0.97
     longC: 1.65
@@ -35,16 +35,16 @@ MonoBehaviour:
     lowSpeedThreshold: 15
     midSpeedGripMult: 1
     highSpeedThreshold: 60
-    highSpeedGripMult: 0.92
+    highSpeedGripMult: 0.97
   aero:
-    downforceCoeff: 5.4
+    downforceCoeff: 5.8
     frontBias: 0.231
     fullDownforceSpeed: 70
     lateralDragCoeff: 1.8
     lateralDragOnsetSpeed: 20
     lateralDragCap: 18000
   steering:
-    maxSteerAngle: 16
+    maxSteerAngle: 17.5
     speedSensitivityCurve:
       serializedVersion: 2
       m_Curve:
@@ -122,14 +122,14 @@ MonoBehaviour:
   drivetrain:
     motorForce: 128000
     brakeForce: 95000
-    throttleSpoolSpeed: 3.1
+    throttleSpoolSpeed: 3.5
     brakeSpoolSpeed: 6
     rearDriveBias: 1
     frontBrakeBias: 0.68
     brakeSteerStability: 0.75
     brakeSteerFrontBias: 0.72
     brakeSteerBlendSpeedKmh: 80
-    reverseMaxSpeedKmh: 12
+    reverseMaxSpeedKmh: 0
     motorForceBySpeed:
       serializedVersion: 2
       m_Curve:

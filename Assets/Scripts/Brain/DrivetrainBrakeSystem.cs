@@ -294,6 +294,9 @@ public class DrivetrainBrakeSystem : MonoBehaviour
 
     private bool ShouldUseReverse(float brakeInput, float throttleInput, float forwardSpeedKmh)
     {
+        if (reverseMaxSpeedKmh <= 0.01f)
+            return false;
+
         if (brakeInput <= 0.01f || throttleInput > 0.01f)
             return false;
 

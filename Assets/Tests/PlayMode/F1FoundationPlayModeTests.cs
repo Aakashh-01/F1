@@ -83,6 +83,33 @@ public class F1FoundationPlayModeTests
     }
 
     [Test]
+    public void DrivetrainBrake_DisablesReverseWhenReverseSpeedIsZero()
+    {
+        GameObject car = new GameObject("Reverse Disabled Test Car");
+        BasicMotor drivetrain = car.AddComponent<BasicMotor>();
+        drivetrain.reverseMaxSpeedKmh = 0f;
+        var method = typeof(DrivetrainBrakeSystem).GetMethod(
+            "ShouldUseReverse",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        bool atRestUsesReverse = (bool)method.Invoke(drivetrain, new object[] { 1f, 0f, 0f });
+
+        Assert.IsFalse(atRestUsesReverse);
+        Object.DestroyImmediate(car);
+    }
+
+#if UNITY_EDITOR
+    [Test]
+    public void AIPhysicsProfile_DisablesReverseForGridLaunch()
+    {
+        VehiclePhysicsProfile profile = UnityEditor.AssetDatabase.LoadAssetAtPath<VehiclePhysicsProfile>("Assets/Profiles/AI_Profiles/F1_AI_Physics.asset");
+
+        Assert.IsNotNull(profile);
+        Assert.AreEqual(0f, profile.drivetrain.reverseMaxSpeedKmh, 0.001f);
+    }
+#endif
+
+    [Test]
     public void SteeringAssist_UsesSlipAngleInsteadOfGripCoefficient()
     {
         GameObject car = new GameObject("Steering Test Car");
@@ -606,6 +633,7 @@ public class F1FoundationPlayModeTests
 
         manager.racingLine = driver.racingLine;
         manager.perceptionFrameStride = 4;
+        manager.autoAssignCenteredLanes = false;
         manager.ConfigureCar(driver.gameObject, entry, 6);
 
         Assert.AreSame(physicsProfile, coordinator.physicsProfile);
@@ -622,6 +650,30 @@ public class F1FoundationPlayModeTests
         Object.DestroyImmediate(difficultyProfile);
         Object.DestroyImmediate(managerObject);
         Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void RaceGridManager_AutoAssignsCenteredEntriesToAlternatingRaceLanes()
+    {
+        GameObject rightRig = CreateAIDriverTestRig(out _, out AIDriverController rightDriver, out _, out _);
+        GameObject leftRig = CreateAIDriverTestRig(out _, out AIDriverController leftDriver, out _, out _);
+        GameObject managerObject = new GameObject("Race Grid Manager");
+        RaceGridManager manager = managerObject.AddComponent<RaceGridManager>();
+        manager.autoAssignCenteredLanes = true;
+        manager.autoPreferredLaneOffset01 = 0.42f;
+        manager.poleOnRight = true;
+
+        RaceGridManager.RaceGridEntry entry = new RaceGridManager.RaceGridEntry();
+
+        manager.ConfigureCar(rightDriver.gameObject, entry, 0);
+        manager.ConfigureCar(leftDriver.gameObject, entry, 1);
+
+        Assert.AreEqual(0.42f, rightDriver.preferredLaneOffset01, 0.001f);
+        Assert.AreEqual(-0.42f, leftDriver.preferredLaneOffset01, 0.001f);
+
+        Object.DestroyImmediate(managerObject);
+        Object.DestroyImmediate(rightRig);
+        Object.DestroyImmediate(leftRig);
     }
 
     [Test]
@@ -864,6 +916,77 @@ public class F1FoundationPlayModeTests
         Assert.IsFalse(sensor.FrontBlocked);
         Assert.AreEqual(1.68f, driver.DesiredLaneOffset, 0.001f);
 
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_HoldsLaneWhenSideTrafficBlocksDesiredLane()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject rightObstacle = CreateObstacle("Right Side Traffic", new Vector3(4f, 0.8f, 0f));
+        driver.preferredLaneOffset01 = 0.8f;
+        driver.freeTrackLaneUse = 0.7f;
+        driver.laneVariationStrength = 0f;
+        driver.sideTrafficLaneHoldBuffer = 0.1f;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsTrue(sensor.RightBlocked);
+        Assert.AreEqual(0f, driver.DesiredLaneOffset, 0.001f);
+
+        Object.DestroyImmediate(rightObstacle);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_UsesSideTrafficCautionInTurns()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject rightObstacle = CreateObstacle("Right Turn Side Traffic", new Vector3(4f, 0.8f, 0f));
+        SetLineWaypoint(driver.racingLine, 1, new Vector3(12f, 0f, 28f), 160f);
+        SetLineWaypoint(driver.racingLine, 2, new Vector3(22f, 0f, 56f), 160f);
+        driver.preferredLaneOffset01 = 0f;
+        driver.laneVariationStrength = 0f;
+        driver.sideTrafficSteeringThreshold = 0.2f;
+        driver.sideTrafficTurnBrake = 0.16f;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsTrue(sensor.RightBlocked);
+        Assert.AreEqual(AISpeedClampReason.SideTraffic, driver.LastSpeedClampReason);
+        Assert.Greater(driver.LastBrakeInput, 0f);
+
+        Object.DestroyImmediate(rightObstacle);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_PackedSharpCornerScalesSpeedForTraffic()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out _);
+        GameObject rightObstacle = CreateObstacle("Packed Corner Side Traffic", new Vector3(4f, 0.8f, 0f));
+        SetLineWaypoint(driver.racingLine, 1, new Vector3(16f, 0f, 20f), 180f);
+        SetLineWaypoint(driver.racingLine, 2, new Vector3(32f, 0f, 20f), 180f);
+        driver.packCornerCurvatureThreshold = 0.1f;
+        driver.packCornerSpeedScale = 0.72f;
+        driver.laneVariationStrength = 0f;
+
+        Physics.SyncTransforms();
+        sensor.Tick(true);
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.IsTrue(sensor.RightBlocked);
+        Assert.AreEqual(AISpeedClampReason.SideTraffic, driver.LastSpeedClampReason);
+        Assert.LessOrEqual(driver.LastSpeedTargetKmh, driver.LastTargetSpeedKmh * 0.72f + 0.001f);
+
+        Object.DestroyImmediate(rightObstacle);
         Object.DestroyImmediate(rig);
     }
 
@@ -1171,6 +1294,38 @@ public class F1FoundationPlayModeTests
 
         Object.DestroyImmediate(car);
     }
+
+    [Test]
+    public void EngineAudio_GeneratesPlaceholderShiftBlipWhenNoClipAssigned()
+    {
+        GameObject car = new GameObject("Generated Shift Audio Test Car");
+        car.AddComponent<Rigidbody>();
+        car.AddComponent<VehiclePhysicsCoordinator>().applyProfileOnAwake = false;
+        car.AddComponent<AudioSource>();
+        car.AddComponent<AudioSource>();
+        F1EngineAudioController engine = car.AddComponent<F1EngineAudioController>();
+
+        engine.SendMessage("Awake");
+
+        Assert.IsNotNull(engine.shiftSource);
+        Assert.IsNotNull(engine.shiftBlipClip);
+        Assert.IsFalse(engine.shiftSource.loop);
+        Assert.LessOrEqual(engine.shiftBlipClip.length, 0.3f);
+
+        Object.DestroyImmediate(car);
+    }
+
+#if UNITY_EDITOR
+    [Test]
+    public void PlayerPhysicsProfile_UsesClientBuildMotorPower()
+    {
+        VehiclePhysicsProfile profile = UnityEditor.AssetDatabase.LoadAssetAtPath<VehiclePhysicsProfile>("Assets/Profiles/F1_Player_Physics.asset");
+
+        Assert.IsNotNull(profile);
+        Assert.LessOrEqual(profile.drivetrain.motorForce, 100000f);
+        Assert.LessOrEqual(profile.drivetrain.throttleSpoolSpeed, 1.35f);
+    }
+#endif
 
     [Test]
     public void CameraSpeedPerception_IncreasesFovWithSpeed()

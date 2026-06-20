@@ -633,14 +633,14 @@ MonoBehaviour:
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  forwardDistance: 28
-  sideDistance: 7
+  forwardDistance: 32
+  sideDistance: 8.5
   forwardHalfExtents: {x: 1.3, y: 0.8, z: 0.8}
-  sideHalfExtents: {x: 1, y: 0.8, z: 1.6}
+  sideHalfExtents: {x: 1.15, y: 0.8, z: 2.3}
   sensorHeight: 0.8
   fixedFrameStride: 3
   fixedFrameOffset: 0
-  minimumUpdateInterval: 0.07
+  minimumUpdateInterval: 0.055
   hitBufferSize: 8
   FrontBlocked: 0
   LeftBlocked: 0
@@ -670,27 +670,33 @@ MonoBehaviour:
   lookaheadPerKmh: 0.035
   curvatureLookaheadSteps: 3
   steeringAngleForFullInput: 32
-  laneOffsetMoveSpeed: 4.2
+  laneOffsetMoveSpeed: 4.4
   waypointReachDistance: 8
   forwardProgressSearchSteps: 4
   throttleFullErrorKmh: 16
   brakeFullErrorKmh: 42
   blockedTargetSpeedKmh: 45
-  steeringThrottleReduction: 0.16
-  baseCornerCautionStrength: 0.32
-  competitiveCornerCautionStrength: 0.14
-  overtakeSpeedBoost: 0.05
-  overtakeTrafficSlowdownScale: 0.45
-  overtakeSteeringThrottleScale: 0.6
+  steeringThrottleReduction: 0.12
+  baseCornerCautionStrength: 0.26
+  competitiveCornerCautionStrength: 0.09
+  overtakeSpeedBoost: 0.07
+  overtakeTrafficSlowdownScale: 0.4
+  overtakeSteeringThrottleScale: 0.48
   preferRightOvertake: 1
   overtakeTrigger: 0.18
   overtakeCommitSeconds: 1.1
   preferredLaneOffset01: 0
-  freeTrackLaneUse: 0.7
-  waypointLaneInfluence: 0.72
+  freeTrackLaneUse: 0.74
+  waypointLaneInfluence: 0.78
   laneEdgeSafetyMargin: 1.4
-  laneVariationStrength: 0.12
+  laneVariationStrength: 0.05
   laneVariationFrequency: 0.08
+  sideTrafficLaneHoldBuffer: 0.25
+  sideTrafficTurnThrottleScale: 0.62
+  sideTrafficTurnBrake: 0.18
+  sideTrafficSteeringThreshold: 0.24
+  packCornerCurvatureThreshold: 0.38
+  packCornerSpeedScale: 0.74
   trackRecoveryMargin: 1.25
   trackRecoverySpeedKmh: 95
   drawDebug: 1

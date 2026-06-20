@@ -15,6 +15,7 @@ public class F1EngineAudioController : MonoBehaviour
     public bool generatePlaceholderClip = true;
     [Range(4000, 48000)] public int placeholderSampleRate = 22050;
     [Range(0.1f, 2f)] public float placeholderLoopSeconds = 0.55f;
+    [Range(0.03f, 0.3f)] public float placeholderShiftSeconds = 0.12f;
     [Range(0f, 1f)] public float masterVolume = 1f;
 
     public float CurrentRpm { get; private set; }
@@ -34,6 +35,7 @@ public class F1EngineAudioController : MonoBehaviour
         ResolveReferences();
         EnsureAudioSources();
         EnsureLoopClip();
+        EnsureShiftClip();
         ApplySourceDefaults();
         RefreshTelemetry(true);
     }
@@ -101,6 +103,30 @@ public class F1EngineAudioController : MonoBehaviour
         }
 
         AudioClip clip = AudioClip.Create("Generated_F1_Engine_Loop", sampleCount, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+        return clip;
+    }
+
+    public AudioClip CreatePlaceholderShiftClip()
+    {
+        int sampleRate = Mathf.Max(4000, placeholderSampleRate);
+        int sampleCount = Mathf.Max(128, Mathf.RoundToInt(sampleRate * placeholderShiftSeconds));
+        float[] samples = new float[sampleCount];
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            float t = i / (float)sampleRate;
+            float normalized = i / Mathf.Max(1f, sampleCount - 1f);
+            float attack = Mathf.Clamp01(normalized / 0.12f);
+            float decay = Mathf.Exp(-normalized * 9.5f);
+            float envelope = attack * decay;
+            float pneumatic = Mathf.Sin(2f * Mathf.PI * 1380f * t) * 0.22f;
+            float body = Mathf.Sin(2f * Mathf.PI * 180f * t) * 0.32f;
+            float grit = PseudoNoise(i) * 0.11f * Mathf.Exp(-normalized * 14f);
+            samples[i] = Mathf.Clamp((body + pneumatic + grit) * envelope, -1f, 1f);
+        }
+
+        AudioClip clip = AudioClip.Create("Generated_F1_Upshift_Blip", sampleCount, 1, sampleRate, false);
         clip.SetData(samples, 0);
         return clip;
     }
@@ -173,6 +199,12 @@ public class F1EngineAudioController : MonoBehaviour
             engineSource.clip = engineLoopClip;
     }
 
+    private void EnsureShiftClip()
+    {
+        if (shiftBlipClip == null && generatePlaceholderClip)
+            shiftBlipClip = CreatePlaceholderShiftClip();
+    }
+
     private void ApplySourceDefaults()
     {
         if (engineSource != null)
@@ -191,12 +223,25 @@ public class F1EngineAudioController : MonoBehaviour
             shiftSource.playOnAwake = false;
             shiftSource.spatialBlend = 0.35f;
             shiftSource.dopplerLevel = 0f;
+            shiftSource.rolloffMode = AudioRolloffMode.Linear;
+            shiftSource.maxDistance = 45f;
         }
     }
 
     private void PlayShiftBlip()
     {
         if (shiftSource != null && shiftBlipClip != null && isActiveAndEnabled)
-            shiftSource.PlayOneShot(shiftBlipClip, 0.35f * masterVolume);
+        {
+            shiftSource.pitch = Mathf.Lerp(0.97f, 1.03f, Mathf.Repeat(CurrentGear * 0.37f, 1f));
+            shiftSource.PlayOneShot(shiftBlipClip, 0.18f * masterVolume);
+        }
+    }
+
+    private static float PseudoNoise(int sampleIndex)
+    {
+        uint value = unchecked((uint)sampleIndex * 747796405u + 2891336453u);
+        value = ((value >> ((int)(value >> 28) + 4)) ^ value) * 277803737;
+        value = (value >> 22) ^ value;
+        return (value / 4294967295f) * 2f - 1f;
     }
 }

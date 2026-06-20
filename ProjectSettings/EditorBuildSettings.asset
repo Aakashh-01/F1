@@ -6,6 +6,12 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/ClientDemo_Menu.unity
+    guid: 2cf7a60bcc033a94f873024cf825b577
+  - enabled: 1
+    path: Assets/Scenes/ClientDemo_Akash_Scene.unity
+    guid: 2493032904fc7a042bf84aa6f4bf399a
+  - enabled: 0
     path: Assets/Scenes/Akash_Scene.unity
     guid: 6ee02ea7afa02a446a3287bf56f9f4aa
   m_configObjects:

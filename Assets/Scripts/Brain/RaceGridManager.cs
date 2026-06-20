@@ -29,6 +29,8 @@ public class RaceGridManager : MonoBehaviour
     public VehiclePhysicsProfile defaultAIPhysicsProfile;
     public AIDifficultyProfile defaultDifficultyProfile;
     [Range(1, 12)] public int perceptionFrameStride = 3;
+    public bool autoAssignCenteredLanes = true;
+    [Range(0.1f, 0.8f)] public float autoPreferredLaneOffset01 = 0.42f;
 
     [Header("Grid")]
     public bool spawnOnStart = true;
@@ -154,7 +156,7 @@ public class RaceGridManager : MonoBehaviour
                 ? entry.difficultyProfile.preset
                 : entry.fallbackDifficulty;
             driver.preferRightOvertake = entry.preferRightOvertake;
-            driver.preferredLaneOffset01 = entry.preferredLaneOffset01;
+            driver.preferredLaneOffset01 = GetAssignedPreferredLaneOffset(entry, gridIndex);
         }
 
         if (perception != null)
@@ -243,6 +245,16 @@ public class RaceGridManager : MonoBehaviour
         int gridPosition = nextAutoGridPosition++;
         occupiedGridPositions.Add(gridPosition);
         return gridPosition;
+    }
+
+    private float GetAssignedPreferredLaneOffset(RaceGridEntry entry, int gridIndex)
+    {
+        if (!autoAssignCenteredLanes || Mathf.Abs(entry.preferredLaneOffset01) > 0.01f)
+            return entry.preferredLaneOffset01;
+
+        bool rightSlot = Mathf.Max(0, gridIndex) % 2 == 0 ? poleOnRight : !poleOnRight;
+        float side = rightSlot ? 1f : -1f;
+        return side * autoPreferredLaneOffset01;
     }
 
     private Vector3 GetGridOrigin(Vector3 forward, Vector3 right)
