@@ -1,7 +1,9 @@
 using NUnit.Framework;
 using System;
 using System.Reflection;
+using UnityEngine.TestTools;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 public class F1FoundationPlayModeTests
@@ -110,7 +112,7 @@ public class F1FoundationPlayModeTests
 #endif
 
     [Test]
-    public void SteeringAssist_UsesSlipAngleInsteadOfGripCoefficient()
+    public void SteeringWithoutAdvancedAssist_ProducesZeroAssistAngle()
     {
         GameObject car = new GameObject("Steering Test Car");
         Rigidbody rb = car.AddComponent<Rigidbody>();
@@ -133,8 +135,6 @@ public class F1FoundationPlayModeTests
         steering.tractionSystem = traction;
         steering.wheelFL = wheels[0].transform;
         steering.wheelFR = wheels[1].transform;
-        steering.oversteerAssistStrength = 0.5f;
-        steering.slipThreshold = 8f;
 
 #if UNITY_6000_0_OR_NEWER
         rb.linearVelocity = car.transform.forward * 30f;
@@ -143,7 +143,166 @@ public class F1FoundationPlayModeTests
 #endif
         steering.Simulate(null);
 
-        Assert.Less(steering.LastAssistAngle, 0f);
+        Assert.AreEqual(0f, steering.LastAssistAngle,
+            "Without AdvancedSteeringAssist there must be no assist.");
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void AdvancedSteeringAssist_IsSoleAssistSource()
+    {
+        GameObject car = CreateAdvancedAssistTestCar(0f, 16f, out VehiclePhysicsCoordinator coordinator, out AdvancedSteeringAssist assist);
+        SteeringSystem steering = coordinator.GetComponent<SteeringSystem>();
+        if (steering == null)
+            steering = coordinator.gameObject.AddComponent<SteeringSystem>();
+        steering.advancedAssist = assist;
+
+        RunAdvancedAssistFrames(coordinator, assist, 4);
+
+        steering.Simulate(coordinator);
+
+        Assert.AreEqual(assist.SmoothedAssistAngle, steering.LastAssistAngle,
+            "SteeringSystem must surface exactly the AdvancedSteeringAssist output.");
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void Coordinator_RequiresAdvancedSystems_DoesNotAutoAdd()
+    {
+        LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("AdvancedBrakingSystem missing"));
+        LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("AdvancedSteeringAssist missing"));
+
+        GameObject car = new GameObject("Coordinator Missing Systems Car");
+        car.AddComponent<Rigidbody>();
+        VehiclePhysicsCoordinator coordinator = car.AddComponent<VehiclePhysicsCoordinator>();
+        coordinator.applyProfileOnAwake = false;
+
+        Assert.IsNull(car.GetComponent<AdvancedBrakingSystem>(),
+            "Coordinator must not silently AddComponent AdvancedBrakingSystem.");
+        Assert.IsNull(car.GetComponent<AdvancedSteeringAssist>(),
+            "Coordinator must not silently AddComponent AdvancedSteeringAssist.");
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void Coordinator_AppliesProfileToSerializedSystems()
+    {
+        MobileTouchControls.ResetInputs();
+        GameObject car = new GameObject("Coordinator Profile Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        TractionSystem traction = car.AddComponent<TractionSystem>();
+        AdvancedSteeringAssist assist = car.AddComponent<AdvancedSteeringAssist>();
+        AdvancedBrakingSystem braking = car.AddComponent<AdvancedBrakingSystem>();
+        VehiclePhysicsCoordinator coordinator = car.AddComponent<VehiclePhysicsCoordinator>();
+
+        RaycastWheel[] wheels = new RaycastWheel[4];
+        for (int i = 0; i < wheels.Length; i++)
+        {
+            GameObject wheel = new GameObject(i == 0 ? "FL" : i == 1 ? "FR" : i == 2 ? "RL" : "RR");
+            wheel.transform.SetParent(car.transform);
+            wheel.AddComponent<WheelVisual>();
+            wheels[i] = wheel.AddComponent<RaycastWheel>();
+            wheels[i].IsGrounded = true;
+        }
+
+        assist.tractionSystem = traction;
+        braking.rb = rb;
+        braking.tractionSystem = traction;
+        braking.drivetrain = null;
+        braking.weightTransfer = null;
+
+        coordinator.rb = rb;
+        coordinator.wheels = wheels;
+        coordinator.traction = traction;
+        coordinator.advancedSteeringAssist = assist;
+        coordinator.advancedBraking = braking;
+        coordinator.applyProfileOnAwake = false;
+
+        VehiclePhysicsProfile profile = ScriptableObject.CreateInstance<VehiclePhysicsProfile>();
+        profile.advancedSteering.countersteerStrength = 0.61f;
+        profile.advancedSteering.assistLevel = SteeringAssistLevel.Low;
+        profile.advancedBrake.maxLateBrakeMultiplier = 0.93f;
+        profile.advancedBrake.rearInstabilityStrength = 0.21f;
+
+        coordinator.ApplyProfile(profile);
+
+        Assert.AreEqual(0.61f, assist.countersteerStrength);
+        Assert.AreEqual(SteeringAssistLevel.Low, assist.assistLevel);
+        Assert.AreEqual(0.93f, braking.maxLateBrakeMultiplier);
+        Assert.AreEqual(0.21f, braking.rearInstabilityStrength);
+
+        Object.DestroyImmediate(profile);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void WheelSlots_ResolvesByCanonicalNames()
+    {
+        GameObject car = new GameObject("WheelSlots Resolve Car");
+        car.AddComponent<Rigidbody>();
+        RaycastWheel[] found = new RaycastWheel[4];
+        string[] names = { "RR", "FL", "RL", "FR" }; // deliberately unordered
+        for (int i = 0; i < names.Length; i++)
+        {
+            GameObject wheel = new GameObject(names[i]);
+            wheel.transform.SetParent(car.transform);
+            wheel.AddComponent<WheelVisual>();
+            found[i] = wheel.AddComponent<RaycastWheel>();
+        }
+
+        RaycastWheel[] slots = new RaycastWheel[4];
+        WheelSlots.ResolveByName(found, slots);
+
+        Assert.AreEqual("FL", slots[WheelSlots.FL].name);
+        Assert.AreEqual("FR", slots[WheelSlots.FR].name);
+        Assert.AreEqual("RL", slots[WheelSlots.RL].name);
+        Assert.AreEqual("RR", slots[WheelSlots.RR].name);
+        Object.DestroyImmediate(car);
+    }
+
+    [Test]
+    public void WheelSlots_MissingSlot_FailsLoudly()
+    {
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("wheel slot FL is not assigned"));
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("wheel slot FR is not assigned"));
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("wheel slot RL is not assigned"));
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("wheel slot RR is not assigned"));
+
+        RaycastWheel[] slots = new RaycastWheel[4];
+        bool valid = WheelSlots.Validate(slots, "Validation Car");
+
+        Assert.IsFalse(valid, "Validation must fail when a slot is missing.");
+    }
+
+    [Test]
+    public void Drivetrain_StandaloneBackfillsWheelsOnceByName()
+    {
+        GameObject car = new GameObject("Drivetrain Standalone Car");
+        Rigidbody rb = car.AddComponent<Rigidbody>();
+        DrivetrainBrakeSystem drivetrain = car.AddComponent<BasicMotor>();
+
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject wheel = new GameObject(i == 0 ? "FL" : i == 1 ? "FR" : i == 2 ? "RL" : "RR");
+            wheel.transform.SetParent(car.transform);
+            wheel.AddComponent<WheelVisual>();
+            wheel.AddComponent<RaycastWheel>();
+        }
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = car.transform.forward * 20f;
+#else
+        rb.velocity = car.transform.forward * 20f;
+#endif
+
+        // First Simulate resolves wheels by name; second must reuse the cache.
+        drivetrain.Simulate(null);
+        float firstBrakeForce = drivetrain.LastBrakeForce;
+        drivetrain.Simulate(null);
+
+        Assert.IsNotNull(drivetrain.wheels[0], "FL slot must be resolved by name.");
+        Assert.IsNotNull(drivetrain.wheels[3], "RR slot must be resolved by name.");
+        Assert.AreEqual(firstBrakeForce, drivetrain.LastBrakeForce);
         Object.DestroyImmediate(car);
     }
 
@@ -478,6 +637,111 @@ public class F1FoundationPlayModeTests
 
         Assert.Greater(coordinator.SteeringInput, 0.05f);
         Assert.Greater(driver.LastSteeringInput, 0.05f);
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_StuckWithoutProgress_EntersRecoveryAndRequestsReverse()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out _, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 120f);
+        driver.stuckDetectionSeconds = 0.2f;
+        driver.recoveryReverseSeconds = 0.5f;
+
+        // Wedge the car off to the side of the line so the stop is externally explainable.
+        coordinator.transform.position = new Vector3(4f, 0f, 0f);
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.zero;
+#else
+        rb.velocity = Vector3.zero;
+#endif
+
+        int detectTicks = Mathf.CeilToInt(0.2f / Time.fixedDeltaTime) + 4;
+        for (int i = 0; i < detectTicks && !driver.InStuckRecovery; i++)
+        {
+            coordinator.RefreshState();
+            driver.Simulate();
+        }
+
+        Assert.IsTrue(driver.InStuckRecovery, "AI pinned without progress must enter recovery.");
+
+        // One more tick so ApplyRecoveryInputs overrides the outputs.
+        coordinator.RefreshState();
+        driver.Simulate();
+
+        Assert.AreEqual(0f, driver.LastThrottleInput, "Recovery must cut throttle.");
+        Assert.GreaterOrEqual(driver.LastBrakeInput, 0.99f,
+            "Recovery must request brake input (becomes reverse at standstill).");
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_MakingProgress_NeverEntersRecovery()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out _, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 120f);
+        driver.stuckDetectionSeconds = 0.2f;
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.forward * 20f;
+#else
+        rb.velocity = Vector3.forward * 20f;
+#endif
+
+        int ticks = Mathf.CeilToInt(1f / Time.fixedDeltaTime);
+        for (int i = 0; i < ticks; i++)
+        {
+            coordinator.RefreshState();
+            driver.Simulate();
+        }
+
+        Assert.IsFalse(driver.InStuckRecovery, "A moving AI must never enter recovery.");
+        Object.DestroyImmediate(rig);
+    }
+
+    [Test]
+    public void AIDriver_RecoveryExitsAndCooldownPreventsImmediateRetrigger()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out _, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 120f);
+        driver.stuckDetectionSeconds = 0.1f;
+        driver.recoveryReverseSeconds = 0.2f;
+        driver.recoveryCooldownSeconds = 3f;
+
+        // Wedge the car off-line so recovery is allowed to trigger.
+        coordinator.transform.position = new Vector3(4f, 0f, 0f);
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.zero;
+#else
+        rb.velocity = Vector3.zero;
+#endif
+
+        int detectTicks = Mathf.CeilToInt(0.1f / Time.fixedDeltaTime) + 4;
+        for (int i = 0; i < detectTicks && !driver.InStuckRecovery; i++)
+        {
+            coordinator.RefreshState();
+            driver.Simulate();
+        }
+        Assert.IsTrue(driver.InStuckRecovery);
+
+        int reverseTicks = Mathf.CeilToInt(0.2f / Time.fixedDeltaTime) + 4;
+        for (int i = 0; i < reverseTicks && driver.InStuckRecovery; i++)
+        {
+            coordinator.RefreshState();
+            driver.Simulate();
+        }
+        Assert.IsFalse(driver.InStuckRecovery, "Recovery must end after recoveryReverseSeconds.");
+
+        // Still pinned, but inside cooldown window: must not re-enter yet.
+        int cooldownProbeTicks = Mathf.CeilToInt(0.05f / Time.fixedDeltaTime);
+        for (int i = 0; i < cooldownProbeTicks; i++)
+        {
+            coordinator.RefreshState();
+            driver.Simulate();
+        }
+        Assert.IsFalse(driver.InStuckRecovery, "Cooldown must delay the next recovery attempt.");
         Object.DestroyImmediate(rig);
     }
 

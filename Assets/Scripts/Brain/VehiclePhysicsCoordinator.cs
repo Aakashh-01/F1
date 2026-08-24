@@ -73,6 +73,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     private float _externalSteeringInput;
     private float _externalThrottleInput;
     private float _externalBrakeInput;
+    private bool _wheelsValidated;
 
     public float SpeedMs => speedMs;
     public float SpeedKmh => speedKmh;
@@ -208,6 +209,15 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (rb == null)
             return;
 
+        if (!_wheelsValidated)
+        {
+            // Validate once inputs have settled: real vehicles must have all four
+            // slots; logic-only harnesses (no wheel children, nothing assigned) skip.
+            _wheelsValidated = true;
+            if (HasAnyWheelEvidence())
+                WheelSlots.Validate(wheels, name);
+        }
+
 #if UNITY_6000_0_OR_NEWER
         Vector3 velocity = rb.linearVelocity;
 #else
@@ -274,11 +284,13 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         if (rb == null) rb = GetComponent<Rigidbody>();
         if (drivetrain == null) drivetrain = GetComponent<DrivetrainBrakeSystem>();
         if (advancedBraking == null) advancedBraking = GetComponent<AdvancedBrakingSystem>();
-        if (advancedBraking == null) advancedBraking = gameObject.AddComponent<AdvancedBrakingSystem>();
+        if (advancedBraking == null)
+            Debug.LogWarning($"[VehiclePhysicsCoordinator] AdvancedBrakingSystem missing on '{name}'. Add it to the prefab/scene object.");
         if (downforce == null) downforce = GetComponent<DownforceSystem>();
         if (steering == null) steering = GetComponent<SteeringSystem>();
         if (advancedSteeringAssist == null) advancedSteeringAssist = GetComponent<AdvancedSteeringAssist>();
-        if (advancedSteeringAssist == null) advancedSteeringAssist = gameObject.AddComponent<AdvancedSteeringAssist>();
+        if (advancedSteeringAssist == null)
+            Debug.LogWarning($"[VehiclePhysicsCoordinator] AdvancedSteeringAssist missing on '{name}'. Add it to the prefab/scene object.");
         if (traction == null) traction = GetComponent<TractionSystem>();
         if (weightTransfer == null) weightTransfer = GetComponent<WeightTransfer>();
         if (visualBody == null)
@@ -289,10 +301,7 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         }
 
         RaycastWheel[] foundWheels = GetComponentsInChildren<RaycastWheel>();
-        AssignWheelByName(foundWheels, "FL", 0);
-        AssignWheelByName(foundWheels, "FR", 1);
-        AssignWheelByName(foundWheels, "RL", 2);
-        AssignWheelByName(foundWheels, "RR", 3);
+        WheelSlots.ResolveByName(foundWheels, wheels);
 
         for (int i = 0; i < Mathf.Min(wheels.Length, foundWheels.Length); i++)
         {
@@ -304,20 +313,16 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         InitializeVisualBodyReference();
     }
 
-    private void AssignWheelByName(RaycastWheel[] foundWheels, string wheelName, int index)
+    private bool HasAnyWheelEvidence()
     {
-        if (foundWheels == null || index < 0 || index >= wheels.Length)
-            return;
-
-        for (int i = 0; i < foundWheels.Length; i++)
+        if (wheels != null)
         {
-            RaycastWheel wheel = foundWheels[i];
-            if (wheel != null && wheel.name == wheelName)
-            {
-                wheels[index] = wheel;
-                return;
-            }
+            for (int i = 0; i < wheels.Length; i++)
+                if (wheels[i] != null)
+                    return true;
         }
+
+        return GetComponentsInChildren<RaycastWheel>(true).Length > 0;
     }
 
     private void SyncSystemWheelReferences()

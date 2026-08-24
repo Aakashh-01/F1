@@ -57,6 +57,8 @@ public class AdvancedBrakingSystem : MonoBehaviour
 
     public bool UseExternalSimulation { get; set; }
 
+    private bool _referencesResolved;
+
     private void Awake()
     {
         ResolveReferences();
@@ -72,7 +74,14 @@ public class AdvancedBrakingSystem : MonoBehaviour
 
     public void Simulate(VehiclePhysicsCoordinator coordinator)
     {
-        ResolveReferences();
+        if (!_referencesResolved)
+        {
+            ResolveReferences();
+            // All four dependencies are required for full functionality; stop
+            // looking them up once present. Explicitly-null optional refs keep
+            // re-resolving (same behaviour as before the cache).
+            _referencesResolved = rb != null && tractionSystem != null && weightTransfer != null && drivetrain != null;
+        }
 
         float speedKmh = coordinator != null ? coordinator.SpeedKmh : GetSpeedKmh();
         float steeringInput = coordinator != null ? coordinator.SteeringInput : Input.GetAxisRaw("Horizontal");

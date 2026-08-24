@@ -45,7 +45,7 @@ public class TractionSystem : MonoBehaviour
     private VehiclePhysicsCoordinator _coordinator;
     private float _speedMs;
 
-    private const int FL = 0, FR = 1, RL = 2, RR = 3;
+    private const int FL = WheelSlots.FL, FR = WheelSlots.FR, RL = WheelSlots.RL, RR = WheelSlots.RR;
 
     private void Awake()
     {

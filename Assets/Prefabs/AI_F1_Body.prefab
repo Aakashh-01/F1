@@ -205,6 +205,8 @@ GameObject:
   - component: {fileID: 6554790199230445664}
   - component: {fileID: 3931683218923386670}
   - component: {fileID: 6992582862909834729}
+  - component: {fileID: 7803574572245311015}
+  - component: {fileID: 5581092719995663993}
   m_Layer: 0
   m_Name: AI_F1_Body
   m_TagString: Untagged
@@ -717,6 +719,165 @@ MonoBehaviour:
   LastUnblockedTargetSpeedKmh: 0
   LastSpeedTargetKmh: 0
   LastSpeedClampReason: 0
+--- !u!114 &7803574572245311015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037282087299967351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea2278b7b5b690448e17ce4a04e8c3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tractionSystem: {fileID: 6269195717964630482}
+  assistLevel: 1
+  rearSlipThresholdDegrees: 8
+  frontSlipThresholdDegrees: 9
+  severeSlipDegrees: 18
+  tractionLossUtilisation: 0.92
+  minimumAssistSpeedKmh: 18
+  recoveryStrength: 0.28
+  countersteerStrength: 0.42
+  understeerStrength: 0.18
+  maxAssistAngle: 7
+  opposingInputRetention: 0.42
+  assistSmoothingTime: 0.14
+  mobileTapSmoothingTime: 0.12
+  overrideBlendInTime: 0.18
+  overrideBlendOutTime: 0.28
+  RawAssistAngle: 0
+  SmoothedAssistAngle: 0
+  PlayerOverrideFactor: 0
+  SmoothedPlayerIntent: 0
+  CurrentTractionLossState: 0
+--- !u!114 &5581092719995663993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037282087299967351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96f47e1d6a15d214b9b9fe11e9567e16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rb: {fileID: 3414666105574991985}
+  tractionSystem: {fileID: 6269195717964630482}
+  weightTransfer: {fileID: 2522575792926875979}
+  drivetrain: {fileID: 4676323483354600867}
+  brakePressRate: 7.5
+  brakeReleaseRate: 10
+  brakePressureCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.35
+      value: 0.24
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.75
+      value: 0.82
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  lateBrakeMultiplierBySpeed:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.88
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 120
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 220
+      value: 1.12
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 320
+      value: 1.18
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  maxLateBrakeMultiplier: 1.18
+  frontLockupThreshold: 0.96
+  rearLockupThreshold: 0.84
+  lockupBlendRange: 0.24
+  maxLockupEfficiencyLoss: 0.36
+  trailBrakeSupportStrength: 0.62
+  trailBrakeFrontBiasShift: 0.08
+  trailBrakeSteeringThreshold: 0.18
+  trailBrakeMinSpeedKmh: 45
+  rearInstabilityStrength: 0.36
+  maxRearInstabilityYawTorque: 2800
+  rearInstabilityStartSpeedKmh: 80
+  RawBrakeInput: 0
+  VirtualBrakePressure: 0
+  ShapedBrakePressure: 0
+  EffectiveBrakePressure: 0
+  LateBrakeMultiplier: 1
+  FrontLockupAmount: 0
+  RearLockupAmount: 0
+  BrakeEfficiency: 1
+  TrailBrakeBlend: 0
+  RearInstabilityAmount: 0
+  RearInstabilityYawTorque: 0
+  DynamicFrontBrakeBias: 0.68
 --- !u!1 &2187702821501422602
 GameObject:
   m_ObjectHideFlags: 0

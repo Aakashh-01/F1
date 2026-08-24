@@ -51,7 +51,7 @@ public class WeightTransfer : MonoBehaviour
     private float _accelSmoothVelLong;
     private float _accelSmoothVelLat;
 
-    private const int FL = 0, FR = 1, RL = 2, RR = 3;
+    private const int FL = WheelSlots.FL, FR = WheelSlots.FR, RL = WheelSlots.RL, RR = WheelSlots.RR;
 
     private void Awake()
     {

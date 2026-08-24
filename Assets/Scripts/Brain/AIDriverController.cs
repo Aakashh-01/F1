@@ -68,6 +68,18 @@ public class AIDriverController : MonoBehaviour
     [Range(0f, 8f)] public float trackRecoveryMargin = 1.25f;
     [Range(20f, 180f)] public float trackRecoverySpeedKmh = 95f;
 
+    [Header("Stuck Recovery")]
+    [Tooltip("Speed below which the AI counts as not making progress.")]
+    [Range(0f, 20f)] public float stuckSpeedThresholdKmh = 6f;
+    [Tooltip("How long the AI must want to move without progressing before recovering.")]
+    [Range(0.5f, 15f)] public float stuckDetectionSeconds = 4f;
+    [Tooltip("How long the reverse manoeuvre lasts.")]
+    [Range(0.3f, 5f)] public float recoveryReverseSeconds = 1.2f;
+    [Tooltip("Minimum delay between recovery attempts.")]
+    [Range(0f, 10f)] public float recoveryCooldownSeconds = 4f;
+    [Tooltip("Throttle demand required to consider the AI 'trying to move'.")]
+    [Range(0f, 1f)] public float stuckThrottleDemandThreshold = 0.25f;
+
     [Header("Debug")]
     public bool drawDebug = true;
     [HideInInspector] public int CurrentWaypointIndex = -1;
@@ -82,6 +94,7 @@ public class AIDriverController : MonoBehaviour
     [HideInInspector] public float LastWaypointLaneIntent;
     [HideInInspector] public bool IsOvertaking;
     [HideInInspector] public bool IsRecoveringTrack;
+    [HideInInspector] public bool InStuckRecovery;
     [HideInInspector] public float LastLateralError;
     [HideInInspector] public float LastLaneLimit;
     [HideInInspector] public float LastUnblockedTargetSpeedKmh;
@@ -93,6 +106,10 @@ public class AIDriverController : MonoBehaviour
     private float _laneVariationSeed;
     private float _overtakeCommitTimer;
     private int _overtakeDirection;
+    private bool _referencesResolved;
+    private float _stuckTimer;
+    private float _recoveryTimer;
+    private float _recoveryCooldownTimer;
 
     private AIDifficultyProfile Difficulty
     {
@@ -123,7 +140,14 @@ public class AIDriverController : MonoBehaviour
 
     public void Simulate()
     {
-        ResolveReferences();
+        if (!_referencesResolved)
+        {
+            ResolveReferences();
+            // Stop the per-tick FindAnyObjectByType/GetComponent lookups once all
+            // three references are present. Late injection (RaceGridManager /
+            // tests) assigns fields directly, so the latch flips next tick.
+            _referencesResolved = coordinator != null && perception != null && racingLine != null;
+        }
 
         if (coordinator == null || racingLine == null || racingLine.Count < 2)
             return;
@@ -160,7 +184,61 @@ public class AIDriverController : MonoBehaviour
         LastUnblockedTargetSpeedKmh = LastTargetSpeedKmh;
         Vector3 targetPoint = lookaheadPoint + racingLine.GetSegmentRight(lookaheadSegmentIndex) * CurrentLaneOffset;
         CalculateInputs(targetPoint, LastTargetSpeedKmh, speedKmh, difficulty);
+        UpdateStuckState(Time.fixedDeltaTime);
         coordinator.SetExternalInput(LastSteeringInput, LastThrottleInput, LastBrakeInput);
+    }
+
+    private void UpdateStuckState(float dt)
+    {
+        _recoveryCooldownTimer = Mathf.Max(0f, _recoveryCooldownTimer - dt);
+
+        if (InStuckRecovery)
+        {
+            ApplyRecoveryInputs();
+            _recoveryTimer -= dt;
+            if (_recoveryTimer <= 0f)
+            {
+                InStuckRecovery = false;
+                _stuckTimer = 0f;
+                _recoveryCooldownTimer = recoveryCooldownSeconds;
+            }
+
+            return;
+        }
+
+        bool tryingToMove = LastThrottleInput > stuckThrottleDemandThreshold;
+        bool notProgressing = coordinator.SpeedKmh < stuckSpeedThresholdKmh;
+        // Only recover when the stop is externally explainable (off-track or
+        // displaced from the line). An AI held up while sitting ON its line is
+        // traffic, not a wedged car — reversing there would cause ramming.
+        bool plausiblyWedged = IsRecoveringTrack ||
+            LastLateralError > Mathf.Max(0.5f, LastLaneLimit * 0.5f);
+
+        if (_recoveryCooldownTimer <= 0f && tryingToMove && notProgressing && plausiblyWedged)
+        {
+            _stuckTimer += dt;
+            if (_stuckTimer >= stuckDetectionSeconds)
+            {
+                InStuckRecovery = true;
+                _recoveryTimer = recoveryReverseSeconds;
+                CancelBlockedOvertake(_overtakeDirection);
+            }
+        }
+        else
+        {
+            _stuckTimer = Mathf.Max(0f, _stuckTimer - dt * 2f);
+        }
+    }
+
+    private void ApplyRecoveryInputs()
+    {
+        // Reverse manoeuvre: brake input becomes reverse drive at standstill
+        // (DrivetrainBrakeSystem.ShouldUseReverse), steering arcs away from the
+        // current heading so the tail swings back toward the racing line.
+        float steerAway = Mathf.Abs(LastSteeringInput) > 0.05f ? -Mathf.Sign(LastSteeringInput) : 1f;
+        LastSteeringInput = 0.6f * steerAway;
+        LastThrottleInput = 0f;
+        LastBrakeInput = 1f;
     }
 
     private void UpdateProgressIndex()

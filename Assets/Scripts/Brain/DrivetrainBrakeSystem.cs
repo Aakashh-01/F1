@@ -39,6 +39,8 @@ public class DrivetrainBrakeSystem : MonoBehaviour
 
     private VehiclePhysicsCoordinator _coordinator;
     private const float ReverseForceMultiplier = 0.45f;
+    private bool _wheelsFullyResolved;
+    private bool _referencesResolved;
 
     protected virtual void Awake()
     {
@@ -56,7 +58,13 @@ public class DrivetrainBrakeSystem : MonoBehaviour
     public void Simulate(VehiclePhysicsCoordinator coordinator)
     {
         _coordinator = coordinator;
-        ResolveReferences();
+        if (!_referencesResolved)
+        {
+            ResolveReferences();
+            // Stop re-resolving once the wheel slots are fully populated
+            // (rb/advancedBraking are found on the first pass or not at all).
+            _referencesResolved = _wheelsFullyResolved;
+        }
 
         float targetThrottle;
         float targetBrakeInput;
@@ -321,33 +329,23 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         if (rb == null) rb = GetComponent<Rigidbody>();
         if (advancedBraking == null) advancedBraking = GetComponent<AdvancedBrakingSystem>();
 
-        RaycastWheel[] found = GetComponentsInChildren<RaycastWheel>();
-        AssignWheelByName(found, "FL", 0);
-        AssignWheelByName(found, "FR", 1);
-        AssignWheelByName(found, "RL", 2);
-        AssignWheelByName(found, "RR", 3);
-
-        for (int i = 0; i < Mathf.Min(wheels.Length, found.Length); i++)
+        // Wheel slots are injected authoritatively by VehiclePhysicsCoordinator.
+        // This name-based pass only backfills standalone usage and retries until
+        // every slot is filled, so it is effectively free once resolved.
+        if (!_wheelsFullyResolved)
         {
-            if (wheels[i] == null)
-                wheels[i] = found[i];
+            WheelSlots.ResolveByName(GetComponentsInChildren<RaycastWheel>(), wheels);
+            _wheelsFullyResolved = WheelsAllFilled();
         }
     }
 
-    private void AssignWheelByName(RaycastWheel[] found, string wheelName, int index)
+    private bool WheelsAllFilled()
     {
-        if (found == null || index < 0 || index >= wheels.Length)
-            return;
+        for (int i = 0; i < wheels.Length; i++)
+            if (wheels[i] == null)
+                return false;
 
-        for (int i = 0; i < found.Length; i++)
-        {
-            RaycastWheel wheel = found[i];
-            if (wheel != null && wheel.name == wheelName)
-            {
-                wheels[index] = wheel;
-                return;
-            }
-        }
+        return wheels.Length >= WheelSlots.SlotNames.Length;
     }
 
     private void ApplyRearInstabilityYaw()

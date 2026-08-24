@@ -25,6 +25,10 @@ public class SteeringSystem : MonoBehaviour
 
     [Header("Ackermann & Assist")]
     [Range(0f, 0.2f)] public float ackermannFactor = 0.15f;
+
+    // Superseded by AdvancedSteeringAssist — kept only for serialization
+    // compatibility with existing prefabs and VehiclePhysicsProfile assets.
+    // These are no longer read at runtime.
     [Range(0f, 1f)] public float oversteerAssistStrength = 0.3f;
     [Range(0f, 1f)] public float understeerAssistStrength = 0.15f;
     public float slipThreshold = 8f;
@@ -103,58 +107,9 @@ public class SteeringSystem : MonoBehaviour
 
     private float CalculateAssistAngle(VehiclePhysicsCoordinator coordinator, float speedKmh)
     {
-        LastAssistAngle = 0f;
-
-        if (advancedAssist != null)
-        {
-            LastAssistAngle = advancedAssist.Simulate(coordinator);
-            return LastAssistAngle;
-        }
-
-        if (speedKmh < 10f)
-            return 0f;
-
-        float rearSlip = coordinator != null ? coordinator.AverageRearSlipAngle : GetAverageSlip(2, 3);
-        float frontSlip = coordinator != null ? coordinator.AverageFrontSlipAngle : GetAverageSlip(0, 1);
-
-        if (Mathf.Abs(rearSlip) > slipThreshold)
-        {
-            LastAssistAngle = -rearSlip * oversteerAssistStrength;
-            return LastAssistAngle;
-        }
-
-        if (Mathf.Abs(frontSlip) > slipThreshold && Mathf.Sign(frontSlip) == Mathf.Sign(_currentInput))
-        {
-            LastAssistAngle = -frontSlip * understeerAssistStrength;
-            return LastAssistAngle;
-        }
-
-        return 0f;
-    }
-
-    private float GetAverageSlip(int leftIndex, int rightIndex)
-    {
-        if (tractionSystem == null || tractionSystem.wheels == null)
-            return 0f;
-
-        float slip = 0f;
-        int count = 0;
-        AddSlip(leftIndex, ref slip, ref count);
-        AddSlip(rightIndex, ref slip, ref count);
-        return count > 0 ? slip / count : 0f;
-    }
-
-    private void AddSlip(int index, ref float slip, ref int count)
-    {
-        if (index < 0 || index >= tractionSystem.wheels.Length)
-            return;
-
-        RaycastWheel wheel = tractionSystem.wheels[index];
-        if (wheel == null || !wheel.IsGrounded)
-            return;
-
-        slip += wheel.LocalSlipVector.x;
-        count++;
+        // AdvancedSteeringAssist is the single authoritative assist path.
+        LastAssistAngle = advancedAssist != null ? advancedAssist.Simulate(coordinator) : 0f;
+        return LastAssistAngle;
     }
 
     private void ApplySteering(float angle)
