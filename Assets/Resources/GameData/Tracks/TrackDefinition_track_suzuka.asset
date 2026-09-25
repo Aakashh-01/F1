@@ -16,7 +16,7 @@ MonoBehaviour:
   _displayName: Suzuka
   _shortCode: SUZ
   _sceneName: SuzukaGP
-  _thumbnail: {fileID: 0}
+  _thumbnail: {fileID: 21300000, guid: bb045fa878c82ff4cb77746d9f2996c2, type: 3}
   _minimapTexture: {fileID: 0}
   _trackLengthMeters: 5807
   _standardRaceLaps: 53

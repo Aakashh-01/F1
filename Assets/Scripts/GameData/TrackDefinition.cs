@@ -32,6 +32,13 @@ namespace F1.GameData
         [SerializeField] private Sprite _minimapTexture;
         public Sprite MinimapTexture => _minimapTexture;
 
+        [Tooltip("Marks a circuit that is listed but not yet playable. Needed because a " +
+                 "circuit can point at a scene that exists and still not be its own: Spa " +
+                 "shares Track_01 with Monaco, so a scene-existence check alone would offer " +
+                 "the same corner twice under two names.")]
+        [SerializeField] private bool _underConstruction;
+        public bool UnderConstruction => _underConstruction;
+
         [Header("Track Geometry")]
         [Tooltip("Total track length in meters")]
         [SerializeField] private float _trackLengthMeters = 5000f;

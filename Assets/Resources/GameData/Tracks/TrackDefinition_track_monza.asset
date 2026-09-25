@@ -16,7 +16,7 @@ MonoBehaviour:
   _displayName: Monza
   _shortCode: MONZA
   _sceneName: MonzaGP
-  _thumbnail: {fileID: 0}
+  _thumbnail: {fileID: 21300000, guid: 3208392cca5666441b0d68d07c581c58, type: 3}
   _minimapTexture: {fileID: 0}
   _trackLengthMeters: 5793
   _standardRaceLaps: 53

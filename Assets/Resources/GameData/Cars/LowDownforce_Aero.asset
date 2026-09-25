@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2de80c03d9597a94aa777347d5a79c2e, type: 3}
   m_Name: LowDownforce_Aero
   m_EditorClassIdentifier: 
+  icon: {fileID: 21300000, guid: ab3eddc1c2849ef4aa7c5be5f0bb173c, type: 3}
   downforceCoeff: 5
   frontBias: 0.38
   fullDownforceSpeed: 70

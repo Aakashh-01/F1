@@ -15,7 +15,7 @@ MonoBehaviour:
   _carId: car_gen2_rental
   _displayName: F1 Gen 2 - Rental
   _generation: 2
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 131f911deb3a9d042bea79af9fd74912, type: 3}
   _carPrefab: {fileID: 1037282087299967351, guid: d0603a6a646e83d43b49066eaba6ba0a, type: 3}
   _basePhysicsProfile: {fileID: 11400000, guid: b2d1af3fef01ee4468d466af3d1e6827, type: 2}
   _highDownforceAero: {fileID: 11400000, guid: 9a2f9cfd95a639e46b0a5b67f26ed5d4, type: 2}

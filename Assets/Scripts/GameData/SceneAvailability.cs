@@ -53,11 +53,17 @@ namespace F1.GameData
         }
 
         /// <summary>
-        /// True when the given definition points at a circuit that can actually be raced.
+        /// True when the given definition names a circuit that can actually be raced.
+        ///
+        /// Both conditions matter. The scene has to exist, which is automatic and cannot
+        /// drift. And the circuit must not be flagged as under construction, because a
+        /// definition can point at a scene that exists and still not be a distinct circuit:
+        /// Spa and Monaco both point at Track_01, so checking the scene alone would offer the
+        /// same corner twice under two different names.
         /// </summary>
         public static bool IsAvailable(TrackDefinition track)
         {
-            return track != null && IsAvailable(track.SceneName);
+            return track != null && !track.UnderConstruction && IsAvailable(track.SceneName);
         }
     }
 }

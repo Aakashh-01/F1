@@ -16,7 +16,7 @@ MonoBehaviour:
   _displayName: Silverstone
   _shortCode: SIL
   _sceneName: SilverstoneGP
-  _thumbnail: {fileID: 0}
+  _thumbnail: {fileID: 21300000, guid: 053a1a4b8efe8fd4a9cd1a62b16e9031, type: 3}
   _minimapTexture: {fileID: 0}
   _trackLengthMeters: 5891
   _standardRaceLaps: 52

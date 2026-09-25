@@ -16,7 +16,7 @@ MonoBehaviour:
   _displayName: Monaco
   _shortCode: MON
   _sceneName: Track_01
-  _thumbnail: {fileID: 0}
+  _thumbnail: {fileID: 21300000, guid: 113944e6a7d0d6448ac7c171dc511c67, type: 3}
   _minimapTexture: {fileID: 0}
   _trackLengthMeters: 3337
   _standardRaceLaps: 78

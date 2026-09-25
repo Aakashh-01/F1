@@ -16,8 +16,9 @@ MonoBehaviour:
   _displayName: Spa-Francorchamps
   _shortCode: SPA
   _sceneName: Track_01
-  _thumbnail: {fileID: 0}
+  _thumbnail: {fileID: 21300000, guid: c4a92281e5c3b7441af1003173c4d978, type: 3}
   _minimapTexture: {fileID: 0}
+  _underConstruction: 1
   _trackLengthMeters: 7004
   _standardRaceLaps: 44
   _useAutoSectors: 1

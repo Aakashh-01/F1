@@ -23,12 +23,16 @@ public class ClientDemoUiBuilder
     private const string CarCardPath = "Assets/Prefabs/CarCard_Prefab.prefab";
     private const string TrackCardPath = "Assets/Prefabs/TrackCard_Prefab.prefab";
 
-    // The columns are a third of the canvas wide each, so 320 leaves comfortable gutters
-    // on a 16:9 screen while still filling the column.
-    private const float CardWidth = 320f;
-    private const float CardHeight = 460f;
-    private const float ArtHeight = 250f;
-    private const float CardCornerPad = 6f;
+    // The columns are a third of the canvas wide and 80% of its height (864 units at the
+    // 1920x1080 reference). A column can hold three cards, so the card has to fit three:
+    // 3 * 270 + 2 * 10 spacing + 12 padding = 830, inside 864.
+    // The width is chosen to match the art: the panel is 284 x 140, and the generated car
+    // images are about 1.83:1, so they fill it closely instead of floating small in a wide
+    // dark frame. A wider card just adds empty space either side of the picture.
+    private const float CardWidth = 300f;
+    private const float CardHeight = 270f;
+    private const float ArtHeight = 140f;
+    private const float CardCornerPad = 8f;
 
     [MenuItem("Tools/BuildClientDemoUI")]
     public static void Build()
@@ -299,18 +303,19 @@ public class ClientDemoUiBuilder
             group.interactable = true;
             group.blocksRaycasts = true;
 
-            // A banner across the artwork rather than a small label, so it reads at a glance
-            // from across a room during a demo.
+            // A compact pill rather than a full-width banner. At 88 units tall on a 270
+            // card it covered most of the artwork behind it, and a dimmed picture under a
+            // dark banner is just a black rectangle — the thumbnail is the thing worth seeing.
             var badge = FindOrCreateChild(cardRect, "ComingSoonBadge");
             var badgeImage = badge.GetComponent<Image>();
-            badgeImage.color = new Color(0f, 0f, 0f, 0.72f);
+            badgeImage.color = new Color(0f, 0f, 0f, 0.78f);
             badgeImage.raycastTarget = false;
             badgeRect(badge, ArtHeight);
 
             var label = FindOrCreateTextChild(badge, "ComingSoonText");
             var text = label.GetComponent<TMPro.TextMeshProUGUI>();
             text.text = "COMING SOON";
-            text.fontSize = 30f;
+            text.fontSize = 18f;
             text.fontStyle = TMPro.FontStyles.Bold;
             text.alignment = TMPro.TextAlignmentOptions.Center;
             text.color = new Color(1f, 0.82f, 0.25f, 1f);
@@ -333,13 +338,13 @@ public class ClientDemoUiBuilder
 
     private static void badgeRect(RectTransform badge, float artHeight)
     {
-        // Sits over the middle of the artwork panel.
+        // A pill across the lower part of the artwork, inset so the picture frames it.
         badge.anchorMin = new Vector2(0f, 1f);
         badge.anchorMax = new Vector2(1f, 1f);
         badge.pivot = new Vector2(0.5f, 1f);
-        float top = -(CardCornerPad + artHeight * 0.5f);
-        badge.offsetMin = new Vector2(CardCornerPad, top - 44f);
-        badge.offsetMax = new Vector2(-CardCornerPad, top + 44f);
+        float top = -(CardCornerPad + artHeight - 46f);
+        badge.offsetMin = new Vector2(38f, top - 30f);
+        badge.offsetMax = new Vector2(-38f, top);
     }
 
     private static void BuildCard(string path, string implTypeName, string artName)
@@ -365,6 +370,12 @@ public class ClientDemoUiBuilder
             layout.flexibleHeight = 0f;
 
             var cardRect = (RectTransform)root.transform;
+
+            // The columns set childControlHeight = false, so the layout group keeps each
+            // card's own rect height and ignores the LayoutElement's preferredHeight. Without
+            // this the card stays 180 tall while the art panel is taller than that, and the
+            // artwork spills over the card edges and onto its neighbours.
+            cardRect.sizeDelta = new Vector2(CardWidth, CardHeight);
 
             // --- Darken the card body so the label text stays legible over artwork ---
             var body = root.GetComponent<Image>();
@@ -396,12 +407,15 @@ public class ClientDemoUiBuilder
             art.SetSiblingIndex(0);
 
             // --- Stack the text below the artwork ---
-            SetAnchor(root.transform, "NameText", 0.80f, 34f);
-            SetAnchor(root.transform, "GenText", 0.70f, 30f);
-            SetAnchor(root.transform, "ShortCodeText", 0.70f, 30f);
-            SetAnchor(root.transform, "CostText", 0.60f, 30f);
-            SetAnchor(root.transform, "StatusText", 0.51f, 26f);
-            SetAnchor(root.transform, "CardButton", 0.38f, 44f);
+            // The art panel occupies the top ArtHeight of the card, which on a 270 card is
+            // everything above anchor 0.452. Every label therefore has to sit below that, or
+            // it renders on top of the picture.
+            SetAnchor(root.transform, "NameText", 0.385f, 28f);
+            SetAnchor(root.transform, "GenText", 0.290f, 22f);
+            SetAnchor(root.transform, "ShortCodeText", 0.290f, 22f);
+            SetAnchor(root.transform, "CostText", 0.205f, 22f);
+            SetAnchor(root.transform, "StatusText", 0.150f, 20f);
+            SetAnchor(root.transform, "CardButton", 0.055f, 38f);
 
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }

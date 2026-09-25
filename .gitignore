@@ -117,3 +117,14 @@ CAMERA_RESTORE_PLAN.md
 /Assets/Assets/pdf1.pdf.meta
 /Assets/Assets/pdf2.pdf
 /Assets/Assets/pdf2.pdf.meta
+
+# Full-size originals from the art generation pass (car1..6, Track1..5, Wing1..2).
+# The game imports the downscaled, correctly-named copies in the same folders; these are
+# 95 MB of redundant source at ~7 MB each, and nothing references them. Kept on disk, out
+# of the repository. Delete them once the generated set is signed off.
+/Assets/Art/Cars/car[0-9].png
+/Assets/Art/Cars/car[0-9].png.meta
+/Assets/Art/Tracks/Track[0-9].png
+/Assets/Art/Tracks/Track[0-9].png.meta
+/Assets/Art/Wings/Wing[0-9].png
+/Assets/Art/Wings/Wing[0-9].png.meta
