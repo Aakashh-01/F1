@@ -129,7 +129,7 @@ MonoBehaviour:
     brakeSteerStability: 0.75
     brakeSteerFrontBias: 0.72
     brakeSteerBlendSpeedKmh: 80
-    reverseMaxSpeedKmh: 0
+    reverseMaxSpeedKmh: 12
     motorForceBySpeed:
       serializedVersion: 2
       m_Curve:

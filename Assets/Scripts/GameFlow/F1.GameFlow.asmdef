@@ -1,0 +1,19 @@
+{
+    "name": "F1.GameFlow",
+    "rootNamespace": "F1.GameFlow",
+    "references": [
+        "Assembly-CSharp",
+        "F1.Gameplay",
+        "F1.GameData",
+        "F1.Progression"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

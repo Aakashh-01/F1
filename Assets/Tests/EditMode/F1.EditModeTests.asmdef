@@ -1,0 +1,29 @@
+{
+    "name": "F1.EditModeTests",
+    "rootNamespace": "",
+    "references": [
+        "F1.Gameplay",
+        "F1.GameData",
+        "F1.Progression",
+        "F1.GameFlow",
+        "Unity.TextMeshPro",
+        "Unity.ugui",
+        "UnityEditor.TestRunner",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

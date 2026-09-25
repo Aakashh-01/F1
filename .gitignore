@@ -73,3 +73,47 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# ---------------------------------------------------------------------------
+# Local tooling, captures and scratch files. None of this is game content;
+# it is what accumulates in a working copy and should never reach the repo.
+# ---------------------------------------------------------------------------
+
+# AI/agent tool configuration (per-machine)
+.claude/
+.cline/
+.codex/
+.mcp.json
+graphify-out/
+CAMERA_RESTORE_PLAN.md
+
+# Unity MCP server dependencies. The MCP package itself is already a git
+# dependency in Packages/manifest.json; these are the loose DLLs and the
+# stray local copy of its editor code.
+/Assets/Plugins/NuGet/
+/Assets/Plugins/NuGet.meta
+/Assets/Plugins/Roslyn/
+/Packages/Coplay/
+
+# Embedded editor-only third-party package (asset tool, not gameplay)
+/Packages/com.bezi.sidekick/
+
+# Screenshots and viewport captures. Diagnostic output, several MB each, and
+# nothing references them. The .meta is ignored with the folder so Unity
+# regenerates both on a fresh clone instead of committing a dangling ref.
+/Assets/Screenshots/
+/Assets/Screenshots.meta
+/Assets/Scenes/Screenshot *.png
+/Assets/Scenes/Screenshot *.png.meta
+
+# Scenes left behind by automated test runs
+/Assets/InitTestScene*.unity
+/Assets/InitTestScene*.unity.meta
+
+# Scratch/reference PDFs, duplicated between the repo root and Assets
+/pdf1.pdf
+/pdf2.pdf
+/Assets/Assets/pdf1.pdf
+/Assets/Assets/pdf1.pdf.meta
+/Assets/Assets/pdf2.pdf
+/Assets/Assets/pdf2.pdf.meta

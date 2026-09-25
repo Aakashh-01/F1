@@ -1,7 +1,8 @@
 using UnityEngine;
 
 [RequireComponent(typeof(WheelVisual))]
-public class RaycastWheel : MonoBehaviour
+public class 
+    RaycastWheel : MonoBehaviour
 {
     [Header("Suspension")]
     [Range(0.05f, 0.5f)] public float suspensionLength = 0.25f;

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88e8b524ba9ef9142af2789365b07b4d, type: 3}
+  m_Name: CarDefinition_car_gen1_starter
+  m_EditorClassIdentifier: 
+  _carId: car_gen1_starter
+  _displayName: F1 Gen 1 - Starter
+  _generation: 1
+  _icon: {fileID: 0}
+  _carPrefab: {fileID: 1037282087299967351, guid: d0603a6a646e83d43b49066eaba6ba0a, type: 3}
+  _basePhysicsProfile: {fileID: 11400000, guid: b2d1af3fef01ee4468d466af3d1e6827, type: 2}
+  _highDownforceAero: {fileID: 11400000, guid: 9a2f9cfd95a639e46b0a5b67f26ed5d4, type: 2}
+  _lowDownforceAero: {fileID: 11400000, guid: e92d575750cd72d42abf325ac1c1e4dd, type: 2}
+  _unlockCostPoints: 0
+  _directPurchasePrice: 0
+  _rentalCost24h: 0.5
+  _description: Entry-level F1 car. Balanced handling, forgiving physics. Free for
+    all players.

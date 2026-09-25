@@ -94,6 +94,18 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     public float RearBrakeInstability => rearBrakeInstability;
     public float DynamicFrontBrakeBias => dynamicFrontBrakeBias;
 
+    [Tooltip("While locked the car does not respond to any driver and brakes to a stop. Set " +
+             "by the qualifying shell while its results panel is up, so the car is not still " +
+             "accelerating while the player is deciding between Back, Retry and Go to Race.")]
+    [SerializeField] private bool _inputLocked = false;
+
+    /// <summary>Whether the car is parked. True suppresses every input path.</summary>
+    public bool InputLocked
+    {
+        get => _inputLocked;
+        set => _inputLocked = value;
+    }
+
     private void Awake()
     {
         ResolveReferences();
@@ -113,6 +125,23 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
 
     private void Update()
     {
+        // A locked car stops driving, whoever is asking: this check sits above both the
+        // external and the keyboard/touch paths, so an AI driver, a held throttle key and a
+        // touch control are all suppressed by the same flag. Qualifying uses it to park the
+        // car while the results panel is up — the panel is asking the player a question, and
+        // a car that keeps accelerating under it is not answering one.
+        //
+        // Brake rather than merely cutting throttle: cutting it lets the car coast a long way
+        // down the straight, which reads as the freeze not having worked. The drivetrain
+        // spools the brake in, so it is a deceleration rather than a teleport to zero.
+        if (_inputLocked)
+        {
+            steeringInput = 0f;
+            throttleInput = 0f;
+            brakeInput = 1f;
+            return;
+        }
+
         if (UseExternalInput)
         {
             steeringInput = _externalSteeringInput;

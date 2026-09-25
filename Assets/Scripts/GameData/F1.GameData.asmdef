@@ -1,0 +1,16 @@
+{
+    "name": "F1.GameData",
+    "rootNamespace": "F1.GameData",
+    "references": [
+        "F1.Gameplay"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

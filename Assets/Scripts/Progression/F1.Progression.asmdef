@@ -1,0 +1,17 @@
+{
+    "name": "F1.Progression",
+    "rootNamespace": "F1.Progression",
+    "references": [
+        "F1.Gameplay",
+        "F1.GameData"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

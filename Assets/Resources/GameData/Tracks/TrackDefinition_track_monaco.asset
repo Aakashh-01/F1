@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7124db28353b93940bae8fd918e9f01c, type: 3}
+  m_Name: TrackDefinition_track_monaco
+  m_EditorClassIdentifier: 
+  _trackId: track_monaco
+  _displayName: Monaco
+  _shortCode: MON
+  _sceneName: Track_01
+  _thumbnail: {fileID: 0}
+  _minimapTexture: {fileID: 0}
+  _trackLengthMeters: 3337
+  _standardRaceLaps: 78
+  _useAutoSectors: 1
+  _sectorStartDistances:
+  - 0
+  - 0
+  - 0
+  _racingLineReference: {fileID: 0}
+  _unlockCostPoints: 0
+  _directPurchasePrice: 3.99
+  _description: Legendary street circuit. Tight corners, zero margin for error. Qualifying
+    is everything here.
+  _devBestLapTime: 66.74

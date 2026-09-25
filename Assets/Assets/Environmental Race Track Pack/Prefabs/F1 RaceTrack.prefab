@@ -310,7 +310,7 @@ GameObject:
   - component: {fileID: 3345248}
   - component: {fileID: 2394580}
   - component: {fileID: 6400932}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: MainTrack_Object
   m_TagString: Untagged
   m_Icon: {fileID: 0}

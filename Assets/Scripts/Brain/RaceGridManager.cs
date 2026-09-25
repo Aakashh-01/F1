@@ -7,6 +7,9 @@ public class RaceGridManager : MonoBehaviour
     public class RaceGridEntry
     {
         public string driverName = "AI Driver";
+        [Tooltip("Race number for the car's board. Zero means the manager assigns one from " +
+                 "the grid slot. AIFieldDefinition sets this from its number pool.")]
+        public int driverNumber;
         [Tooltip("Optional explicit grid position. Use -1 to auto-fill after the player and earlier entries.")]
         public int gridPosition = -1;
         public GameObject existingCar;
@@ -45,9 +48,31 @@ public class RaceGridManager : MonoBehaviour
     public Vector3 fallbackGridOrigin;
     public RaceGridEntry[] aiEntries = new RaceGridEntry[0];
 
+    [Header("AI Field (preferred over the entries above)")]
+    [Tooltip("Optional. When assigned, this defines the whole field: how many AI cars, who " +
+             "drives them and how hard they push. It wins over the aiEntries list, because " +
+             "the project owns one AI car prefab and a field is a number plus a roster, not " +
+             "a hand-built list of prefab references. Leave empty to use aiEntries directly.")]
+    public AIFieldDefinition aiField;
+
+    [Tooltip("Put a number and name board above each AI car. Without it every car on the " +
+             "grid is the same prefab and therefore looks identical.")]
+    public bool showDriverBoards = true;
+
     private readonly List<GameObject> _spawnedCars = new List<GameObject>();
 
     public IReadOnlyList<GameObject> SpawnedCars => _spawnedCars;
+
+    /// <summary>
+    /// How many AI cars the configured field will place. Zero when no field is assigned.
+    ///
+    /// Exposed so a caller can talk about the size of the grid without reaching into
+    /// <see cref="aiField"/> or the entry list, and without building the entry array to count
+    /// it.
+    /// </summary>
+    public int aiFieldCount => aiField != null
+        ? aiField.Count
+        : (aiEntries != null ? aiEntries.Length : 0);
 
     private void Awake()
     {
@@ -65,43 +90,98 @@ public class RaceGridManager : MonoBehaviour
         ResolveReferences();
         DestroySpawnedGrid();
 
-        int nextAutoGridPosition = 0;
+        // Resolved once, so the reservation pass and the spawn pass cannot disagree about
+        // how many cars there are. A field definition is a different source of truth than the
+        // serialized list, and which one is in force is decided in exactly one place.
+        RaceGridEntry[] entries = ResolveAIEntries();
+
+        // Every slot the player or an authored entry has claimed, reserved before anything
+        // is placed. The set is built in full first so an auto-filled car can never be handed
+        // a slot that a later entry had already asked for.
         HashSet<int> occupiedGridPositions = new HashSet<int>();
         if (includePlayerInGrid && playerCar != null)
-        {
-            PositionCarOnGrid(playerCar, playerGridPosition);
             occupiedGridPositions.Add(playerGridPosition);
-            nextAutoGridPosition = Mathf.Max(nextAutoGridPosition, playerGridPosition + 1);
-        }
 
-        for (int i = 0; i < aiEntries.Length; i++)
+        for (int i = 0; i < entries.Length; i++)
         {
-            RaceGridEntry entry = aiEntries[i];
+            RaceGridEntry entry = entries[i];
             if (entry != null && entry.gridPosition >= 0)
                 occupiedGridPositions.Add(entry.gridPosition);
         }
 
-        for (int i = 0; i < aiEntries.Length; i++)
+        if (includePlayerInGrid && playerCar != null)
+            PositionCarOnGrid(playerCar, playerGridPosition);
+
+        for (int i = 0; i < entries.Length; i++)
         {
-            RaceGridEntry entry = aiEntries[i];
+            RaceGridEntry entry = entries[i];
             if (entry == null)
                 continue;
 
             int gridPosition = entry.gridPosition >= 0
                 ? entry.gridPosition
-                : GetNextOpenGridPosition(ref nextAutoGridPosition, occupiedGridPositions);
+                : GetLowestOpenGridPosition(occupiedGridPositions);
+            occupiedGridPositions.Add(gridPosition);
+
             bool useExistingSceneCar = IsSceneInstance(entry.existingCar);
-            GameObject car = useExistingSceneCar ? entry.existingCar : SpawnCar(entry, i);
+            GameObject car = useExistingSceneCar
+                ? entry.existingCar
+                : SpawnCar(entry, i, gridPosition);
             if (car == null)
                 continue;
 
             PositionCarOnGrid(car, gridPosition);
             ConfigureCar(car, entry, gridPosition);
+            ApplyDriverIdentity(car, entry, i, gridPosition);
             if (!useExistingSceneCar)
                 _spawnedCars.Add(car);
         }
 
         Physics.SyncTransforms();
+    }
+
+    /// <summary>
+    /// The field the grid spawns from. A field definition wins when one is assigned, because
+    /// it is the one that scales with a single number; the serialized list stays as the
+    /// fallback so nothing that already relies on it stops working.
+    /// </summary>
+    private RaceGridEntry[] ResolveAIEntries()
+    {
+        if (aiField != null)
+            return aiField.BuildGridEntries();
+
+        return aiEntries ?? new RaceGridEntry[0];
+    }
+
+    /// <summary>
+    /// Names and numbers the car, and gives it a board if boards are on.
+    ///
+    /// The number is whatever the entry carries. A field definition picks it from its number
+    /// pool; an entry authored by hand can set one; failing both, the car's place in the
+    /// field is used, which is stable and unique — so the board and the standings always
+    /// agree.
+    ///
+    /// The board's headline is the *grid slot* rather than the number, and it is passed
+    /// separately because the slot is decided here, by the reservation pass, and is not
+    /// something the entry knows. It matters that the slot is the resolved one and not the
+    /// entry's requested <c>gridPosition</c>: an entry asking for -1 gets whatever slot was
+    /// actually free, and that is the slot the car is standing in.
+    /// </summary>
+    private void ApplyDriverIdentity(GameObject car, RaceGridEntry entry, int index, int gridPosition)
+    {
+        if (car == null)
+            return;
+
+        int number = entry.driverNumber > 0
+            ? entry.driverNumber
+            : Mathf.Max(1, index + 1);
+
+        var identifier = car.GetComponent<DriverIdentifier>();
+        if (identifier == null && showDriverBoards)
+            identifier = car.AddComponent<DriverIdentifier>();
+
+        if (identifier != null)
+            identifier.SetIdentity(entry.driverName, number, gridPosition);
     }
 
     public void DestroySpawnedGrid()
@@ -136,12 +216,25 @@ public class RaceGridManager : MonoBehaviour
                 ? entry.physicsProfileOverride
                 : defaultAIPhysicsProfile;
 
-            coordinator.physicsProfile = physicsProfile;
-            coordinator.applyProfileOnAwake = true;
-            coordinator.UseExternalInput = true;
+            // Only overwrite the profile when there is one to overwrite it with. The AI car
+            // prefab ships with a working profile of its own (F1_AI_Physics) and applies it in
+            // Awake, so a grid with no default profile assigned used to null that field on
+            // every spawn. The car still drove — the values were already applied — but the
+            // component was left claiming it had no profile, which is a misleading thing to
+            // find when a car later behaves differently from the one you configured.
+            if (physicsProfile != null)
+            {
+                coordinator.physicsProfile = physicsProfile;
+                coordinator.applyProfileOnAwake = true;
 
-            if (Application.isPlaying && physicsProfile != null)
-                coordinator.ApplyProfile(physicsProfile);
+                if (Application.isPlaying)
+                    coordinator.ApplyProfile(physicsProfile);
+            }
+
+            // The AI drives itself, so every input path is handed over unconditionally. This
+            // one is not profile-dependent, and a car left accepting keyboard input while an
+            // AI controller is also steering it is a car that fights its own driver.
+            coordinator.UseExternalInput = true;
         }
 
         if (driver != null)
@@ -167,13 +260,17 @@ public class RaceGridManager : MonoBehaviour
         }
     }
 
-    private GameObject SpawnCar(RaceGridEntry entry, int gridIndex)
+    private GameObject SpawnCar(RaceGridEntry entry, int gridIndex, int gridPosition)
     {
         GameObject prefab = ResolvePrefab(entry);
         if (prefab == null)
             return null;
 
-        Vector3 position = GetGridPose(gridIndex, out Quaternion rotation);
+        // The *resolved* slot, not the entry's index in the field. These differ whenever the
+        // player is not on pole: the field is index 0, but that car belongs wherever the
+        // reservation put it. Spawning by index and then repositioning relied on the
+        // reposition to win, which it did not — see PositionCarOnGrid.
+        Vector3 position = GetGridPose(gridPosition, out Quaternion rotation);
 
         if (entry.spawnPoint != null)
         {
@@ -223,28 +320,58 @@ public class RaceGridManager : MonoBehaviour
             return;
 
         Vector3 position = GetGridPose(gridPosition, out Quaternion rotation);
+
+        // Both the transform and the rigidbody, and the order matters.
+        //
+        // A transform-only write is reverted by PhysX on the next step, because the body
+        // keeps the pose it was cached at. A body-only write is reverted by the
+        // Physics.SyncTransforms() at the end of SpawnGrid, which pushes the transform's pose
+        // back into physics — and if the transform was never moved, that stale pose wins.
+        // Writing the transform first and the body second leaves the two in agreement, so
+        // whichever the sync uses, the car ends up where it was put.
+        //
+        // Getting this wrong was invisible for a long time: an AI car is instantiated at its
+        // own grid pose, so the reposition that follows used to be a no-op, and the field
+        // looked correct. It only became visible once the player was moved onto the grid from
+        // the start pose, and then once the reservation started placing cars somewhere other
+        // than their field index.
         car.transform.SetPositionAndRotation(position, rotation);
 
-        Rigidbody rb = car.GetComponent<Rigidbody>();
-        if (rb == null)
+        var body = car.GetComponent<Rigidbody>();
+        if (body == null)
             return;
 
+        body.position = position;
+        body.rotation = rotation;
+
 #if UNITY_6000_0_OR_NEWER
-        rb.linearVelocity = Vector3.zero;
+        body.linearVelocity = Vector3.zero;
 #else
-        rb.velocity = Vector3.zero;
+        body.velocity = Vector3.zero;
 #endif
-        rb.angularVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        body.WakeUp();
     }
 
-    private int GetNextOpenGridPosition(ref int nextAutoGridPosition, HashSet<int> occupiedGridPositions)
+    /// <summary>
+    /// The lowest slot nobody has claimed.
+    ///
+    /// Filling forwards from wherever the player happens to sit was wrong the moment the
+    /// player did not start on pole: the cars all went *behind* the player and the slots in
+    /// front of them stayed empty, so a player starting 7th produced a grid with a six-slot
+    /// hole at the front and the whole field pushed back behind them. Taking the lowest free
+    /// slot fills from pole backwards and skips only the player's own, which is what a grid
+    /// with a player mid-field actually looks like.
+    ///
+    /// For a player on pole — the previous default — this is identical to filling forwards.
+    /// </summary>
+    private static int GetLowestOpenGridPosition(HashSet<int> occupiedGridPositions)
     {
-        while (occupiedGridPositions.Contains(nextAutoGridPosition))
-            nextAutoGridPosition++;
+        int candidate = 0;
+        while (occupiedGridPositions.Contains(candidate))
+            candidate++;
 
-        int gridPosition = nextAutoGridPosition++;
-        occupiedGridPositions.Add(gridPosition);
-        return gridPosition;
+        return candidate;
     }
 
     private float GetAssignedPreferredLaneOffset(RaceGridEntry entry, int gridIndex)
