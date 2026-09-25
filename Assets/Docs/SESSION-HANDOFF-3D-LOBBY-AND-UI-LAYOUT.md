@@ -43,19 +43,37 @@ same corner as Monaco. Currently: **Monaco playable, four dimmed with COMING SOO
 
 ---
 
-## 2. What the user wants next
+## 2. What the user wants next — DECIDED
 
-Five items, in their words:
+The user has answered the open questions. **These are settled, do not re-ask them.**
 
-1. **3D lobby for car selection** — a 3D garage, car 3D asset at the centre, player can
-   rotate it
+| Decision | Answer |
+|---|---|
+| One 3D car per tier, or livery swap? | **One car for all tiers now. Livery swap is a later task — explicitly deferred, not forgotten.** |
+| Garage technique? | **Real geometry with parallax. Import a 3D garage, do NOT fake it with a cheap skybox panorama.** |
+| Rotation interaction | **Drag to spin.** |
+| Track screen arrangement | **The one available track is featured at the CENTRE. The other four sit beside it.** |
+| The 95 MB originals | **Deleted.** Done — see §11. |
+| Wing lobby | **Still open — see §5 for what the question actually is.** |
+
+Five work items, in the user's words:
+
+1. **3D lobby for car selection** — a 3D garage, car 3D asset at the centre, player drags
+   to rotate it
 2. **3D lobby for wing selection** — same treatment
 3. **Car selection layout** — tiles move to a **horizontal strip along the bottom**, like
    the reference. Current canvas layout is "not good enough".
-4. **Track selection** — 5 tracks, arranged so they "look good" and align properly
+4. **Track selection** — available track centred, other four beside it
 5. **Wing screen has no visuals** — tiles and background not visible
 
-They also said the gameplay itself is good; this is a **presentation** pass.
+The user also said the gameplay itself is good; this is a **presentation** pass.
+
+### Note on "real geometry" for the garage
+
+The user rejected the panorama skybox in favour of imported geometry. That means an
+asset has to be sourced — there is no garage mesh in the project. Whether that is
+purchased, downloaded, or generated as 3D is not yet decided and is the one genuinely
+open logistics item for the car lobby.
 
 ---
 
@@ -124,20 +142,70 @@ horizontal strip along the bottom**. That means:
 
 ---
 
-## 4. Item 2 — the 3D wing lobby
+## 4. Item 2 — the 3D wing lobby, explained properly
 
-Same treatment. Two choices only: `HighDownforce_Aero` and `LowDownforce_Aero`.
+The user asked for a re-explanation, so here it is in plain terms.
 
-Note there is **no 3D wing model in the project** — only the two `WingAeroProfile`
-ScriptableObjects, which are pure data (`downforceCoeff`, `frontBias`, aero numbers).
-A wing lobby needs a 3D asset: either a front-wing model, or a cutaway of the car
-showing the wing change, or a 3D representation of the aero difference some other way.
-This is a genuine gap and a decision to make (see §8).
+### What the wing feature currently is
 
-The generated wing art is good and can be used for the bottom strip tiles:
-`Assets/Art/Wings/wing_highdownforce.png`, `wing_lowdownforce.png`. They are visibly
-distinct (different endplate structures) though neither reads as a "slim low-drag
-blade" — both are multi-element.
+The game offers the player exactly **two** wing setups:
+
+- `HighDownforce_Aero` — more downforce, slower through corners, the "safe" setup
+- `LowDownforce_Aero` — less downforce, faster on the straights, the "fast" setup
+
+They are two `WingAeroProfile` ScriptableObjects, and they are **pure numbers** —
+`downforceCoeff`, `frontBias`, drag values. There is no 3D object attached to either one.
+
+### What the problem is
+
+If you build a 3D wing lobby, something has to *appear* on screen when the player picks
+one of the two. And the honest answer is: **the project has no wing model to show.**
+
+I checked the car model, and there is good news and a catch.
+
+**Good news:** `F1_Body.prefab` is not one fused mesh. It is a glTF import of 793
+transforms, and the wings are separate, named objects you can address individually:
+
+| Object name | What it is |
+|---|---|
+| `a_frontwing_fl_01_33_54` | front wing |
+| `frontflap_fl_26_42` | front flap |
+| `rearwing_top_62_90` | rear wing main plane |
+| `rearwingmoving_top_2_74_119` | the **moving** rear wing element (under `DRS2_75_118`) |
+| `a_rearwing_top_105_166` | rear wing, second instance |
+| `wing_mirror_l_66_99` | left wing mirror |
+
+**The catch:** there is only **one** set of wings. Not two variants. So "high downforce"
+and "low downforce" are not two different models sitting in the scene waiting to be
+shown — they are the *same* wing parts in two different states.
+
+### So the actual question for the user
+
+The wing lobby is only worth building 3D if the two choices produce a **visible
+difference**. Realistic ways to get one, cheapest first:
+
+1. **Animate the existing wing.** The car already has a moving rear wing element. Tweak
+   the rear wing flap angle between the two settings — more angle reads as more
+   downforce. Needs no new asset, just a rotation on an existing object. Closest to
+   "real", least work.
+2. **Toggle parts on and off.** Show/hide `rearwingmoving_top_2` or the front flap so the
+   two configurations are visibly different silhouettes. Also no new asset.
+3. **Import two wing models.** Most convincing, needs an asset, and then they have to be
+   attached to the car at the right mount points — the car has no wing swap system.
+4. **Do not build a 3D wing lobby.** Keep wing selection a 2D screen, but fix it so it
+   actually shows the two wing images (see §6b — right now it shows nothing at all).
+
+My recommendation is **1 or 2**, because the wing parts are already addressable and
+either is a small amount of work against option 3's asset hunt. But this is a design
+call and the user should pick — the reason it is still open is that option 4 is a
+perfectly reasonable answer and I do not want to assume a 3D lobby is mandatory.
+
+### The wing images, for the tile strip either way
+
+`Assets/Art/Wings/wing_highdownforce.png` and `wing_lowdownforce.png` exist, are
+assigned to the two profiles' `icon` fields, and are visibly distinct (different
+endplate structures). Neither reads as a "slim low-drag blade" — both are multi-element.
+If wing selection stays 2D, these are the tile art and no regeneration is needed.
 
 ---
 
@@ -150,16 +218,15 @@ With 5 tracks that produces a ragged 2×3 grid with one hole — which is what t
 reacting to. Captured screenshot showed Monaco top-left, Monza top-right, Spa mid-left,
 Silverstone mid-right, Suzuka bottom-right.
 
-The ask: "if we have 5 tracks for now put them in a way that they look good."
+**DECIDED: the one available track (Monaco) is featured at the centre, the other four sit
+beside it.** The "owned vs locked" column split is what creates the hole and has to go —
+the playable/locked distinction is already carried per-card by the `AVAILABLE` vs
+`COMING SOON` status line, so it does not need its own column.
 
-Reasonable approaches:
-- one centred row of 5 equal tiles
-- 3 + 2 centred, second row centred under the first
-- keep the two-column split but centre both columns and make the rows line up
-
-Whatever is chosen, the current 2-column "owned vs locked" split is what creates the
-hole, so it likely has to go or be rebalanced. **Worth asking the user** rather than
-guessing — see §8.
+The natural read of the decision is a centred hero tile for Monaco, larger, with the four
+unbuilt circuits as smaller supporting tiles arranged around or beside it. The exact
+arrangement (a row either side, a 2+2 flanking, a strip beneath) is a layout decision for
+the implementation, not a question for the user.
 
 ---
 
@@ -202,23 +269,27 @@ tiles with an `Image`, and either a `WingCardImpl` or an extension of
 
 ---
 
-## 7. Open decisions for the user
+## 7. Open items
 
-These came up and were not settled. Worth asking before building.
+Most questions are now settled (§2). Two remain.
 
-1. **3D car for all six tiers, or add a livery swap?** One model exists. If the lobby
-   shows the same car regardless of tile, that is visible to a client. A material swap
-   keyed off `CarDefinition` is the honest fix but is extra work.
-2. **Garage by panorama skybox, or real geometry?** The user's 4K/8K panorama memory is
-   the cheap route and matches the reference closely. Real geometry costs an asset
-   import but gives parallax when the camera moves. Panorama needs a new 2:1 image
-   generated.
-3. **Rotation interaction**: drag-to-spin, auto-rotate when idle, or both?
-4. **Track screen arrangement** for 5 tiles — one row, or 3+2? (see §5)
-5. **Wing lobby 3D asset** — there is no wing model. Front-wing asset, car cutaway, or
-   skip the 3D wing lobby and make the wing screen a well-styled 2D screen?
-6. **Are `car1..6` / `Track1..5` / `Wing1..2` safe to delete?** They are the 95 MB
-   full-size originals, now gitignored and unused; the game imports downscaled copies.
+1. **Wing lobby: build it 3D or keep it 2D?** See §4 for the full explanation. The car
+   has addressable wing objects, so a visible difference between the two setups is
+   achievable without new assets, but "don't build a 3D wing lobby, just fix the 2D
+   screen" remains a legitimate answer. **Ask the user.**
+2. **Where does the garage geometry come from?** The user chose real geometry over a
+   skybox panorama, but no garage mesh exists in the project. Purchase, download, or
+   generate? That is logistics, not a design question, and it may need the user.
+
+Also deferred, by explicit agreement, not oversight:
+
+- **Livery swap** so each tier shows a different-coloured car in the lobby. Deferred
+  until later; the single shared model is the accepted state for now.
+- `SceneContentTests.TrackScene_HostIsFixedToRace` still fails. Belongs to Phase 5, do
+  not "fix" it early.
+- `50_RaceScene` still has no screen prefab — there is no `RaceScreen_Prefab` in the
+  project at all, only the `RaceScreenImpl` script. Building one is a bigger job than
+  this pass and was not started.
 
 ---
 
@@ -299,8 +370,11 @@ images. The tracks arrived exactly reversed. If art is ever regenerated, inspect
 wiring — wiring by filename put a 2020s car on the free starter and mislabelled four
 circuits.
 
-**Unused originals**, gitignored, ~95 MB, safe to delete once the set is signed off:
-`Assets/Art/Cars/car1..6.png`, `Tracks/Track1..5.png`, `Wings/Wing1..2.png`.
+**Unused originals — DELETED.** `car1..6.png`, `Track1..5.png`, `Wing1..2.png` were the
+full-size generations (~95 MB, 5-9 MB each). The game imported downscaled copies, and
+with the user's approval the originals were removed. `Assets/Art` is now 7.7 MB. The
+matching `.gitignore` rules were removed too, so they cannot silently swallow a future
+drop of a file with one of those names.
 
 **Not generated yet**: `bg_wingsetup.png` (see §6a) and any garage panorama.
 
