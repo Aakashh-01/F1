@@ -16,6 +16,7 @@ namespace F1.UI
         [SerializeField] private TMP_Text _genText;
         [SerializeField] private TMP_Text _costText;
         [SerializeField] private TMP_Text _statusText;
+        [SerializeField] private Image _carImage;
         [SerializeField] private Button _cardButton;
         [SerializeField] private GameObject _selectedIndicator;
 
@@ -26,6 +27,8 @@ namespace F1.UI
         public void SetCar(CarDefinition car)
         {
             _car = car;
+            if (_carImage != null)
+                _carImage.sprite = car?.Icon;
             if (_nameText != null)
                 _nameText.text = car?.DisplayName ?? "Unknown";
             if (_genText != null)

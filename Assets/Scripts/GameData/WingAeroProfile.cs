@@ -10,6 +10,10 @@ namespace F1
     [CreateAssetMenu(menuName = "F1/Wing Aero Profile", fileName = "WingAeroProfile_")]
     public class WingAeroProfile : ScriptableObject
     {
+        [Header("Presentation")]
+        [Tooltip("Artwork shown on the wing setup tile. Leave null and the tile shows its label only.")]
+        public Sprite icon;
+
         [Header("Downforce")]
         [Range(0.5f, 8f)] public float downforceCoeff = 5f;
         [Range(0f, 1f)] public float frontBias = 0.38f;
