@@ -85,11 +85,11 @@ namespace F1.GameFlow
         private void WireNavigation()
         {
             if (_screens.TryGetValue(GameScreen.Branding, out var branding))
-                ((BrandingScreen)branding).OnBrandingComplete += _flow.GoToCarSelection;
+                ((BrandingScreen)branding).OnBrandingComplete += _flow.GoToLobby;
 
             if (_screens.TryGetValue(GameScreen.MainMenu, out var menu))
             {
-                ((MainMenuScreen)menu).OnStartPressed += _flow.GoToCarSelection;
+                ((MainMenuScreen)menu).OnStartPressed += _flow.GoToLobby;
                 ((MainMenuScreen)menu).OnQuitPressed += QuitGame;
                 // OnOptionsPressed intentionally unwired: no OptionsScreen prefab in this phase.
             }
@@ -110,7 +110,11 @@ namespace F1.GameFlow
             }
         }
 
-        // Auto-advance: spec has no Continue button on car/track screens.
+        // Auto-advance: this manager predates the hub and has no Continue button of its own.
+        //
+        // A chosen car used to route to a dedicated car selection screen, which is retired.
+        // Car selection is now the lobby's own second UI state, so the next step after a car
+        // is chosen is track selection.
         private void OnCarChosen(CarDefinition _) => _flow.GoToTrackSelection();
         private void OnTrackChosen(TrackDefinition _) => _flow.GoToWingSetup();
 
@@ -125,11 +129,11 @@ namespace F1.GameFlow
         private void UnwireNavigation()
         {
             if (_screens.TryGetValue(GameScreen.Branding, out var branding))
-                ((BrandingScreen)branding).OnBrandingComplete -= _flow.GoToCarSelection;
+                ((BrandingScreen)branding).OnBrandingComplete -= _flow.GoToLobby;
 
             if (_screens.TryGetValue(GameScreen.MainMenu, out var menu))
             {
-                ((MainMenuScreen)menu).OnStartPressed -= _flow.GoToCarSelection;
+                ((MainMenuScreen)menu).OnStartPressed -= _flow.GoToLobby;
                 ((MainMenuScreen)menu).OnQuitPressed -= QuitGame;
             }
 

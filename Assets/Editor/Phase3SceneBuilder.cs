@@ -2,8 +2,8 @@
 // route. Run: Tools > BuildFlowScenes.
 //
 // Replaces the single monolithic LobbyScene with:
-//   00_LoadingScene      - entry scene: persistent flow root, branding, loading progress
-//   10_CarSelectionScene - the lobby hub
+//   00_LoadingScene  - entry scene: persistent flow root, branding, loading progress
+//   05_LobbyScene    - the lobby: the 3D garage, hub UI and car selection as two states
 //
 // Each scene carries a FlowSceneHost declaring the one screen it owns, so a new hub
 // destination is a new scene plus a host - no change to GameFlowManager.
@@ -26,7 +26,7 @@ public class Phase3SceneBuilder
     private static string ScenePath(string sceneName) => $"{ScenesFolder}/{sceneName}.unity";
 
     private const string LoadingScenePath = ScenesFolder + "/" + FlowSceneNames.Loading + ".unity";
-    private const string CarSelectionScenePath = ScenesFolder + "/" + FlowSceneNames.CarSelection + ".unity";
+    private const string LobbyScenePath = ScenesFolder + "/" + FlowSceneNames.Lobby + ".unity";
     private const string TrackSelectionScenePath = ScenesFolder + "/" + FlowSceneNames.TrackSelection + ".unity";
     private const string WingSetupScenePath = ScenesFolder + "/" + FlowSceneNames.WingSetup + ".unity";
     private const string PreRaceScenePath = ScenesFolder + "/" + FlowSceneNames.PreRace + ".unity";
@@ -37,7 +37,7 @@ public class Phase3SceneBuilder
     private static readonly string[] OrderedRoute =
     {
         FlowSceneNames.Loading,
-        FlowSceneNames.CarSelection,
+        FlowSceneNames.Lobby,
         FlowSceneNames.TrackSelection,
         FlowSceneNames.WingSetup,
         FlowSceneNames.PreRace,
@@ -45,11 +45,19 @@ public class Phase3SceneBuilder
         FlowSceneNames.TrackContent
     };
 
+    /// <summary>
+    /// Rebuilds EVERY flow scene from empty.
+    ///
+    /// DESTRUCTIVE. CreateScene makes a fresh empty scene and saves it over the old file, so
+    /// anything hand-placed inside a flow scene is lost. 05_LobbyScene holds a hand-tuned
+    /// garage rig, so running this will wipe it — use BuildLobbyScene, which only touches the
+    /// lobby, until that scene is authored some other way.
+    /// </summary>
     [MenuItem("Tools/BuildFlowScenes")]
     public static void BuildAll()
     {
         BuildLoadingScene();
-        BuildCarSelectionScene();
+        BuildLobbyScene();
         BuildTrackSelectionScene();
         BuildWingSetupScene();
         BuildPreRaceScene();
@@ -57,6 +65,19 @@ public class Phase3SceneBuilder
         PrepareTrackContentScene();
         RegisterBuildSettings();
         Debug.Log("[Phase3SceneBuilder] Flow scenes built and build settings registered.");
+    }
+
+    /// <summary>
+    /// Builds only the lobby scene, plus its screen prefab, then refreshes the build list.
+    ///
+    /// This is the safe entry point now that a flow scene carries hand-authored content.
+    /// </summary>
+    [MenuItem("Tools/BuildLobbyScene")]
+    public static void BuildLobbySceneOnly()
+    {
+        BuildLobbyScene();
+        RegisterBuildSettings();
+        Debug.Log("[Phase3SceneBuilder] Lobby scene built and build settings registered.");
     }
 
     /// <summary>
@@ -179,26 +200,41 @@ public class Phase3SceneBuilder
         Save(scene, LoadingScenePath);
     }
 
-    // --- 10_CarSelectionScene ---
+    // --- 05_LobbyScene ---
 
-    private static void BuildCarSelectionScene()
+    /// <summary>
+    /// The lobby: the 3D garage, and the first interactive screen after loading.
+    ///
+    /// It carries the hub panels (currency, settings, tasks, Start Race) and, in its second
+    /// UI state, car selection. Both are the same scene and the same garage — the car does
+    /// not move between them, which is why the rig is copied straight out of the car
+    /// selection scene rather than rebuilt from constants.
+    ///
+    /// The rig is captured BEFORE the new scene is created and applied AFTER, because
+    /// capturing opens the car selection scene, which makes it active. Applying scene-level
+    /// settings such as ambient while the wrong scene is active would write them there.
+    /// </summary>
+    private static void BuildLobbyScene()
     {
-        var scene = CreateScene(CarSelectionScenePath, "10_CarSelectionScene");
+        LobbyBuilder.BuildLobbyHubScreenPrefab();
+        var rig = LobbyBuilder.CaptureGarageRig();
+
+        var scene = CreateScene(LobbyScenePath, "05_LobbyScene");
+
+        LobbyBuilder.ApplyGarageRig(scene, rig);
 
         var hostGo = EnsureRoot(scene, "FlowSceneHost");
         var host = EnsureComponent<FlowSceneHost>(hostGo);
         host.Configure(
-            GameFlowManager.GameScreen.CarSelection,
-            LoadPrefab("CarSelectionScreen_Prefab"),
+            GameFlowManager.GameScreen.Lobby,
+            LoadPrefab("LobbyHubScreen_Prefab"),
             HostScreenMode.Fixed,
             hostGo.transform);
 
-        // The hop to 20_TrackSelectionScene is derived from the scene list, so the hub
-        // advances on its own once that scene exists (slice step S1).
-        EnsureComponent<CarSelectionSceneController>(hostGo);
+        EnsureComponent<LobbySceneController>(hostGo);
 
         EnsureEventSystem(scene);
-        Save(scene, CarSelectionScenePath);
+        Save(scene, LobbyScenePath);
     }
 
     // --- 20_TrackSelectionScene (slice step S1) ---
@@ -430,7 +466,7 @@ public class Phase3SceneBuilder
     {
         var so = new SerializedObject(flow);
         Set(so, "_brandingScene", FlowSceneNames.Loading);
-        Set(so, "_carSelectionScene", FlowSceneNames.CarSelection);
+        Set(so, "_lobbyScene", FlowSceneNames.Lobby);
         Set(so, "_trackSelectionScene", FlowSceneNames.TrackSelection);
         Set(so, "_wingSetupScene", FlowSceneNames.WingSetup);
         Set(so, "_resultsScene", FlowSceneNames.Results);
@@ -439,7 +475,8 @@ public class Phase3SceneBuilder
         // track objects (invariant 9).
         Set(so, "_qualifyingScene", FlowSceneNames.PreRace);
         Set(so, "_raceScene", FlowSceneNames.Race);
-        // No main menu in the active route (invariant 1).
+        // The standalone MainMenu screen is not in the active route. The lobby fills that
+        // role now, and it is reached by scene name rather than through this field.
         Set(so, "_mainMenuScene", "");
         so.ApplyModifiedPropertiesWithoutUndo();
     }

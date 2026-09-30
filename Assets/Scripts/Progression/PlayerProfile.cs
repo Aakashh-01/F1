@@ -211,7 +211,33 @@ namespace F1.Progression
     public static class PlayerProfileManager
     {
         private const string FILE_NAME = "player_profile.json";
-        private static string FilePath => System.IO.Path.Combine(Application.persistentDataPath, FILE_NAME);
+
+        /// <summary>
+        /// Redirects the save file. Null — the shipping default — means the real profile in
+        /// <c>persistentDataPath</c>.
+        ///
+        /// This exists because the profile is a plain static, not a per-session object, so it
+        /// is shared by the game and by anything else running in the same domain. The
+        /// PlayMode tests drive the real <c>GameFlowManager</c> and a real
+        /// <c>QualifyingLapReporter</c>, and <c>SetQualifyingTime</c> writes straight
+        /// through to the profile. With the path hardcoded there was nothing to stop a test
+        /// run from saving its fixture's lap time as the player's best lap: the tests
+        /// produced a saved 17.999 s "ghost" on a track nobody had driven, and the save
+        /// outlived every code fix, because a poisoned file is not something a rebuild
+        /// clears.
+        ///
+        /// Point this at a temp file and call <see cref="Load"/> to take effect — the cached
+        /// <see cref="Current"/> is deliberately not invalidated, so a caller cannot change
+        /// the destination out from under an in-flight save. On teardown, null it and
+        /// <see cref="Load"/> again to re-read the real profile.
+        /// </summary>
+        public static string FilePathOverride { get; set; }
+
+        private static string FilePath =>
+            string.IsNullOrEmpty(FilePathOverride)
+                ? System.IO.Path.Combine(Application.persistentDataPath, FILE_NAME)
+                : FilePathOverride;
+
         private static PlayerProfile _currentProfile;
         private static readonly object _lock = new object();
 

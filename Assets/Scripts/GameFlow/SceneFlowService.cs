@@ -81,6 +81,18 @@ namespace F1.GameFlow
         public event Action<SceneLoadResult> OnContentSceneLoaded;
         public event Action<SceneLoadResult> OnSceneLoadFailed;
 
+        /// <summary>
+        /// Raised the moment a FLOW scene load begins, with the destination's name.
+        ///
+        /// Separate from <see cref="OnProgressChanged"/> because progress fires at 0 for
+        /// every operation, content loads included — the track-content load inside the
+        /// pre-race scene would raise it too, and a transition screen belongs over a scene
+        /// change, not over the player still watching the garage. A consumer that wants a
+        /// "loading" card between scenes needs to know a flow load has started, which is
+        /// this and nothing else.
+        /// </summary>
+        public event Action<string> OnFlowSceneLoadStarted;
+
         public Scene CurrentFlowScene => _currentFlowScene;
 
         public string CurrentFlowSceneName =>
@@ -201,6 +213,13 @@ namespace F1.GameFlow
             IsBusy = true;
             Progress = 0f;
             OnProgressChanged?.Invoke(0f);
+            // Raised after the busy flag is set, so a listener that immediately checks
+            // IsBusy sees a consistent state, and before the validity checks, so a load
+            // that is about to fail still announces itself and the overlay has something
+            // to hide on. Deliberately only here and not in the content-load path: a
+            // transition card belongs over a scene change, not over the player still
+            // watching the garage while the track streams in.
+            OnFlowSceneLoadStarted?.Invoke(sceneName);
 
             try
             {

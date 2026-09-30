@@ -48,7 +48,13 @@ namespace F1.GameData
 
             return false;
 #else
-            return Application.CanStreamedLevelUnlocked(sceneName);
+            // The API is CanStreamedLevelBeLoaded. There is no
+            // CanStreamedLevelUnlocked — that name does not exist, and because this whole
+            // branch is behind #else it is compiled ONLY in a player build. The editor
+            // compiles the branch above, every test runs in the editor, and all of them
+            // passed while the player build could not compile at all. A #if with a typo in
+            // the arm nobody builds is invisible until the thing you are shipping.
+            return Application.CanStreamedLevelBeLoaded(sceneName);
 #endif
         }
 

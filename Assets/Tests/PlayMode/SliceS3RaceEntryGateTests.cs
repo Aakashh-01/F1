@@ -27,6 +27,8 @@ public class SliceS3RaceEntryGateTests
     [UnitySetUp]
     public IEnumerator SetUp()
     {
+        ProfileIsolation.Begin();
+
         GameDataRegistry.Initialize();
         F1.Progression.PlayerProfileManager.GrantStarterContent(
             F1.Progression.PlayerProfileManager.Current);
@@ -51,7 +53,15 @@ public class SliceS3RaceEntryGateTests
 
         var loadOp = SceneManager.LoadSceneAsync(
             FlowSceneNames.TrackContent, LoadSceneMode.Additive);
-        while (!loadOp.isDone) yield return null;
+        // Bounded on purpose — see the note in SliceS3HudBindingTests. A load op for a
+        // scene missing from the build list never completes, and an unbounded spin here
+        // hangs the whole run instead of failing it.
+        float loadDeadline = Time.realtimeSinceStartup + 20f;
+        while (!loadOp.isDone && Time.realtimeSinceStartup < loadDeadline)
+            yield return null;
+        Assert.IsTrue(loadOp.isDone,
+            "Loading '" + FlowSceneNames.TrackContent + "' additively did not complete " +
+            "within 20s. It must be present in the build settings list.");
         _trackScene = SceneManager.GetSceneByName(FlowSceneNames.TrackContent);
 
         _track = _trackScene.GetRootGameObjects()
@@ -92,6 +102,8 @@ public class SliceS3RaceEntryGateTests
             var op = SceneManager.UnloadSceneAsync(_trackScene);
             if (op != null) yield return op;
         }
+
+        ProfileIsolation.End();
     }
 
     private GameFlowManager Flow => GameFlowManager.Instance;

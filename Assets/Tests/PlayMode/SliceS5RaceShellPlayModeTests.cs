@@ -28,6 +28,8 @@ public class SliceS5RaceShellPlayModeTests
     [UnitySetUp]
     public IEnumerator SetUp()
     {
+        ProfileIsolation.Begin();
+
         GameDataRegistry.Initialize();
         F1.Progression.PlayerProfileManager.GrantStarterContent(
             F1.Progression.PlayerProfileManager.Current);
@@ -48,21 +50,15 @@ public class SliceS5RaceShellPlayModeTests
         var sceneFlow = GameFlowManager.Instance?.SceneFlow;
         if (sceneFlow != null)
         {
-            if (sceneFlow.ContentScenes.Count > 0)
-            {
-                var unload = sceneFlow.UnloadAllContent();
-                if (unload != null) yield return unload;
-            }
-
-            var current = sceneFlow.CurrentFlowScene;
-            if (current.IsValid() && current.isLoaded)
-            {
-                var op = SceneManager.UnloadSceneAsync(current);
-                if (op != null) yield return op;
-            }
+            // Bounded — see SceneOpWait. Yielding UnloadAllContent() directly cannot be
+            // given a deadline, and an unbounded teardown is what wedged this suite.
+            yield return SceneOpWait.UnloadAllContentBounded(sceneFlow);
+            yield return SceneOpWait.UnloadSceneBounded(sceneFlow.CurrentFlowScene);
         }
 
         if (_flowObject != null) Object.DestroyImmediate(_flowObject);
+
+        ProfileIsolation.End();
     }
 
     private GameFlowManager Flow => GameFlowManager.Instance;
@@ -163,20 +159,43 @@ public class SliceS5RaceShellPlayModeTests
 
         var spawner = Object.FindAnyObjectByType<PlayerCarSpawner>();
         var grid = Grid();
+        var shell = Object.FindAnyObjectByType<RaceSceneController>();
         var car = spawner.PlayerCar;
 
-        int expected = GridPositionResolver.Resolve(
+        int fromQualifying = GridPositionResolver.Resolve(
             Flow.Session.Qualifying.BestLapTime, grid.aiFieldCount, grid.aiField.GetBenchmarkLapSeconds);
 
-        Assert.AreEqual(expected, Flow.RaceGridPosition,
-            "The session's grid position must be the one the qualifying result earns.");
+        // The race scene ships with the demo flag ticked, so the slot the player is actually
+        // given is the back of the grid rather than the one the lap earned. Both are asserted
+        // here rather than only the shipped one: this test is about the wiring between the
+        // decision and the placement, and that wiring has to hold whichever decision was made.
+        int expected = shell.StartsPlayerAtBackOfGrid ? grid.aiFieldCount + 1 : fromQualifying;
+
+        if (shell.StartsPlayerAtBackOfGrid)
+        {
+            Assert.AreEqual(grid.aiFieldCount + 1, Flow.RaceGridPosition,
+                "With the back-of-grid flag set, the session must report the back of the " +
+                "grid. Reporting the qualifying slot here is how a HUD ends up claiming a " +
+                "pole position the car is not in.");
+            Assert.Greater(fromQualifying, 1,
+                "An 84s lap should not win pole against this field. If it does, the field's " +
+                "benchmark times are wrong, not the rule.");
+            Assert.Less(fromQualifying, grid.aiFieldCount + 1,
+                "The player cannot start behind the last car.");
+        }
+        else
+        {
+            Assert.AreEqual(expected, Flow.RaceGridPosition,
+                "The session's grid position must be the one the qualifying result earns.");
+            Assert.Greater(fromQualifying, 1,
+                "An 84s lap should not win pole against this field. If it does, the field's " +
+                "benchmark times are wrong, not the rule.");
+            Assert.Less(fromQualifying, grid.aiFieldCount + 1,
+                "The player cannot start behind the last car.");
+        }
+
         Assert.AreEqual(expected - 1, grid.playerGridPosition,
             "The grid manager counts from zero; the conversion belongs at that boundary.");
-        Assert.Greater(expected, 1,
-            "An 84s lap should not win pole against this field. If it does, the field's " +
-            "benchmark times are wrong, not the rule.");
-        Assert.Less(expected, grid.aiFieldCount + 1,
-            "The player cannot start behind the last car.");
 
         // And the car is physically standing in that slot, not merely labelled with it.
         Vector3 slot = grid.GetGridPosition(grid.playerGridPosition);

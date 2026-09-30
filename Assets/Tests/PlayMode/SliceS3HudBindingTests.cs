@@ -43,6 +43,8 @@ public class SliceS3HudBindingTests
         Application.logMessageReceived += OnLog;
         _presenterLogs.Clear();
 
+        ProfileIsolation.Begin();
+
         GameDataRegistry.Initialize();
         F1.Progression.PlayerProfileManager.GrantStarterContent(
             F1.Progression.PlayerProfileManager.Current);
@@ -63,7 +65,16 @@ public class SliceS3HudBindingTests
 
         var loadOp = SceneManager.LoadSceneAsync(
             FlowSceneNames.TrackContent, LoadSceneMode.Additive);
-        while (!loadOp.isDone) yield return null;
+        // Bounded on purpose. A load op for a scene that is not in the build list never
+        // completes, and a bare `while (!loadOp.isDone)` would then spin for the rest of
+        // the session — the run stops dead, the job latches `tests_running`, and the next
+        // compile is blocked behind it. Failing here names the cause instead.
+        float loadDeadline = Time.realtimeSinceStartup + 20f;
+        while (!loadOp.isDone && Time.realtimeSinceStartup < loadDeadline)
+            yield return null;
+        Assert.IsTrue(loadOp.isDone,
+            "Loading '" + FlowSceneNames.TrackContent + "' additively did not complete " +
+            "within 20s. It must be present in the build settings list.");
         _trackScene = SceneManager.GetSceneByName(FlowSceneNames.TrackContent);
 
         _track = Object.FindAnyObjectByType<TrackPlacement>();
@@ -102,6 +113,8 @@ public class SliceS3HudBindingTests
             var op = SceneManager.UnloadSceneAsync(_trackScene);
             if (op != null) yield return op;
         }
+
+        ProfileIsolation.End();
     }
 
     private GameFlowManager Flow => GameFlowManager.Instance;

@@ -50,6 +50,17 @@ public class Phase3FlowSceneTests
     }
 
     /// <summary>
+    /// Points the profile manager at a throwaway file for the duration of each test, so a
+    /// granted lap time can never be written through to the developer's real save.
+    /// </summary>
+    [UnitySetUp]
+    public IEnumerator ProfileSetUp()
+    {
+        ProfileIsolation.Begin();
+        yield return null;
+    }
+
+    /// <summary>
     /// Scenes are unloaded asynchronously. A plain TearDown that fires-and-forgets the
     /// unloads lets a scene outlive its test, so the next test's FlowSceneHost finds a
     /// destroyed GameFlowManager and logs. Await everything instead.
@@ -63,23 +74,15 @@ public class Phase3FlowSceneTests
         var sceneFlow = GameFlowManager.Instance?.SceneFlow;
         if (sceneFlow != null)
         {
-            var content = sceneFlow.ContentScenes;
-            if (content.Count > 0)
-            {
-                var unloadContent = sceneFlow.UnloadAllContent();
-                if (unloadContent != null)
-                    yield return unloadContent;
-            }
-
-            var current = sceneFlow.CurrentFlowScene;
-            if (current.IsValid() && current.isLoaded)
-            {
-                var op = SceneManager.UnloadSceneAsync(current);
-                if (op != null) yield return op;
-            }
+            // Bounded — see SceneOpWait. Yielding UnloadAllContent() directly cannot be
+            // given a deadline, and an unbounded teardown is what wedged this suite.
+            yield return SceneOpWait.UnloadAllContentBounded(sceneFlow);
+            yield return SceneOpWait.UnloadSceneBounded(sceneFlow.CurrentFlowScene);
         }
 
         if (_flowObject != null) Object.DestroyImmediate(_flowObject);
+
+        ProfileIsolation.End();
     }
 
     private static IEnumerator WaitUntil(System.Func<bool> condition, float timeoutSeconds)
@@ -97,7 +100,7 @@ public class Phase3FlowSceneTests
         foreach (var name in new[]
                  {
                      FlowSceneNames.Loading,
-                     FlowSceneNames.CarSelection,
+                     FlowSceneNames.Lobby,
                      FlowSceneNames.TrackContent
                  })
         {
@@ -106,14 +109,23 @@ public class Phase3FlowSceneTests
         }
     }
 
+    /// <summary>
+    /// The route opens Loading -> Lobby. This used to assert Loading -> CarSelection, and
+    /// used to be called "no main menu between loading and car selection".
+    ///
+    /// That was the original written client requirement, reversed on 2026-09-26 when the
+    /// lobby became the first interactive screen. The lobby is not the MainMenu screen: it
+    /// is a separate screen type hosting the 3D garage, and MainMenu remains unreachable
+    /// from the entry route — which MainMenu_IsNotReachableFromTheEntryRoute still asserts.
+    /// </summary>
     [Test]
-    public void BuildSettings_StartWithLoadingThenCarSelection()
+    public void BuildSettings_StartWithLoadingThenLobby()
     {
         var scenes = UnityEditor.EditorBuildSettings.scenes;
         Assert.Greater(scenes.Length, 1, "The active route needs at least two scenes.");
         Assert.AreEqual(FlowSceneNames.Loading,
             Path.GetFileNameWithoutExtension(scenes[0].path));
-        Assert.AreEqual(FlowSceneNames.CarSelection,
+        Assert.AreEqual(FlowSceneNames.Lobby,
             Path.GetFileNameWithoutExtension(scenes[1].path));
     }
 
@@ -132,7 +144,11 @@ public class Phase3FlowSceneTests
     public void FlowSceneNames_MatchTheScenesOnDisk()
     {
         // Guards against a constant drifting from the asset it names.
-        foreach (var name in new[] { FlowSceneNames.Loading, FlowSceneNames.CarSelection })
+        foreach (var name in new[]
+                 {
+                     FlowSceneNames.Loading,
+                     FlowSceneNames.Lobby
+                 })
         {
             Assert.IsTrue(File.Exists(ToAbsolute($"Assets/Scenes/{name}.unity")),
                 $"FlowSceneNames.{name} points at a scene that does not exist.");
@@ -161,20 +177,37 @@ public class Phase3FlowSceneTests
 
     // --- The exit gate ---
 
+    /// <summary>
+    /// The route after branding is the LOBBY, not car selection and not a main menu.
+    ///
+    /// This test was called BrandingCompletesIntoCarSelectionNotAMainMenu and asserted
+    /// CarSelection. It existed to enforce "there is no main menu between loading and car
+    /// selection", which was the original client requirement. The lobby is a deliberate
+    /// reversal of that (2026-09-26): car selection now happens inside the lobby as a
+    /// second UI state, so nothing navigates to CarSelection automatically any more.
+    ///
+    /// Driven by calling GoToLobby explicitly, the way the original test called
+    /// GoToCarSelection. Nothing in the harness completes branding on its own, so a test
+    /// that only waits for the lobby would time out with the flow still at Branding.
+    /// LoadingScene_AdvancesToTheLobby is the test that exercises the real completion path.
+    ///
+    /// The property that still matters — MainMenu is not in the entry route — is kept, and
+    /// asserted on its own, by MainMenu_IsNotReachableFromTheEntryRoute.
+    /// </summary>
     [UnityTest]
-    public IEnumerator BrandingCompletesIntoCarSelectionNotAMainMenu()
+    public IEnumerator BrandingCompletesIntoTheLobby()
     {
         CreateFlow();
         yield return SettleEntryTransition();
         var flow = _flow;
-        flow.GoToCarSelection();
+        flow.GoToLobby();
 
         yield return WaitUntil(
-            () => SceneManager.GetActiveScene().name == FlowSceneNames.CarSelection, 20f);
+            () => SceneManager.GetActiveScene().name == FlowSceneNames.Lobby, 20f);
 
-        Assert.AreEqual(GameFlowManager.GameScreen.CarSelection, flow.CurrentScreen,
-            "The route after branding is car selection, never the main menu.");
-        Assert.AreEqual(GameFlowState.CarSelection, flow.CurrentFlowState);
+        Assert.AreEqual(GameFlowManager.GameScreen.Lobby, flow.CurrentScreen,
+            "The route after branding is the lobby.");
+        Assert.AreEqual(GameFlowState.Lobby, flow.CurrentFlowState);
     }
 
     [UnityTest]
@@ -183,21 +216,44 @@ public class Phase3FlowSceneTests
         CreateFlow();
         yield return SettleEntryTransition();
         var flow = _flow;
-        flow.GoToCarSelection();
+        flow.GoToLobby();
 
         yield return WaitUntil(
-            () => SceneManager.GetActiveScene().name == FlowSceneNames.CarSelection, 20f);
+            () => SceneManager.GetActiveScene().name == FlowSceneNames.Lobby, 20f);
 
+        Assert.AreEqual(GameFlowManager.GameScreen.Lobby, flow.CurrentScreen);
         Assert.AreNotEqual(GameFlowManager.GameScreen.MainMenu, flow.CurrentScreen,
-            "There is no main menu between loading and car selection (invariant 1).");
-        Assert.IsNotNull(flow.CurrentScreen == GameFlowManager.GameScreen.CarSelection
-            ? (object)flow.CarSelectionScreenInstance
-            : null,
-            "Car selection must resolve to a real hosted screen.");
+            "The lobby replaced the main menu in the entry route; the MainMenu screen is " +
+            "still not part of it.");
+        Assert.IsNotNull(flow.LobbyScreenInstance,
+            "The lobby must resolve to a real hosted screen.");
+    }
+
+    /// <summary>
+    /// Entering the lobby scene hosts the hub screen. Checks the host declares Lobby and
+    /// actually instantiated a screen from its prefab, which is the failure mode that made
+    /// the flow scenes render black.
+    /// </summary>
+    [UnityTest]
+    public IEnumerator EnteringLobbyScene_HostsItsScreen()
+    {
+        CreateFlow();
+        yield return SettleEntryTransition();
+        _flow.GoToLobby();
+
+        yield return WaitUntil(
+            () => SceneManager.GetActiveScene().name == FlowSceneNames.Lobby, 20f);
+        Assert.AreEqual(FlowSceneNames.Lobby, SceneManager.GetActiveScene().name);
+
+        var host = UnityEngine.Object.FindAnyObjectByType<FlowSceneHost>();
+        Assert.IsNotNull(host, "05_LobbyScene must carry a FlowSceneHost.");
+        Assert.AreEqual(GameFlowManager.GameScreen.Lobby, host.HostedScreen);
+        Assert.IsTrue(host.HasScreenInstance,
+            "The host must have instantiated the hub screen from its prefab.");
     }
 
     [UnityTest]
-    public IEnumerator LoadingScene_AdvancesToCarSelectionWithNoMainMenu()
+    public IEnumerator LoadingScene_AdvancesToTheLobby()
     {
         CreateFlow();
         yield return SettleEntryTransition();
@@ -213,36 +269,21 @@ public class Phase3FlowSceneTests
         // Wait on the loaded scene, not just the screen enum: TransitionToScreen sets
         // _currentScreen synchronously, before the load it kicks off has finished.
         float deadline = Time.realtimeSinceStartup + 20f;
-        while (SceneManager.GetActiveScene().name != FlowSceneNames.CarSelection &&
+        while (SceneManager.GetActiveScene().name != FlowSceneNames.Lobby &&
                Time.realtimeSinceStartup < deadline)
             yield return null;
 
-        Assert.AreEqual(GameFlowManager.GameScreen.CarSelection, flow.CurrentScreen,
-            "The loading scene must advance to car selection.");
-        Assert.AreNotEqual(GameFlowManager.GameScreen.MainMenu, flow.CurrentScreen,
-            "There is no main menu between loading and car selection.");
-        Assert.AreEqual(FlowSceneNames.CarSelection, SceneManager.GetActiveScene().name,
-            "The car selection scene must be the active scene after the transition.");
+        Assert.AreEqual(GameFlowManager.GameScreen.Lobby, flow.CurrentScreen,
+            "The loading scene must advance to the lobby.");
+        Assert.AreNotEqual(GameFlowManager.GameScreen.CarSelection, flow.CurrentScreen,
+            "Car selection is reached from inside the lobby, not straight from loading.");
+        Assert.AreEqual(FlowSceneNames.Lobby, SceneManager.GetActiveScene().name,
+            "The lobby scene must be the active scene after the transition.");
     }
 
-    [UnityTest]
-    public IEnumerator EnteringCarSelectionScene_HostsItsScreen()
-    {
-        CreateFlow();
-        yield return SettleEntryTransition();
-        var flow = _flow;
-        flow.GoToCarSelection();
-
-        yield return WaitUntil(
-            () => SceneManager.GetActiveScene().name == FlowSceneNames.CarSelection, 20f);
-        Assert.AreEqual(FlowSceneNames.CarSelection, SceneManager.GetActiveScene().name);
-
-        var host = UnityEngine.Object.FindAnyObjectByType<FlowSceneHost>();
-        Assert.IsNotNull(host, "10_CarSelectionScene must carry a FlowSceneHost.");
-        Assert.AreEqual(GameFlowManager.GameScreen.CarSelection, host.HostedScreen);
-        Assert.IsTrue(host.HasScreenInstance,
-            "The host must have instantiated the car selection screen from its prefab.");
-    }
+    // EnteringCarSelectionScene_HostsItsScreen was removed with 10_CarSelectionScene.
+    // EnteringLobbyScene_HostsItsScreen above covers the same ground for the screen that
+    // now carries car selection.
 
     [UnityTest]
     public IEnumerator SceneHost_RegistersSoTheScreenResolvesWithoutSearching()
@@ -250,42 +291,42 @@ public class Phase3FlowSceneTests
         CreateFlow();
         yield return SettleEntryTransition();
         var flow = _flow;
-        flow.GoToCarSelection();
+        flow.GoToLobby();
 
         yield return WaitUntil(
-            () => flow.CarSelectionScreenInstance != null, 20f);
+            () => flow.LobbyScreenInstance != null, 20f);
 
         // Resolved through the host registry, not FindAnyObjectByType, so it still
         // resolves when the host instantiated the screen inactive (fixes finding L4).
         var host = UnityEngine.Object.FindAnyObjectByType<FlowSceneHost>();
         Assert.IsNotNull(host);
         Assert.IsNotNull(host.ScreenInstance);
-        Assert.IsNotNull(flow.CarSelectionScreenInstance,
-            "GameFlowManager must resolve the hosted car selection screen.");
+        Assert.IsNotNull(flow.LobbyScreenInstance,
+            "GameFlowManager must resolve the hosted lobby screen.");
     }
 
     [UnityTest]
-    public IEnumerator LeavingCarSelection_UnregistersItsHost()
+    public IEnumerator LeavingTheLobby_UnregistersItsHost()
     {
         CreateFlow();
         yield return SettleEntryTransition();
         var flow = _flow;
-        flow.GoToCarSelection();
+        flow.GoToLobby();
         yield return WaitUntil(
-            () => SceneManager.GetActiveScene().name == FlowSceneNames.CarSelection, 20f);
+            () => SceneManager.GetActiveScene().name == FlowSceneNames.Lobby, 20f);
 
-        // Route back to the loading scene; the car selection host's scene unloads.
+        // Route back to the loading scene; the lobby host's scene unloads.
         // The active scene switches before the outgoing scene finishes unloading, so
         // wait for the unload too rather than asserting mid-transition.
         flow.GoToBranding();
         yield return WaitUntil(
             () => SceneManager.GetActiveScene().name == FlowSceneNames.Loading, 20f);
         yield return WaitUntil(
-            () => !SceneManager.GetSceneByName(FlowSceneNames.CarSelection).isLoaded, 20f);
+            () => !SceneManager.GetSceneByName(FlowSceneNames.Lobby).isLoaded, 20f);
 
         Assert.AreEqual(FlowSceneNames.Loading, SceneManager.GetActiveScene().name);
-        Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<CarSelectionSceneController>(),
-            "No car selection controller should survive its scene unloading.");
+        Assert.IsNull(UnityEngine.Object.FindAnyObjectByType<LobbySceneController>(),
+            "No lobby controller should survive its scene unloading.");
     }
 
     // --- Host configuration ---

@@ -43,6 +43,57 @@ namespace F1.GameFlow
     }
 
     /// <summary>
+    /// The lobby — the 3D garage, showing car selection.
+    ///
+    /// This screen used to carry two states: a hub (currency, settings, tasks and a START
+    /// RACE button) and the car tiles, swapped by pressing Start Race. The hub is gone. The
+    /// lobby now opens straight onto the tiles, so there is no state to swap and nothing
+    /// to press first — the car list IS the lobby's first screen.
+    ///
+    /// The car, camera and lighting are untouched by any of this: the same garage is on
+    /// screen throughout, which was always the point of folding car selection into the
+    /// lobby rather than putting a menu in front of it.
+    /// </summary>
+    public interface ILobbyScreen : IScreenController
+    {
+        /// <summary>
+        /// Next pressed, with a car chosen. This is the point the flow leaves the garage
+        /// and loads track selection.
+        /// </summary>
+        event Action OnNextPressed;
+
+        /// <summary>
+        /// A car tile was chosen. Raised on selection only - not on rent or unlock, which
+        /// have their own paths. The screen does NOT navigate: it marks the tile and enables
+        /// Next, and the flow moves on only when Next is pressed.
+        /// </summary>
+        event Action<CarDefinition> OnCarChosen;
+
+        /// <summary>Premium-currency readout shown above the tiles.</summary>
+        void SetCurrency(int amount);
+
+        /// <summary>
+        /// Re-reads the currency figure from the player profile.
+        ///
+        /// Declared on the interface rather than reached by casting to the concrete impl
+        /// because F1.GameFlow is its own assembly and cannot see the UI scripts, which live
+        /// in the predefined Assembly-CSharp. The other scene controllers keep the same
+        /// boundary by talking to the abstract ScreenController types.
+        /// </summary>
+        void RefreshFromProfile();
+
+        /// <summary>
+        /// Marks a car as the chosen tile, or clears the choice when passed null.
+        ///
+        /// The scene controller calls this back with whatever the flow ACCEPTED, rather than
+        /// the screen deciding for itself. Tapping a rental the player has no rental for is
+        /// rejected by <c>SelectCar</c>, and if the screen kept its own optimistic mark the
+        /// tile would look chosen, Next would light up, and pressing it would do nothing.
+        /// </summary>
+        void SetChosenCar(CarDefinition car);
+    }
+
+    /// <summary>
     /// Car selection screen — shows owned, rentable, locked cars by generation.
     /// </summary>
     public interface ICarSelectionScreen : IScreenController

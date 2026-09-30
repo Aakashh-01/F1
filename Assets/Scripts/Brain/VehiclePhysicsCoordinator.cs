@@ -94,9 +94,10 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     public float RearBrakeInstability => rearBrakeInstability;
     public float DynamicFrontBrakeBias => dynamicFrontBrakeBias;
 
-    [Tooltip("While locked the car does not respond to any driver and brakes to a stop. Set " +
-             "by the qualifying shell while its results panel is up, so the car is not still " +
-             "accelerating while the player is deciding between Back, Retry and Go to Race.")]
+    [Tooltip("While locked the car does not respond to any driver and is held at rest. Set " +
+             "by the qualifying shell during the start countdown and while its results " +
+             "panel is up, so the car is not still accelerating while the player is deciding " +
+             "between Back, Retry and Go to Race.")]
     [SerializeField] private bool _inputLocked = false;
 
     /// <summary>Whether the car is parked. True suppresses every input path.</summary>
@@ -105,6 +106,46 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
         get => _inputLocked;
         set => _inputLocked = value;
     }
+
+    /// <summary>
+    /// True while the car should be held at rest, which the drivetrain needs to know
+    /// separately from the input values.
+    ///
+    /// This exists because of a real defect. Parking used to be expressed as
+    /// <c>throttle = 0, brake = 1</c> on the theory that a brake brings the car to a stop.
+    /// But <c>DrivetrainBrakeSystem.ShouldUseReverse</c> reads exactly that combination —
+    /// brake held, no throttle, at or under 2 km/h — as a request to REVERSE, and feeds the
+    /// brake value to the drivetrain as reverse throttle. Parking a car on the grid line
+    /// therefore drove it backwards for as long as it was held, which is the wrong direction
+    /// on a circuit whose start straight runs toward the line.
+    ///
+    /// The drivetrain asks this flag and suppresses drive, brake and reverse outright,
+    /// damping the body to rest instead. Suppressing the input is the fix; changing
+    /// <c>ShouldUseReverse</c> would have broken reversing everywhere, including the AI
+    /// driver's deliberate recovery manoeuvre, which uses the same brake-as-reverse path on
+    /// purpose.
+    /// </summary>
+    public bool IsParked => _inputLocked;
+
+    /// <summary>
+    /// Suppresses the drivetrain's brake-as-reverse reading while still allowing the brake
+    /// to brake.
+    ///
+    /// This exists because a brake is how this drivetrain expresses reverse: the brake held
+    /// with no throttle at or below walking pace IS a reverse request (see DrivetrainBrakeSystem
+    /// .ShouldUseReverse). That is correct for a driver's deliberate reverse, and it is wrong
+    /// for a car that is braking because it cannot get past the car in front. An AI car easing
+    /// off behind traffic reaches a standstill and its brake request is then read as "reverse",
+    /// so it drives backwards into whatever is behind it — and because every car in the pack
+    /// is doing the same thing, one car stopping triggers a chain of cars reversing into each
+    /// other, starting from the grid, where consecutive cars sit closer together than the
+    /// emergency-brake distance.
+    ///
+    /// Unlike <see cref="InputLocked"/> this leaves steering and the brake itself intact, so
+    /// the car can still pick a lane and still decelerate; it only removes the reverse reading.
+    /// Player input never sets it, so ordinary reversing is untouched.
+    /// </summary>
+    public bool SuppressReverse { get; set; }
 
     private void Awake()
     {
@@ -127,18 +168,19 @@ public class VehiclePhysicsCoordinator : MonoBehaviour
     {
         // A locked car stops driving, whoever is asking: this check sits above both the
         // external and the keyboard/touch paths, so an AI driver, a held throttle key and a
-        // touch control are all suppressed by the same flag. Qualifying uses it to park the
-        // car while the results panel is up — the panel is asking the player a question, and
-        // a car that keeps accelerating under it is not answering one.
+        // touch control are all suppressed by the same flag. Qualifying uses it during the
+        // start countdown and while the results panel is up.
         //
-        // Brake rather than merely cutting throttle: cutting it lets the car coast a long way
-        // down the straight, which reads as the freeze not having worked. The drivetrain
-        // spools the brake in, so it is a deceleration rather than a teleport to zero.
+        // All three inputs go to zero rather than to a full brake. The drivetrain reads
+        // "brake held, no throttle, stationary" as a request to reverse — see IsParked — so
+        // braking was the one thing that made a parked car move. DrivetrainBrakeSystem sees
+        // IsParked and damps the body to rest directly, which is what actually holds a car
+        // still, and it cannot be misread as throttle.
         if (_inputLocked)
         {
             steeringInput = 0f;
             throttleInput = 0f;
-            brakeInput = 1f;
+            brakeInput = 0f;
             return;
         }
 

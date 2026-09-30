@@ -169,6 +169,13 @@ namespace F1.GameFlow
         WingSetup,
         PreRace,
         Race,
-        Results
+        Results,
+
+        /// <summary>
+        /// Appended, not inserted. Like GameScreen this enum is easy to grow in the wrong
+        /// place: CarSelection still occupies its own state for the standalone flow, so the
+        /// hub was added at the end rather than renumbering everything after it.
+        /// </summary>
+        Lobby
     }
 }

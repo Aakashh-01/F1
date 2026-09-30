@@ -108,8 +108,14 @@ namespace F1.GameFlow
             if (!_autoAdvance)
                 yield break;
 
-            // Invariant 1: no main menu between loading and car selection.
-            _flow.GoToCarSelection();
+            // Loading opens the lobby — the 3D garage — not car selection directly.
+            //
+            // This used to be "Invariant 1: no main menu between loading and car selection",
+            // which was the original written client requirement. The hub is a deliberate
+            // reversal of it (decided 2026-09-26), and the lobby holds car selection as a
+            // second UI state, so nothing navigates to CarSelection automatically any more.
+            // The test that enforced the old invariant is updated in the same change.
+            _flow.GoToLobby();
         }
     }
 }

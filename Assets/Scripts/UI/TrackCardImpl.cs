@@ -24,7 +24,17 @@ namespace F1.UI
         [Tooltip("Shown instead of the cost line when the circuit has no scene yet.")]
         [SerializeField] private GameObject _comingSoonBadge;
         [SerializeField] private CanvasGroup _contentGroup;
-        [SerializeField, Range(0f, 1f)] private float _unavailableAlpha = 0.45f;
+
+        // Raised from 0.45 when the cards went from a dark theme to a light one.
+        //
+        // Dimming works by making a card blend into what is behind it, and that only works if
+        // the card and the backdrop are close in value. On the old dark card over a dark
+        // backdrop, 0.45 faded it back and still left it readable. On the light card, 0.45
+        // over the dark track-selection background is dark grey — and the card's own labels
+        // are dark ink, so an unavailable circuit ended up as dark text on a dark wash, the
+        // least legible card on screen for a state that is supposed to read as merely
+        // inactive. The COMING SOON badge is the real signal; the dim only has to be a hint.
+        [SerializeField, Range(0f, 1f)] private float _unavailableAlpha = 0.75f;
 
         public event System.Action<TrackDefinition> OnCardClicked;
 
@@ -66,7 +76,10 @@ namespace F1.UI
             if (_statusText != null)
             {
                 if (track == null) _statusText.text = "";
-                else if (!available) _statusText.text = "COMING SOON";
+                // Deliberately empty for an unavailable circuit. The badge above already
+                // says COMING SOON, in the one place the eye goes first, and repeating it
+                // here had every locked tile carrying the same phrase twice in two colours.
+                else if (!available) _statusText.text = "";
                 else if (track.UnlockCostPoints == 0) _statusText.text = "AVAILABLE";
                 else _statusText.text = $"LOCKED ({track.UnlockCostPoints} pts)";
             }

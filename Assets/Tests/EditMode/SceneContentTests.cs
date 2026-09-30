@@ -79,58 +79,22 @@ public class SceneContentTests
             "The GDD requires 'Developed by Pearl-Lemon' on the branding screen.");
     }
 
-    [Test]
-    public void CarSelectionScene_HostsOnlyItsOwnScreen()
-    {
-        var scene = EditorSceneManager.OpenScene(
-            $"Assets/Scenes/{FlowSceneNames.CarSelection}.unity", OpenSceneMode.Single);
+    // CarSelectionScene_HostsOnlyItsOwnScreen and CarSelectionScene_DoesNotAlsoHostBranding
+    // were removed with 10_CarSelectionScene. Car selection is now the lobby's second UI
+    // state, and its coverage is carried by the scene-list sweep below plus
+    // Phase3FlowSceneTests.EnteringLobbyScene_HostsItsScreen.
 
-        var host = Object.FindAnyObjectByType<FlowSceneHost>();
-        Assert.IsNotNull(host, "The car selection scene must carry a FlowSceneHost.");
-        Assert.AreEqual(GameFlowManager.GameScreen.CarSelection, host.HostedScreen);
-
-        var prefab = HostScreenPrefab(host);
-        Assert.IsNotNull(prefab, "The car selection host must have a screen prefab.");
-        // The concrete Impl lives in Assembly-CSharp, which an asmdef cannot reference,
-        // so check against the abstract contract instead.
-        Assert.IsNotNull(prefab.GetComponent<CarSelectionScreen>(),
-            "The hosted prefab must actually be a car selection screen.");
-    }
-
-    [Test]
-    public void CarSelectionScene_DoesNotAlsoHostBranding()
-    {
-        // One screen per scene. If a scene hosts two, one of them is unreachable.
-        var scene = EditorSceneManager.OpenScene(
-            $"Assets/Scenes/{FlowSceneNames.CarSelection}.unity", OpenSceneMode.Single);
-
-        var hosts = scene.GetRootGameObjects();
-        int count = 0;
-        foreach (var root in hosts)
-            if (root.GetComponent<FlowSceneHost>() != null) count++;
-
-        Assert.AreEqual(1, count, "A flow scene hosts exactly one screen.");
-    }
-
-    [Test]
-    public void TrackScene_HostIsFixedToRace()
-    {
-        var scene = EditorSceneManager.OpenScene(
-            $"Assets/Scenes/{FlowSceneNames.TrackContent}.unity", OpenSceneMode.Single);
-
-        var host = Object.FindAnyObjectByType<FlowSceneHost>();
-        Assert.IsNotNull(host, "The shared track scene must carry a FlowSceneHost.");
-
-        // This used to be HostScreenMode.QualifyingOrRace, asserting that the track scene
-        // derived its screen from the session type and therefore hosted Qualifying while
-        // qualifying. Slice step S4 gave qualifying its own shell, and with two hosts in play
-        // that mode became ambiguous: the track host and the pre-race host both claimed
-        // Qualifying, and which one the flow found depended on load order. The track scene is
-        // content now and hosts Race only, until S5 gives the race a shell of its own.
-        // SliceS4PreRaceSceneTests.TrackScene_HostsRaceOnlySoItCannotShadowTheQualifyingHost
-        // asserts the serialized mode as well as the resolved screen.
-        Assert.AreEqual(GameFlowManager.GameScreen.Race, host.HostedScreen);
-    }
+    // TrackScene_HostIsFixedToRace was removed because it asserted an arrangement two slices
+    // ago. It demanded the track content scene carry a FlowSceneHost on Race; S5 then gave the
+    // race a shell of its own, 50_RaceScene hosts Race, and the content scene's host went with
+    // it. The track scene is loaded additively under whichever session is running, so a host
+    // there can only compete with a shell for screen resolution, and the winner was decided by
+    // load order. Two tests now assert the correct arrangement, and they contradict this one
+    // directly: SliceS4PreRaceSceneTests.TrackScene_HostsNoScreenAtAllSoItCannotShadowAShell
+    // and SliceS5RaceShellTests.TrackContentCarriesNoScreenHostAndNoRaceSession. The S4 test
+    // says in its own comment that the assertion moved from "hosts Race" to "hosts nothing",
+    // which is this test being left behind. It had never passed on a fresh checkout — the scene
+    // it opens has carried no host since before the test was written.
 
     [Test]
     public void EveryFlowSceneInTheBuildList_ExistsAndLoads()
@@ -190,7 +154,7 @@ public class SceneContentTests
         foreach (var name in new[]
                  {
                      FlowSceneNames.Loading,
-                     FlowSceneNames.CarSelection,
+                     FlowSceneNames.Lobby,
                      FlowSceneNames.TrackSelection,
                      FlowSceneNames.WingSetup
                  })
@@ -219,7 +183,7 @@ public class SceneContentTests
         foreach (var name in new[]
                  {
                      FlowSceneNames.Loading,
-                     FlowSceneNames.CarSelection,
+                     FlowSceneNames.Lobby,
                      FlowSceneNames.TrackSelection,
                      FlowSceneNames.WingSetup
                  })

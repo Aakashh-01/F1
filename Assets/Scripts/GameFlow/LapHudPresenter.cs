@@ -42,6 +42,19 @@ namespace F1.GameFlow
                  "wiring arrives with S5, which also owns the lap counter.")]
         [SerializeField] private bool _race = false;
 
+        /// <summary>
+        /// Turns the race lap-clock push on for a car that is running in a race.
+        ///
+        /// The flag is a serialized field rather than a constant because the same component
+        /// and the same car prefab serve qualifying and racing, and only the session knows
+        /// which one is on screen. A qualifying car must not push to the race HUD and a race
+        /// car should, so the shell that brings the session up decides. Kept public and
+        /// explicit rather than inferred from <c>CurrentSessionType</c> at push time, because
+        /// inferring it there would mean a ghost or a replay car quietly driving a HUD it
+        /// has no business touching.
+        /// </summary>
+        public void SetRacePush(bool enabled) => _race = enabled;
+
         [Tooltip("Push this tracker's lap progress (0..1) to any screen that declares it. " +
                  "Nothing consumes it yet; it is captured here so sector timing later has a " +
                  "measured value to work from rather than a second tracking system.")]

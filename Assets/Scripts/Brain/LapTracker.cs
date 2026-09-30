@@ -59,6 +59,12 @@ public class LapTracker : MonoBehaviour
              "half a metre is well under one car length.")]
     [SerializeField] private float _lapCompletionTolerance = 0.5f;
 
+    [Tooltip("Smallest per-frame displacement treated as real travel, in metres. Below " +
+             "this the car is standing still and any change in the nearest racing-line " +
+             "waypoint is float noise rather than progress. At 60 fps a car doing 10 km/h " +
+             "moves 46 mm a frame, so this does not gate a car that is genuinely moving.")]
+    [SerializeField] private float _minimumProgressMetres = 0.02f;
+
     // Arc-length table over the racing line, built once. _segmentStart[i] is the distance
     // from waypoint 0 to waypoint i; _totalArc is the full lap.
     private float[] _segmentStart;
@@ -69,6 +75,35 @@ public class LapTracker : MonoBehaviour
     private float _previousArc;
     private float _unwrappedDistance;
     private bool _running;
+    private bool _suspended;
+
+    /// <summary>
+    /// Stops the clock without stopping the tracker.
+    ///
+    /// The start countdown holds a car on the grid for three seconds, and the driver should
+    /// not pay for those seconds. Without this the clock begins the moment the car is placed
+    /// — <see cref="Tick"/> re-arms on the first frame after a reset, since the car starts
+    /// behind the line and must not "complete" a lap by being snapped onto it — so a
+    /// three-second countdown silently became three seconds off the driver's best lap.
+    ///
+    /// Suspending rather than resetting matters for the same reason: the arc-length origin
+    /// stays where the car was placed, so resuming does not re-base the track distance
+    /// underneath a car that has not moved.
+    /// </summary>
+    public void Suspend() => _suspended = true;
+
+    /// <summary>
+    /// Restarts the clock from zero. Deliberately zeroes <see cref="CurrentLapTime"/> so the
+    /// driver's first timed lap starts at 0:00.000 whenever the countdown ended, rather than
+    /// carrying whatever accumulated before it.
+    /// </summary>
+    public void Resume()
+    {
+        _suspended = false;
+        CurrentLapTime = 0f;
+    }
+
+    public bool IsSuspended => _suspended;
     private float _lapProgress01 = -1f; // -1 = not pushed to consumers since the last reset
 
     /// <summary>Raised with this tracker and the completed lap's time, in seconds.</summary>
@@ -183,6 +218,12 @@ public class LapTracker : MonoBehaviour
         if (_track == null || !_track.IsValid)
             return;
 
+        // A suspended clock does not accumulate. The tracker still runs, so the arc-length
+        // bookkeeping and the sector logic stay warm, but the driver's time is not spent
+        // before they are allowed to drive — see Suspend.
+        if (_suspended)
+            return;
+
         if (!_running)
         {
             // First valid sample establishes the starting point. The car is placed on the
@@ -231,6 +272,29 @@ public class LapTracker : MonoBehaviour
         // Signed progress along the line, wrapped to the shorter way round so the seam
         // between the last and first waypoint is not a discontinuity.
         float arc = ArcAt(line, index);
+
+        // A car that is not moving must not make progress, and the arc cannot be trusted to
+        // notice that on its own.
+        //
+        // Progress is the difference between the nearest racing-line waypoint this frame
+        // and the nearest one last frame. For a stationary car those two indices are
+        // decided by float noise on a near-tie, and they flip back and forth — and every
+        // flip reads as a WHOLE SEGMENT of travel, roughly 38 m on this circuit. Standing on
+        // the grid, a car banks a full 3.4 km Monaco lap in about eighteen seconds, and the
+        // qualifying HUD reports a lap that nobody drove.
+        //
+        // Raw displacement is the honest measure of "did this car go anywhere". The clock
+        // below is deliberately still allowed to run: a driver sitting on the line really is
+        // spending that time.
+        if (movement.sqrMagnitude < _minimumProgressMetres * _minimumProgressMetres)
+        {
+            // Re-baseline the arc, so the flip is not banked and released as one large jump
+            // the moment the car does start moving.
+            _previousArc = arc;
+            CurrentLapTime += deltaTime;
+            return;
+        }
+
         float step = arc - _previousArc;
         if (step > _totalArc * 0.5f) step -= _totalArc;
         else if (step < -_totalArc * 0.5f) step += _totalArc;
@@ -324,6 +388,29 @@ public class LapTracker : MonoBehaviour
         OnLapCompleted?.Invoke(this, lapTime);
     }
 
+    /// <summary>
+    /// The layer the drivable surface is on, used by the grounded check.
+    ///
+    /// This is settable because the value is a property of the *track*, not of the car, and
+    /// the two were quietly disagreeing. The field defaulted to 0 (Default) while the track
+    /// surface is authored on Ground, so the downward cast missed the road and found nothing.
+    /// It appeared to work only because a car's own body collider was also on Default and sat
+    /// directly under the cast origin — so the grounded check was passing by finding the car
+    /// itself. Move that collider onto another layer and the check starts failing for real,
+    /// which is how this surfaced: every AI stopped accumulating lap distance the moment its
+    /// body moved to the Traffic layer.
+    ///
+    /// The symptom is silent and severe. A tracker that never passes the grounded check
+    /// never accumulates distance, so lap times stay at zero, lap-completion events never
+    /// fire, and anything ranking cars by progress — the race HUD's position, among others —
+    /// has nothing to rank.
+    /// </summary>
+    public int TrackLayer
+    {
+        get => _trackLayer;
+        set => _trackLayer = value;
+    }
+
     private bool IsOnTrackSurface()
     {
         var surface = _track.TrackSurface;
@@ -348,5 +435,9 @@ public class LapTracker : MonoBehaviour
         _previousArc = 0f;
         _running = false;
         _lapProgress01 = -1f;
+        // A reset clears a suspension too. Reset is what a respawn and a retry call, and in
+        // both the clock is expected to be live afterwards; leaving a stale suspension here
+        // would silently freeze the clock for the rest of the session.
+        _suspended = false;
     }
 }

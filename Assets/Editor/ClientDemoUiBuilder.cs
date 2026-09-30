@@ -23,20 +23,30 @@ public class ClientDemoUiBuilder
     private const string CarCardPath = "Assets/Prefabs/CarCard_Prefab.prefab";
     private const string TrackCardPath = "Assets/Prefabs/TrackCard_Prefab.prefab";
 
-    // The columns are a third of the canvas wide and 80% of its height (864 units at the
-    // 1920x1080 reference). A column can hold three cards, so the card has to fit three:
-    // 3 * 270 + 2 * 10 spacing + 12 padding = 830, inside 864.
-    // The width is chosen to match the art: the panel is 284 x 140, and the generated car
-    // images are about 1.83:1, so they fill it closely instead of floating small in a wide
-    // dark frame. A wider card just adds empty space either side of the picture.
-    private const float CardWidth = 300f;
-    private const float CardHeight = 270f;
-    private const float ArtHeight = 140f;
+    // The card is now a TILE, not a column entry. It lives in a horizontal strip along the
+    // bottom of the lobby's selection panel, six across at the 1920x1080 reference:
+    // 6 * 250 + 5 * 22 spacing = 1610, which clears the 80-unit strip insets either side.
+    //
+    // That makes it squarer than the 300x270 it used to be, which is what a strip wants -
+    // a row of 1.1:1 cards reads as a shelf of cars, where a row of 300x270 read as a shelf
+    // of letterboxes. The art panel grows to match so the picture still fills its frame.
+    private const float CardWidth = 250f;
+    private const float CardHeight = 280f;
+
+    // The art panel and the text stack have to share 280 units between them. The text needs
+    // 28 + 22 + 22 + 22 + 34 = 128 for name, gen, cost, status and the button, so the art
+    // gets the remaining 152. At 168 the stack overflowed by 16 and the status line sat on
+    // top of the Select button.
+    //
+    // 132 chosen for a 1.77:1 art panel against the ~1.83:1 generated car images, so the
+    // picture still fills its frame without letterboxing.
+    private const float ArtHeight = 132f;
     private const float CardCornerPad = 8f;
 
     [MenuItem("Tools/BuildClientDemoUI")]
     public static void Build()
     {
+        SlimUiSkin.EnsureLoaded();
         BuildCarCard();
         BuildTrackCard();
         AssetDatabase.SaveAssets();
@@ -128,7 +138,14 @@ public class ClientDemoUiBuilder
     {
         CropBackgroundsToWidescreen();
         ApplyBackground(CarScreenPrefabPath, ArtRoot + "Backgrounds/bg_carselect.png");
-        ApplyBackground(TrackScreenPrefabPath, ArtRoot + "Backgrounds/bg_trackselect.png");
+        // v2, not the original. The first track background was an aerial night photograph of a
+        // circuit, and the track thumbnails are also warm, detailed circuit photographs — two
+        // images of the same subject at the same level of detail, so they fought each other
+        // and neither read. v2 is a dark abstract circuit-line graphic: it says "circuits"
+        // without ever looking like another track photo, and its cool near-black field makes
+        // the warm thumbnails the brightest thing on screen. The original bg_trackselect.png
+        // is still on disk if it is ever wanted back.
+        ApplyBackground(TrackScreenPrefabPath, ArtRoot + "Backgrounds/bg_trackselect_v2.png");
         ApplyBackground(WingScreenPrefabPath, ArtRoot + "Backgrounds/bg_wingsetup.png");
         ApplyBackground(BrandingPrefabPath, ArtRoot + "Backgrounds/bg_loading.png");
         EnsureLoadingScreenHasBranding();
@@ -218,6 +235,136 @@ public class ClientDemoUiBuilder
     /// "the car selection screen is black" — nothing was wrong with the prefab's styling,
     /// there was simply nothing in the scene to style.
     /// </summary>
+    /// <summary>
+    /// Rearranges the track screen into a centred hero tile with the unbuilt circuits
+    /// flanking it.
+    ///
+    /// The two Owned/Locked columns produced a ragged 2x3 grid with a hole in it, and put the
+    /// one playable circuit in a top corner where it read as just another option. The column
+    /// split also duplicated information the per-card AVAILABLE / COMING SOON status already
+    /// carries, so it goes entirely.
+    ///
+    /// Re-runnable and idempotent: existing columns are found and re-anchored rather than
+    /// duplicated, and any left over from the old two-column layout are removed.
+    /// </summary>
+    [MenuItem("Tools/BuildTrackSelectionLayout")]
+    public static void BuildTrackSelectionLayout()
+    {
+        var root = PrefabUtility.LoadPrefabContents(TrackScreenPrefabPath);
+        try
+        {
+            var impl = FindImpl(root, "TrackSelectionScreenImpl");
+            if (impl == null)
+            {
+                Debug.LogError($"[ClientDemoUI] TrackSelectionScreenImpl not found in {TrackScreenPrefabPath}.");
+                return;
+            }
+
+            // The retired columns. They are deleted, not reused, so the two fields the impl
+            // no longer has cannot keep a stale reference alive.
+            foreach (var dead in new[] { "OwnedColumn", "LockedColumn" })
+            {
+                var existing = root.transform.Find(dead);
+                if (existing != null) Object.DestroyImmediate(existing.gameObject);
+            }
+
+            var hero = EnsureColumn(root.transform, "HeroColumn");
+            var left = EnsureColumn(root.transform, "LockedLeftColumn");
+            var right = EnsureColumn(root.transform, "LockedRightColumn");
+
+            // Hero centred, wide enough for a 430 tile with air either side. The flanking
+            // columns take the outer thirds for 232-wide supporting tiles. The vertical band
+            // stops short of the title and clears the bottom edge.
+            Anchor(hero, new Vector2(0.30f, 0.06f), new Vector2(0.70f, 0.80f), 26f);
+            Anchor(left, new Vector2(0.03f, 0.16f), new Vector2(0.27f, 0.74f), 18f);
+            Anchor(right, new Vector2(0.73f, 0.16f), new Vector2(0.97f, 0.74f), 18f);
+
+            var so = new SerializedObject(impl);
+            Set(so, "_heroColumn", hero);
+            Set(so, "_lockedLeftColumn", left);
+            Set(so, "_lockedRightColumn", right);
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            PrefabUtility.SaveAsPrefabAsset(root, TrackScreenPrefabPath);
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+
+        // The screen is installed as an instance in the scene, so the rebuilt prefab has to
+        // be pushed back out or the scene keeps the old two-column copy.
+        PushIntoScene(TrackScreenPrefabPath, "Assets/Scenes/20_TrackSelectionScene.unity",
+                      "TrackSelectionScreen");
+
+        Debug.Log("[ClientDemoUI] Track screen laid out as a centred hero with flanking columns.");
+    }
+
+    private static RectTransform EnsureColumn(Transform root, string name)
+    {
+        var existing = root.Find(name) as RectTransform;
+        if (existing != null) return existing;
+
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(root, false);
+        return (RectTransform)go.transform;
+    }
+
+    private static void Anchor(RectTransform rt, Vector2 min, Vector2 max, float spacing)
+    {
+        var group = rt.GetComponent<VerticalLayoutGroup>() ?? rt.gameObject.AddComponent<VerticalLayoutGroup>();
+        group.spacing = spacing;
+        group.childAlignment = TextAnchor.MiddleCenter;
+        // The cards carry explicit sizeDeltas sized per role (hero vs supporting), so the
+        // group must not control their dimensions.
+        group.childControlWidth = false;
+        group.childControlHeight = false;
+        group.childForceExpandWidth = false;
+        group.childForceExpandHeight = false;
+
+        rt.anchorMin = min;
+        rt.anchorMax = max;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+    }
+
+    /// <summary>
+    /// Replaces an installed screen instance in a scene with the current prefab, preserving
+    /// its name. Screens are stored as prefab instances, so editing the prefab alone leaves
+    /// the scene showing the old version.
+    /// </summary>
+    private static void PushIntoScene(string prefabPath, string scenePath, string objectName)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null) return;
+
+        var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            if (root.name != objectName) continue;
+            Object.DestroyImmediate(root);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            instance.name = objectName;
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"[ClientDemoUI] Reinstalled {objectName} in {Path.GetFileName(scenePath)}.");
+            return;
+        }
+        Debug.LogWarning($"[ClientDemoUI] No '{objectName}' root in {scenePath}; not reinstalled.");
+    }
+
+    /// <summary>Assigns an object-reference serialized field.</summary>
+    private static void Set(SerializedObject so, string property, Object value)
+    {
+        var prop = so.FindProperty(property);
+        if (prop == null)
+        {
+            Debug.LogError($"[ClientDemoUI] No field '{property}'.");
+            return;
+        }
+        prop.objectReferenceValue = value;
+    }
+
     [MenuItem("Tools/InstallScreensIntoScenes")]
     public static void InstallScreens()
     {
@@ -249,6 +396,347 @@ public class ClientDemoUiBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log($"[ClientDemoUI] Installed {objectName} into {Path.GetFileName(scenePath)}.");
+    }
+
+    /// <summary>
+    /// Gives the loading scene a camera.
+    ///
+    /// 00_LoadingScene had none at all, and Unity logs a frame with nothing to render
+    /// through — the "no camera available" complaint. The branding screen is a
+    /// Screen Space - Overlay canvas, so uGUI itself does not need a camera and the UI drew
+    /// fine; what was missing was anything for the engine to render the world with, which
+    /// leaves the view behind the overlay undefined and produces a warning every run.
+    ///
+    /// The camera renders a flat dark clear and nothing else. The branding artwork is a
+    /// full-screen Image on the overlay, so this exists to give the frame a surface, not to
+    /// light or compose anything. It is tagged MainCamera so Camera.main resolves during the
+    /// load, and it is destroyed with the scene, so the lobby's own LobbyCamera takes over
+    /// the moment the flow advances.
+    ///
+    /// Idempotent, and additive: the scene is never made active, and a second run finds the
+    /// camera and does nothing.
+    /// </summary>
+    /// <summary>
+    /// Points the loading screen at a background and brings its progress bar into the theme.
+    ///
+    /// Narrow on purpose. `BuildScreens` also re-applies backgrounds to the car, track and
+    /// WING screens, and the wing one would put an opaque picture back over the garage — the
+    /// exact defect §4a of the handoff was about. This touches the branding screen only.
+    ///
+    /// The artwork is `bg_transition.png` — the user's own F1 key art, pasted into
+    /// Assets/Scenes and copied here so BOTH loading screens share one file: this branding
+    /// screen, and the transition card FlowOverlay shows between scenes. It is 1671x941,
+    /// already 16:9, so it needs no crop.
+    ///
+    /// Every earlier candidate is still on disk and nothing was overwritten: bg_loading.png
+    /// (the original stock night race), bg_loading_v2.png (the dark garage) and
+    /// bg_trackselect_v2.png.
+    ///
+    /// The bar is recoloured in the same pass because it was the loudest thing on the new
+    /// artwork: a hard RGBA(0.878, 0.024, 0.000) red sitting across a cool, dark image. It
+    /// now uses the same amber accent as Start Race and Continue, so the loading screen is
+    /// part of the same product rather than a red bar bolted onto a moody photograph.
+    /// </summary>
+    [MenuItem("Tools/UI/Apply Loading Screen Art", priority = 72)]
+    public static void ApplyLoadingBackground()
+    {
+        ApplyBackground(BrandingPrefabPath, ArtRoot + "Backgrounds/bg_transition.png");
+        SkinLoadingProgressBar();
+    }
+
+    /// <summary>Recolours the branding screen's progress track and fill to the theme.</summary>
+    private static void SkinLoadingProgressBar()
+    {
+        var contents = PrefabUtility.LoadPrefabContents(BrandingPrefabPath);
+        try
+        {
+            // The bar lives under "LoadingProgress", not a "ProgressRoot".
+            var bar = contents.transform.Find("LoadingProgress");
+            if (bar == null)
+            {
+                Debug.LogWarning("[ClientDemoUI] No LoadingProgress on the branding screen; " +
+                                 "the bar was left alone.");
+                return;
+            }
+
+            var trackImage = bar.Find("Track")?.GetComponent<Image>();
+            var fillImage = bar.Find("Fill")?.GetComponent<Image>();
+            if (trackImage == null || fillImage == null)
+            {
+                Debug.LogWarning("[ClientDemoUI] LoadingProgress is missing its Track or Fill; " +
+                                 "the bar was left alone.");
+                return;
+            }
+
+            // A translucent dark trough, so it reads as a container against both the dark
+            // garage and the brighter car rather than as a solid bar.
+            trackImage.color = new Color(0.10f, 0.11f, 0.14f, 0.75f);
+            trackImage.raycastTarget = false;
+
+            fillImage.color = SlimUiSkin.Accent;
+            fillImage.raycastTarget = false;
+
+            PrefabUtility.SaveAsPrefabAsset(contents, BrandingPrefabPath);
+            Debug.Log("[ClientDemoUI] Loading bar recoloured to the theme accent (was hard red).");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(contents);
+        }
+    }
+
+    /// <summary>
+    /// Removes the "Select your race" subtitle from the branding screen.
+    ///
+    /// The object is deleted rather than blanked, and the impl's field cleared, so nothing
+    /// can put the text back by writing to it. BrandingScreenImpl only ever calls
+    /// SetVisible on it and that is null-safe, so the screen is otherwise unaffected.
+    /// </summary>
+    [MenuItem("Tools/UI/Remove Loading Screen Subtitle", priority = 73)]
+    public static void RemoveLoadingSubtitle()
+    {
+        var contents = PrefabUtility.LoadPrefabContents(BrandingPrefabPath);
+        try
+        {
+            var subtitle = contents.transform.Find("SubtitleText");
+            if (subtitle == null)
+            {
+                Debug.Log("[ClientDemoUI] No SubtitleText on the branding screen; already removed.");
+                return;
+            }
+
+            Object.DestroyImmediate(subtitle.gameObject);
+
+            var impl = FindImpl(contents, "BrandingScreenImpl");
+            if (impl != null)
+            {
+                // One SerializedObject for both the read and the write: a second instance
+                // would carry a different pending-change set and the clear would be dropped.
+                var so = new SerializedObject(impl);
+                var prop = so.FindProperty("_subtitleText");
+                if (prop != null)
+                {
+                    prop.objectReferenceValue = null;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                }
+                else
+                {
+                    Debug.LogWarning("[ClientDemoUI] BrandingScreenImpl has no _subtitleText field.");
+                }
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(contents, BrandingPrefabPath);
+            Debug.Log("[ClientDemoUI] Removed the loading screen subtitle.");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(contents);
+        }
+    }
+
+    /// <summary>
+    /// Gives the genuinely camera-less UI scenes a camera.
+    ///
+    /// 00_LoadingScene and 20_TrackSelectionScene had none, and Unity logs a frame with
+    /// nothing to render through — the "no camera available" complaint. Their screens are
+    /// Screen Space - Overlay canvases over a flat backdrop, so uGUI never needed a camera
+    /// and the UI drew fine; what was missing was a surface for the engine to render the
+    /// frame with.
+    ///
+    /// The camera clears to a flat dark colour and draws nothing (`cullingMask = 0`). It
+    /// exists to give the frame something to render through, not to light or compose
+    /// anything — the artwork behind each screen is a full-screen Image on the overlay.
+    /// Tagged MainCamera so Camera.main resolves, and destroyed with its scene.
+    ///
+    /// **Three scenes are deliberately NOT in this list, and adding them breaks things.**
+    ///
+    /// - **40_PreRaceScene** was in an earlier version of this list and it was wrong. It is
+    ///   not a UI scene: it is a driving scene. `PreRaceSceneController` loads the track
+    ///   additively and calls `PlayerCarSpawner.Spawn`, and the car arrives carrying its own
+    ///   `Main Camera`. A second camera that clears to near-black and renders nothing does
+    ///   not sit harmlessly alongside it — it CLEARS the target and draws no replacement, so
+    ///   it wipes the chase camera's output and the whole screen goes black. That is not a
+    ///   cosmetic problem and no test would have caught it; the scene still "worked", it
+    ///   simply rendered nothing.
+    /// - **50_RaceScene** and **Track_01** have no camera in the scene and that is correct
+    ///   for the same reason — the camera rides on the car prefab.
+    ///
+    /// Idempotent and additive: each scene is opened additively, never made active, and a
+    /// scene that already has any camera is left alone.
+    /// </summary>
+    /// <summary>
+    /// Brings the qualifying HUD into the same skin as the selection screens.
+    ///
+    /// It is a different kind of surface from everything else here, and the two halves need
+    /// opposite treatment:
+    ///
+    /// - **The lap clock floats over live 3D.** No panel behind it by design — the whole
+    ///   point is to watch the lap, and UIBuilder's own note says an opaque full-screen
+    ///   background "would hide the driving entirely". So it cannot be given a dark tile to
+    ///   sit on, and a colour alone will not carry it: white reads against dark scenery and
+    ///   vanishes against a bright sky, which the track scenes have plenty of. It gets a dark
+    ///   underlay instead, so the same glyph survives both.
+    /// - **The results panel IS a tile**, and it is already a dark one. It moves onto the
+    ///   same deep indigo as the selection cards, with the same light ink, and its three
+    ///   buttons take the same three-layer treatment — light fill, the pack's frame, dark
+    ///   label — so the panel does not read as a leftover from an older build.
+    ///
+    /// Go to Race is the primary of the three, so it gets the amber accent; Back and Retry
+    /// stay neutral.
+    /// </summary>
+    [MenuItem("Tools/UI/Skin Qualifying Screen", priority = 74)]
+    public static void SkinQualifyingScreen()
+    {
+        const string path = "Assets/Prefabs/QualifyingScreen_Prefab.prefab";
+        var contents = PrefabUtility.LoadPrefabContents(path);
+        try
+        {
+            // --- The lap clock, over the track ---
+            var track = contents.transform.Find("TrackNameText")?.GetComponent<TMPro.TextMeshProUGUI>();
+            var lap = contents.transform.Find("CurrentLapTimeText")?.GetComponent<TMPro.TextMeshProUGUI>();
+            var best = contents.transform.Find("BestLapText")?.GetComponent<TMPro.TextMeshProUGUI>();
+
+            foreach (var t in new[] { track, lap })
+            {
+                if (t == null) continue;
+                t.color = Color.white;
+                SlimUiSkin.ApplyHudTextMaterial(t);
+            }
+            if (best != null)
+            {
+                // Was 0.72/0.84/0.94 — a pale blue that lost all contrast the moment the
+                // camera faced sky. Brighter, and now shadowed.
+                best.color = new Color(0.90f, 0.93f, 0.97f, 1f);
+                SlimUiSkin.ApplyHudTextMaterial(best);
+            }
+
+            // --- The results panel: a tile like any other ---
+            var panelRt = contents.transform.Find("ResultsPanel") as RectTransform;
+            if (panelRt == null)
+            {
+                Debug.LogError("[ClientDemoUI] QualifyingScreen_Prefab has no ResultsPanel.");
+                return;
+            }
+            var panelImage = panelRt.GetComponent<Image>();
+            if (panelImage != null)
+                SlimUiSkin.ApplyFlatPanel(panelImage, SlimUiSkin.CardFill);
+
+            var resultsTitle = panelRt.Find("ResultsTitleText")?.GetComponent<TMPro.TextMeshProUGUI>();
+            var resultsCaption = panelRt.Find("ResultsCaptionText")?.GetComponent<TMPro.TextMeshProUGUI>();
+            var resultsTime = panelRt.Find("ResultLapTimeText")?.GetComponent<TMPro.TextMeshProUGUI>();
+            if (resultsTitle != null) resultsTitle.color = SlimUiSkin.TileInk;
+            if (resultsCaption != null) resultsCaption.color = SlimUiSkin.TileInkMuted;
+            if (resultsTime != null) resultsTime.color = Color.white;
+
+            // --- Its three buttons ---
+            SkinPanelButton(panelRt, "BackButton", primary: false);
+            SkinPanelButton(panelRt, "RetryButton", primary: false);
+            SkinPanelButton(panelRt, "GoToRaceButton", primary: true);
+
+            PrefabUtility.SaveAsPrefabAsset(contents, path);
+            Debug.Log("[ClientDemoUI] Qualifying HUD skinned: lap clock shadowed for the 3D " +
+                      "backdrop, results panel moved onto the tile palette.");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(contents);
+        }
+    }
+
+    /// <summary>
+    /// Gives a button inside the results panel the standard three-layer treatment and a dark
+    /// label, since the fill is now light.
+    /// </summary>
+    private static void SkinPanelButton(RectTransform panel, string name, bool primary)
+    {
+        var rt = panel.Find(name) as RectTransform;
+        var button = rt?.GetComponent<Button>();
+        if (button == null)
+        {
+            Debug.LogWarning($"[ClientDemoUI] No button '{name}' in the results panel; skipped.");
+            return;
+        }
+
+        if (primary) SlimUiSkin.ApplyPrimaryButton(button);
+        else SlimUiSkin.ApplySecondaryButton(button);
+
+        var label = rt.Find("Label")?.GetComponent<TMPro.TextMeshProUGUI>();
+        if (label != null)
+        {
+            label.color = SlimUiSkin.Ink;
+            label.fontStyle = TMPro.FontStyles.Bold;
+        }
+    }
+
+    [MenuItem("Tools/UI/Ensure UI Scene Cameras", priority = 71)]
+    public static void EnsureUiSceneCameras()
+    {
+        var targets = new (string scene, string cameraName, Color clear)[]
+        {
+            (LoadingScenePath, "LoadingCamera", new Color(0.035f, 0.040f, 0.050f, 1f)),
+            ("Assets/Scenes/20_TrackSelectionScene.unity", "MenuCamera",
+                new Color(0.020f, 0.030f, 0.050f, 1f)),
+        };
+
+        int added = 0, present = 0, missing = 0;
+        foreach (var (scenePath, cameraName, clear) in targets)
+        {
+            if (!System.IO.File.Exists(scenePath))
+            {
+                Debug.LogWarning($"[ClientDemoUI] {scenePath} not found; skipped.");
+                missing++;
+                continue;
+            }
+
+            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+            try
+            {
+                bool alreadyHasOne = false;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    if (root.GetComponentInChildren<Camera>(true) != null) { alreadyHasOne = true; break; }
+                }
+
+                if (alreadyHasOne)
+                {
+                    Debug.Log($"[ClientDemoUI] {Path.GetFileName(scenePath)} already has a camera; " +
+                              "nothing to do.");
+                    present++;
+                    continue;
+                }
+
+                var go = new GameObject(cameraName, typeof(Camera), typeof(AudioListener));
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, scene);
+                go.tag = "MainCamera";
+
+                var cam = go.GetComponent<Camera>();
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = clear;
+                cam.nearClipPlane = 0.3f;
+                cam.farClipPlane = 100f;
+                // A UI-only scene: draw nothing, so the flat clear is all that sits behind
+                // the overlay, and leave the mask clear for anything the scene grows later.
+                cam.cullingMask = 0;
+
+                go.transform.position = new Vector3(0f, 1f, -10f);
+                go.transform.rotation = Quaternion.identity;
+
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+                added++;
+                Debug.Log($"[ClientDemoUI] Added {cameraName} to {Path.GetFileName(scenePath)}; it had " +
+                          "no camera, so Unity had nothing to render the frame through.");
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        Debug.Log($"[ClientDemoUI] UI scene cameras: {added} added, {present} already present, " +
+                  $"{missing} skipped. 40_PreRaceScene, 50_RaceScene and Track_01 are excluded on " +
+                  "purpose — they are driving scenes and their camera rides on the car prefab. " +
+                  "A flat-clear camera there wipes the chase camera's output and the screen goes black.");
     }
 
     /// <summary>Adds the branding prefab to the loading scene if it is not already there.</summary>
@@ -328,6 +816,22 @@ public class ClientDemoUiBuilder
 
             badge.gameObject.SetActive(false);
 
+            // Written explicitly rather than left to the C# default, because a prefab
+            // serialises whatever the field held when it was authored. Change the default
+            // and an existing prefab keeps the old number, which is how the unavailable-card
+            // dim stayed at 0.45 after the light theme landed.
+            var impl = FindImpl(root, "TrackCardImpl");
+            if (impl != null)
+            {
+                var implSo = new SerializedObject(impl);
+                var alphaProp = implSo.FindProperty("_unavailableAlpha");
+                if (alphaProp != null)
+                {
+                    alphaProp.floatValue = 0.75f;
+                    implSo.ApplyModifiedPropertiesWithoutUndo();
+                }
+            }
+
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
         finally
@@ -377,13 +881,22 @@ public class ClientDemoUiBuilder
             // artwork spills over the card edges and onto its neighbours.
             cardRect.sizeDelta = new Vector2(CardWidth, CardHeight);
 
-            // --- Darken the card body so the label text stays legible over artwork ---
+            // --- Card body: deep indigo, with the pack's panel art over it as an edge ---
+            // Dark, not light: the car and track artwork carries its own dark backdrop, and
+            // a pale card turned that into a dark rectangle dropped into a bright panel.
+            // See SlimUiSkin for why the art well is near-black.
             var body = root.GetComponent<Image>();
             if (body != null)
             {
-                body.color = new Color(0.06f, 0.07f, 0.09f, 0.96f);
+                SlimUiSkin.ApplyFlatPanel(body, SlimUiSkin.CardFill);
                 body.raycastTarget = false;
             }
+
+            var bodyFrame = FindOrCreateChild(cardRect, "CardFrame");
+            SlimUiSkin.ApplyPanelOverlay(bodyFrame.GetComponent<Image>(),
+                                         SlimUiSkin.CardFrameOverlay);
+            bodyFrame.GetComponent<Image>().raycastTarget = false;
+            Stretch((RectTransform)bodyFrame);
 
             // --- Artwork panel across the top ---
             var art = FindOrCreateChild(cardRect, artName);
@@ -396,6 +909,20 @@ public class ClientDemoUiBuilder
             artImage.preserveAspect = true;
             artImage.color = Color.white;
 
+            // A near-black well behind the picture. The artwork's own backdrop is near-black,
+            // so the well disappears into it and the subject floats instead of sitting
+            // inside a visible box. This is the change that stops the card looking hazy.
+            var artWell = FindOrCreateChild(cardRect, artName + "Well");
+            SlimUiSkin.ApplyFlatPanel(artWell.GetComponent<Image>(), SlimUiSkin.ArtWellFill);
+            artWell.GetComponent<Image>().raycastTarget = false;
+            var artWellRect = (RectTransform)artWell;
+            artWellRect.anchorMin = new Vector2(0f, 1f);
+            artWellRect.anchorMax = new Vector2(1f, 1f);
+            artWellRect.pivot = new Vector2(0.5f, 1f);
+            artWellRect.offsetMin = new Vector2(CardCornerPad, -(ArtHeight + CardCornerPad));
+            artWellRect.offsetMax = new Vector2(-CardCornerPad, -CardCornerPad);
+            artWellRect.SetAsFirstSibling();
+
             var artRect = (RectTransform)art;
             artRect.anchorMin = new Vector2(0f, 1f);
             artRect.anchorMax = new Vector2(1f, 1f);
@@ -407,15 +934,52 @@ public class ClientDemoUiBuilder
             art.SetSiblingIndex(0);
 
             // --- Stack the text below the artwork ---
-            // The art panel occupies the top ArtHeight of the card, which on a 270 card is
-            // everything above anchor 0.452. Every label therefore has to sit below that, or
-            // it renders on top of the picture.
-            SetAnchor(root.transform, "NameText", 0.385f, 28f);
-            SetAnchor(root.transform, "GenText", 0.290f, 22f);
-            SetAnchor(root.transform, "ShortCodeText", 0.290f, 22f);
-            SetAnchor(root.transform, "CostText", 0.205f, 22f);
-            SetAnchor(root.transform, "StatusText", 0.150f, 20f);
-            SetAnchor(root.transform, "CardButton", 0.055f, 38f);
+            // The art panel is the top ArtHeight of the card, so on a 280 card everything
+            // above 0.528 is picture and every label has to sit below that. Measured in
+            // units from the card's bottom edge, the stack runs: button 1..33, status
+            // 40..60, cost 68..88, gen 96..116, name 120..146, with the art starting at 148.
+            SetAnchor(root.transform, "NameText", 0.475f, 26f);
+            SetAnchor(root.transform, "GenText", 0.379f, 20f);
+            SetAnchor(root.transform, "ShortCodeText", 0.379f, 20f);
+            SetAnchor(root.transform, "CostText", 0.279f, 20f);
+            SetAnchor(root.transform, "StatusText", 0.179f, 20f);
+            SetAnchor(root.transform, "CardButton", 0.061f, 32f);
+
+            // --- SlimUI skin ---
+            // Labels go light on the now-dark tile. Gen/short-code/cost/status are secondary
+            // lines and are muted so the name reads first, which is the hierarchy these cards
+            // had before the theme changed.
+            SlimUiSkin.ApplyCardInk(root,
+                plain: new[] { "NameText" },
+                muted: new[] { "GenText", "ShortCodeText", "CostText", "StatusText" });
+
+            // The card's own press target gets the same three-layer button treatment as the
+            // screen's Back and Continue: an opaque light fill, the pack's outline on top,
+            // and dark ink. The button stays light even though the card is dark — it is the
+            // one element that has to read against the dark garage as well.
+            var cardButton = root.transform.Find("CardButton")?.GetComponent<Button>();
+            if (cardButton != null) SlimUiSkin.ApplyButtonVisual(cardButton, primary: true);
+            var buttonLabel = root.transform.Find("CardButton/Label")?.GetComponent<TMPro.TMP_Text>();
+            SlimUiSkin.ApplyInk(buttonLabel);
+
+            SlimUiSkin.ApplySelectedBorder(root, "SelectedIndicator");
+
+            // Sibling order is settled last, because three separate passes each reorder this
+            // hierarchy and the last one wins otherwise. Bottom to top it has to be:
+            //   CardFrame  a translucent light edge, so the dark card is visible at all
+            //              against a dark garage
+            //   <art>Well  the near-black recess
+            //   <art>      the picture itself, never washed by anything above it
+            //   labels, button, selected indicator
+            // Getting this wrong is invisible in the inspector and wrecks the card: a
+            // translucent frame drawn OVER the artwork is exactly the haze this palette
+            // exists to remove.
+            var frameChild = cardRect.Find("CardFrame");
+            var wellChild = cardRect.Find(artName + "Well");
+            var artChild = cardRect.Find(artName);
+            if (frameChild != null) frameChild.SetSiblingIndex(0);
+            if (wellChild != null) wellChild.SetSiblingIndex(1);
+            if (artChild != null) artChild.SetSiblingIndex(2);
 
             PrefabUtility.SaveAsPrefabAsset(root, path);
         }
@@ -443,6 +1007,17 @@ public class ClientDemoUiBuilder
         var rt = (RectTransform)go.transform;
         rt.SetParent(parent, false);
         return rt;
+    }
+
+    /// <summary>Fills the parent rect, so an overlay covers exactly the card.</summary>
+    private static void Stretch(RectTransform rt)
+    {
+        if (rt == null) return;
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
     }
 
     /// <summary>

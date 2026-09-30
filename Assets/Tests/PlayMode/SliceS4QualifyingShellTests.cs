@@ -31,6 +31,8 @@ public class SliceS4QualifyingShellTests
     [UnitySetUp]
     public IEnumerator SetUp()
     {
+        ProfileIsolation.Begin();
+
         GameDataRegistry.Initialize();
         F1.Progression.PlayerProfileManager.GrantStarterContent(
             F1.Progression.PlayerProfileManager.Current);
@@ -39,40 +41,57 @@ public class SliceS4QualifyingShellTests
         _flowObject.AddComponent<GameFlowManager>();
         _flowObject.AddComponent<FlowRoot>();
 
-        // Let the flow settle before anything is asked of it, exactly as the boot route does.
         yield return Settle();
     }
 
     [UnityTearDown]
     public IEnumerator TearDown()
     {
-        var sceneFlow = GameFlowManager.Instance?.SceneFlow;
-        if (sceneFlow != null)
-        {
-            if (sceneFlow.ContentScenes.Count > 0)
-            {
-                var unload = sceneFlow.UnloadAllContent();
-                if (unload != null) yield return unload;
-            }
-
-            var current = sceneFlow.CurrentFlowScene;
-            if (current.IsValid() && current.isLoaded)
-            {
-                var op = SceneManager.UnloadSceneAsync(current);
-                if (op != null) yield return op;
-            }
-        }
+        // Both waits are bounded. This is the teardown the whole suite hung on: the run
+        // stopped dead at 146/155 on the first test in this fixture with every wait inside
+        // the test itself already carrying a deadline, which pointed the finger here. See
+        // SceneOpWait for why the content unload cannot simply be yielded.
+        yield return SceneOpWait.UnloadAllContentBounded(GameFlowManager.Instance?.SceneFlow);
+        yield return SceneOpWait.UnloadSceneBounded(
+            GameFlowManager.Instance?.SceneFlow != null
+                ? GameFlowManager.Instance.SceneFlow.CurrentFlowScene
+                : default);
 
         if (_flowObject != null) Object.DestroyImmediate(_flowObject);
+
+        ProfileIsolation.End();
     }
 
     private GameFlowManager Flow => GameFlowManager.Instance;
 
-    private static IEnumerator Settle()
+    /// <summary>
+    /// Waits for the flow to go idle, with a deadline.
+    ///
+    /// This used to be a bare <c>WaitUntil</c>, and it was the only unbounded wait in this
+    /// fixture — <see cref="WaitForScene"/> and <see cref="WaitForSpawnedCar"/> both carry a
+    /// realtime deadline. A flow operation that never completes (a load of a scene that is
+    /// not in the build list, an unload that stalls) leaves <c>IsBusy</c> true forever, so
+    /// the wait never returned, the test run stopped dead at whichever test happened to
+    /// follow a wedged operation, and the job latched <c>tests_running</c> and blocked the
+    /// next compile. A deadline turns that silent stall into a named failure.
+    /// </summary>
+    private static IEnumerator Settle(float timeout = 20f)
     {
-        yield return new WaitUntil(() =>
-            GameFlowManager.Instance?.SceneFlow == null
-            || !GameFlowManager.Instance.SceneFlow.IsBusy);
+        float deadline = Time.realtimeSinceStartup + timeout;
+        while (Time.realtimeSinceStartup < deadline)
+        {
+            var sceneFlow = GameFlowManager.Instance?.SceneFlow;
+            if (sceneFlow == null || !sceneFlow.IsBusy)
+                break;
+
+            yield return null;
+        }
+
+        var flow = GameFlowManager.Instance?.SceneFlow;
+        Assert.IsTrue(flow == null || !flow.IsBusy,
+            "The scene flow never went idle within " + timeout + "s. A load or unload is " +
+            "stuck, which would previously have hung the whole run rather than failing it.");
+
         yield return null;
     }
 

@@ -10,7 +10,7 @@ public class SceneFlowServiceTests
 {
     // Phase 3 replaced LobbyScene with the two flow scenes, so the routing tests point
     // at the scenes that are actually in the build list now.
-    private const string FlowScene = F1.GameFlow.FlowSceneNames.CarSelection;
+    private const string FlowScene = F1.GameFlow.FlowSceneNames.Lobby;
     private const string ContentScene = F1.GameFlow.FlowSceneNames.Loading;
 
     private GameObject _host;
@@ -42,18 +42,10 @@ public class SceneFlowServiceTests
         {
             // Await the unloads; a fire-and-forget unload lets a scene outlive its
             // test and leak into the next one.
-            if (_service.ContentScenes.Count > 0)
-            {
-                var unload = _service.UnloadAllContent();
-                if (unload != null) yield return unload;
-            }
-
-            var current = _service.CurrentFlowScene;
-            if (current.IsValid() && current.isLoaded)
-            {
-                var op = SceneManager.UnloadSceneAsync(current);
-                if (op != null) yield return op;
-            }
+            // Bounded — see SceneOpWait. Yielding UnloadAllContent() directly cannot be
+            // given a deadline, and an unbounded teardown is what wedged this suite.
+            yield return SceneOpWait.UnloadAllContentBounded(_service);
+            yield return SceneOpWait.UnloadSceneBounded(_service.CurrentFlowScene);
         }
 
         if (_flowObject != null)

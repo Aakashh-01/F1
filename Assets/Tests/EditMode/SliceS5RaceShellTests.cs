@@ -236,6 +236,75 @@ public class SliceS5RaceShellTests
     }
 
     [Test]
+    public void RaceSceneActuallyHasAScreenPrefabToInstantiate()
+    {
+        // The test above passed for the whole time the race had no HUD at all, because it
+        // only checked which screen the host *declares*. Declaring Race and having nothing to
+        // instantiate is a legal state — FlowSceneHost says so, and every other assertion in
+        // the project was written against that. The result was a race that ran with no
+        // position, no lap counter and no clock on screen, and no test failed.
+        //
+        // So the declaration is asserted separately from the thing that makes it real. The
+        // prefab is what turns "hosts Race" into a HUD.
+        var scene = EditorSceneManager.OpenScene(RaceScenePath, OpenSceneMode.Single);
+
+        var host = Find<FlowSceneHost>(scene);
+        Assert.IsNotNull(host, "The race shell must carry a FlowSceneHost, like every shell.");
+
+        var so = new UnityEditor.SerializedObject(host);
+        var prefab = so.FindProperty("_screenPrefab").objectReferenceValue as GameObject;
+
+        Assert.IsNotNull(prefab,
+            "The race host declares the Race screen but has no prefab assigned, so " +
+            "FlowSceneHost.EnsureScreenInstance returns early and the race runs with no " +
+            "HUD. Build it with Tools > Race > Build And Install Race Screen.");
+
+        var screen = prefab.GetComponent<ScreenController>();
+        Assert.IsNotNull(screen,
+            "The race screen prefab carries no ScreenController, so hosting it would fail " +
+            "at runtime rather than at build time.");
+
+        // The concrete implementation, not the abstract placeholder — the same distinction
+        // SliceS4QualifyingShellTests makes for the qualifying shell. Checked by name
+        // because Assets/Scripts/UI has no assembly definition and therefore compiles into
+        // the predefined Assembly-CSharp, which an asmdef-based test assembly cannot
+        // reference; the abstract contract in F1.GameFlow is reachable, which is enough.
+        Assert.AreEqual("RaceScreenImpl", screen.GetType().Name,
+            "The hosted race screen should be the concrete UI implementation.");
+    }
+
+    [Test]
+    public void RaceScreenPrefabWiresEveryReadoutItAdvertises()
+    {
+        // A prefab that exists but leaves its text fields null renders an empty HUD, which
+        // is the same failure as no HUD wearing a different hat. Every one of these is what
+        // the interface contract offers a caller, so every one of them is asserted assigned.
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+            "Assets/Prefabs/RaceScreen_Prefab.prefab");
+        Assert.IsNotNull(prefab,
+            "RaceScreen_Prefab is missing. Tools > Race > Build And Install Race Screen.");
+
+        var screen = prefab.GetComponent<ScreenController>();
+        Assert.IsNotNull(screen);
+
+        var so = new UnityEditor.SerializedObject(screen);
+        foreach (string field in new[]
+                 {
+                     "_trackNameText", "_totalLapsText", "_positionText",
+                     "_currentLapText", "_lapTimeText", "_bestLapText",
+                     "_sector1Text", "_sector2Text", "_sector3Text",
+                     "_finishPanel", "_finishPositionText", "_pointsEarnedText",
+                     "_pauseButton",
+                 })
+        {
+            var prop = so.FindProperty(field);
+            Assert.IsNotNull(prop, $"RaceScreenImpl has no serialized field '{field}'.");
+            Assert.IsNotNull(prop.objectReferenceValue,
+                $"RaceScreenImpl.{field} is unassigned, so that part of the HUD never draws.");
+        }
+    }
+
+    [Test]
     public void RaceSceneCarriesTheControllerAndASpawner()
     {
         var scene = EditorSceneManager.OpenScene(RaceScenePath, OpenSceneMode.Single);

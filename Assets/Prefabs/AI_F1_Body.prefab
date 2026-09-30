@@ -207,7 +207,8 @@ GameObject:
   - component: {fileID: 6992582862909834729}
   - component: {fileID: 7803574572245311015}
   - component: {fileID: 5581092719995663993}
-  m_Layer: 0
+  - component: {fileID: 7315277893025456147}
+  m_Layer: 6
   m_Name: AI_F1_Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -366,6 +367,7 @@ MonoBehaviour:
   LastMotorForce: 0
   LastBrakeForce: 0
   LastReverseForce: 0
+  parkHoldDamping: 0.5
 --- !u!114 &5302436572224620046
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -620,6 +622,7 @@ MonoBehaviour:
   trailBrakeBlend: 0
   rearBrakeInstability: 0
   dynamicFrontBrakeBias: 0
+  _inputLocked: 0
 --- !u!114 &3931683218923386670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -634,12 +637,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   obstacleLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 64
   forwardDistance: 32
   sideDistance: 8.5
   forwardHalfExtents: {x: 1.3, y: 0.8, z: 0.8}
   sideHalfExtents: {x: 1.15, y: 0.8, z: 2.3}
   sensorHeight: 0.8
+  rearDistance: 9
+  rearHalfExtents: {x: 1.3, y: 0.8, z: 0.8}
   fixedFrameStride: 3
   fixedFrameOffset: 0
   minimumUpdateInterval: 0.055
@@ -647,10 +652,17 @@ MonoBehaviour:
   FrontBlocked: 0
   LeftBlocked: 0
   RightBlocked: 0
+  RearBlocked: 0
   FrontDistance: 0
+  RearDistance: 0
+  LeftDistance: 0
+  RightDistance: 0
   ClosestObstacle: {fileID: 0}
   LastSensorUpdateTime: 0
   SensorUpdateSerial: 0
+  LeaderBody: {fileID: 0}
+  LeaderSpeedKmh: 0
+  ClosingSpeedKmh: 0
 --- !u!114 &6992582862909834729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -693,14 +705,32 @@ MonoBehaviour:
   laneEdgeSafetyMargin: 1.4
   laneVariationStrength: 0.05
   laneVariationFrequency: 0.08
+  followMinGap: 5
+  followTimeHeadway: 1.5
+  followApproachKmhPerMetre: 1
+  followMaxClosingKmh: 20
+  launchStandingSpeedKmh: 5
   sideTrafficLaneHoldBuffer: 0.25
   sideTrafficTurnThrottleScale: 0.62
   sideTrafficTurnBrake: 0.18
   sideTrafficSteeringThreshold: 0.24
   packCornerCurvatureThreshold: 0.38
   packCornerSpeedScale: 0.74
+  emergencyMinGap: 6
+  emergencyTimeHeadway: 1.1
+  emergencySpeedMargin: 1.2
+  emergencyClosingKmh: 4
+  requireRearClearanceToReverse: 1
+  gridLaunchDistanceMetres: 60
+  sideOverlapEscapeMetres: 1.8
+  sideOverlapEscapeShift: 1.6
   trackRecoveryMargin: 1.25
   trackRecoverySpeedKmh: 95
+  stuckSpeedThresholdKmh: 6
+  stuckDetectionSeconds: 4
+  recoveryReverseSeconds: 1.2
+  recoveryCooldownSeconds: 4
+  stuckThrottleDemandThreshold: 0.25
   drawDebug: 1
   CurrentWaypointIndex: -1
   LookaheadWaypointIndex: -1
@@ -714,11 +744,18 @@ MonoBehaviour:
   LastWaypointLaneIntent: 0
   IsOvertaking: 0
   IsRecoveringTrack: 0
+  InStuckRecovery: 0
   LastLateralError: 0
   LastLaneLimit: 0
   LastUnblockedTargetSpeedKmh: 0
   LastSpeedTargetKmh: 0
   LastSpeedClampReason: 0
+  LastFollowTargetKmh: 0
+  LastDesiredGap: 0
+  LastEmergencyDistance: 0
+  LastRearClearToReverse: 1
+  LastLeaderSpeedKmh: 0
+  LastClosingSpeedKmh: 0
 --- !u!114 &7803574572245311015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -878,6 +915,24 @@ MonoBehaviour:
   RearInstabilityAmount: 0
   RearInstabilityYawTorque: 0
   DynamicFrontBrakeBias: 0.68
+--- !u!114 &7315277893025456147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1037282087299967351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a30ebed2963be614cb73c792abef7e06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _track: {fileID: 0}
+  _maxStepMetres: 40
+  _requireGrounded: 1
+  _trackLayer: 3
+  _lapCompletionTolerance: 0.5
+  _minimumProgressMetres: 0.02
 --- !u!1 &2187702821501422602
 GameObject:
   m_ObjectHideFlags: 0

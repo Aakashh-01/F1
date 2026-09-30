@@ -23,7 +23,7 @@ namespace F1.GameFlow
     /// host is what keeps the two from drifting onto different objects.
     /// </summary>
     [DisallowMultipleComponent]
-    public class PreRaceSceneController : MonoBehaviour
+    public class PreRaceSceneController : MonoBehaviour, ISessionStartGate
     {
         [Header("Qualifying Mode Objects (optional)")]
         [Tooltip("Ghost car prefab. Intentionally unassigned: the ghost car is deferred " +
@@ -37,6 +37,14 @@ namespace F1.GameFlow
         private TrackPlacement _track;
         private GameObject _activeGhost;
         private bool _sessionReady;
+
+        /// <summary>
+        /// How long the shell will wait for the routing service to go idle before giving up
+        /// on loading the track content. Generous, because a real transition on a slow
+        /// machine is not a failure — the point is only that "still busy" must eventually
+        /// become an error rather than a wait that never ends.
+        /// </summary>
+        private const float ContentLoadIdleTimeoutSeconds = 30f;
 
         private void Start() => StartCoroutine(BringUpSession());
 
@@ -100,8 +108,29 @@ namespace F1.GameFlow
                 // scene work when Start runs, and the routing service refuses a second load
                 // while one is in flight — so wait for it to go idle before asking. Without
                 // this the content request is rejected as Busy and the session never starts.
-                while (_flow.SceneFlow != null && _flow.SceneFlow.IsBusy)
+                //
+                // Bounded, because the alternative is worse than a slow start. If the
+                // service is left permanently busy — a load that was refused, a scene
+                // operation that never completed — this used to spin here forever, and the
+                // shell never finished coming up. Nothing reports that: the car simply
+                // never appears, and the session looks like it is still loading indefinitely
+                // rather than like a failure.
+                float idleDeadline = Time.realtimeSinceStartup + ContentLoadIdleTimeoutSeconds;
+                while (_flow.SceneFlow != null && _flow.SceneFlow.IsBusy
+                       && Time.realtimeSinceStartup < idleDeadline)
+                {
                     yield return null;
+                }
+
+                if (_flow.SceneFlow != null && _flow.SceneFlow.IsBusy)
+                {
+                    Debug.LogError(
+                        "[PreRaceSceneController] The scene loader is still busy after " +
+                        $"{ContentLoadIdleTimeoutSeconds:F0}s, so the track content request " +
+                        "would only be refused as Busy. The qualifying session cannot start.",
+                        this);
+                    yield break;
+                }
 
                 bool loadFailed = true;
                 yield return _flow.LoadTrackContent(result =>
@@ -144,12 +173,40 @@ namespace F1.GameFlow
             // The first attempt is driving, not a menu. The results panel is reached from
             // the lap that comes back from the flow, not from arriving here.
             _screen.ShowDrivingState();
-            SetCarLocked(false);
+            // Held here, not released, until the countdown finishes — see
+            // BeginStartCountdown. The overlay finds this scene's gate through
+            // ISessionStartGate and drives it.
+            SetCarLocked(true);
 
             Debug.Log(
                 $"[PreRaceSceneController] Qualifying ready on '{_track.gameObject.scene.name}' " +
                 $"(lap {_track.LapLengthMeters:0}m). Race entry is " +
                 (_flow.CanStartRace ? "open" : "blocked until a lap is completed") + ".");
+        }
+
+        // --- ISessionStartGate ---
+
+        public bool IsSessionReady => _sessionReady;
+
+        /// <summary>
+        /// Holds or releases the car at the line, and stops the lap clock while held.
+        ///
+        /// The overlay plays the countdown and calls this to release on zero; it never owns
+        /// the timing itself. The clock belongs here rather than there because only the
+        /// controller knows when the car is genuinely on the grid — the countdown can finish
+        /// before the track has streamed in, and a clock that started on scene load charged
+        /// the driver for the loading time.
+        /// </summary>
+        public void SetStartGateLocked(bool locked)
+        {
+            SetCarLocked(locked);
+
+            if (_spawner == null || _spawner.PlayerCar == null) return;
+            var tracker = _spawner.PlayerCar.GetComponent<LapTracker>();
+            if (tracker == null) return;
+
+            if (locked) tracker.Suspend();
+            else tracker.Resume();
         }
 
         /// <summary>

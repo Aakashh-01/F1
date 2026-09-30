@@ -19,6 +19,7 @@ public class GameFlowPhase2GateTests
         // These tests must not depend on whatever the developer's local save file
         // happens to contain. Ensure the free starter car and tracks are available on
         // the live profile so car/track selection is exercisable.
+        ProfileIsolation.Begin();
         GameDataRegistry.Initialize();
         F1.Progression.PlayerProfileManager.GrantStarterContent(
             F1.Progression.PlayerProfileManager.Current);
@@ -32,6 +33,8 @@ public class GameFlowPhase2GateTests
     {
         if (_flowObject != null)
             Object.DestroyImmediate(_flowObject);
+
+        ProfileIsolation.End();
     }
 
     private GameFlowManager Flow => GameFlowManager.Instance;

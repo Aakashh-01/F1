@@ -344,6 +344,14 @@ public class RaceGridManager : MonoBehaviour
         body.position = position;
         body.rotation = rotation;
 
+        // gridVerticalOffset is not a height, it is a guess, and it was far too small: this
+        // car's collider hangs 0.92 m below its rigidbody origin, so 0.05 m put every AI car
+        // almost a metre INSIDE the road. PhysX ejected them on the next step, which is the
+        // bump and the unsettled, uneven grid. Measure the car instead — see
+        // VehicleGroundSnap, which is the same code the player's spawn path uses so the two
+        // cannot drift apart again.
+        F1.Gameplay.VehicleGroundSnap.Snap(car);
+
 #if UNITY_6000_0_OR_NEWER
         body.linearVelocity = Vector3.zero;
 #else

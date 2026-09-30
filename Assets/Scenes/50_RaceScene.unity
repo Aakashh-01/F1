@@ -277,6 +277,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _raceLapsOverride: -1
   _aiFieldOverride: {fileID: 0}
+  _startPlayerAtBackOfGrid: 1
 --- !u!114 &1520020989
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -291,7 +292,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _screenMode: 0
   _hostedScreen: 6
-  _screenPrefab: {fileID: 0}
+  _screenPrefab: {fileID: 5980301076856109981, guid: 26dd12a4e31bf4d4bb149506d191df78, type: 3}
   _screenParent: {fileID: 1520020990}
 --- !u!4 &1520020990
 Transform:

@@ -30,28 +30,34 @@ public class SliceS1SelectionFlowTests
         _flow.SceneFlow?.AdoptFlowScene(null);
     }
 
+    /// <summary>
+    /// Points the profile manager at a throwaway file before any test calls
+    /// <see cref="F1.Progression.PlayerProfileManager.Current"/> through
+    /// <see cref="CreateFlow"/>, so nothing here can reach the developer's real save.
+    /// </summary>
+    [UnitySetUp]
+    public IEnumerator ProfileSetUp()
+    {
+        ProfileIsolation.Begin();
+        yield return null;
+    }
+
     [UnityTearDown]
     public IEnumerator TearDown()
     {
         var sceneFlow = GameFlowManager.Instance?.SceneFlow;
         if (sceneFlow != null)
         {
-            if (sceneFlow.ContentScenes.Count > 0)
-            {
-                var unloadContent = sceneFlow.UnloadAllContent();
-                if (unloadContent != null) yield return unloadContent;
-            }
-
-            var current = sceneFlow.CurrentFlowScene;
-            if (current.IsValid() && current.isLoaded)
-            {
-                var op = SceneManager.UnloadSceneAsync(current);
-                if (op != null) yield return op;
-            }
+            // Bounded — see SceneOpWait. Yielding UnloadAllContent() directly cannot be
+            // given a deadline, and an unbounded teardown is what wedged this suite.
+            yield return SceneOpWait.UnloadAllContentBounded(sceneFlow);
+            yield return SceneOpWait.UnloadSceneBounded(sceneFlow.CurrentFlowScene);
         }
 
         if (_flowObject != null) Object.DestroyImmediate(_flowObject);
         _flow = null;
+
+        ProfileIsolation.End();
     }
 
     private static IEnumerator Settle()
@@ -95,7 +101,7 @@ public class SliceS1SelectionFlowTests
         var expected = new[]
         {
             FlowSceneNames.Loading,
-            FlowSceneNames.CarSelection,
+            FlowSceneNames.Lobby,
             FlowSceneNames.TrackSelection,
             FlowSceneNames.WingSetup
         };

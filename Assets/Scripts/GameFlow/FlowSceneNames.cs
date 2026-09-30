@@ -12,8 +12,26 @@ namespace F1.GameFlow
         public const string Loading = "00_LoadingScene";
 
         /// <summary>
-        /// The lobby hub. Per the client this is the first interactive screen — there is
-        /// no main menu between loading and car selection.
+        /// The lobby. This is the 3D garage: the car stands in it and does not move.
+        ///
+        /// It hosts car selection directly — the tile strip and Next are the first thing on
+        /// screen, with no hub panel and no Start Race button in front of them. It is
+        /// deliberately NOT a separate menu screen in front of the garage, and there is no
+        /// "click Car Selection to navigate" step between loading and it.
+        ///
+        /// The hub that used to sit here (currency, settings, task list, Start Race) was
+        /// removed 2026-09-30; it was a deliberate reversal of the original "no main menu
+        /// between loading and car selection" requirement, decided 2026-09-26, and has since
+        /// been reversed back.
+        /// </summary>
+        public const string Lobby = "05_LobbyScene";
+
+        /// <summary>
+        /// Car selection. The scene no longer ships — it is gone from the build list and the
+        /// file is deleted. Car selection lives inside <see cref="Lobby"/> as its only screen.
+        ///
+        /// The constant is kept because CarSelectionSceneController still references it, and
+        /// because <c>GameScreen.CarSelection</c> must keep its integer value.
         /// </summary>
         public const string CarSelection = "10_CarSelectionScene";
 
@@ -31,7 +49,8 @@ namespace F1.GameFlow
 
         /// <summary>
         /// The pre-Phase-3 single-scene lobby. Retained on disk for reference but not in
-        /// the build list; the active route is Loading -> CarSelection -> ... .
+        /// the build list; it is NOT <see cref="Lobby"/>. The active route is
+        /// Loading -> Lobby -> ... .
         /// </summary>
         public const string LegacyLobby = "LobbyScene";
     }

@@ -1,9 +1,9 @@
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine.TestTools;
 using UnityEngine;
-using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 public class F1FoundationPlayModeTests
@@ -1350,6 +1350,442 @@ public class F1FoundationPlayModeTests
         Object.DestroyImmediate(rig);
     }
 
+    // ---------------------------------------------------------------------
+    // AI cars must not drive into each other.
+    //
+    // The defect these cover: this drivetrain expresses reverse by holding the brake, so a
+    // car that brakes hard because it cannot get past the car in front is, at a standstill,
+    // indistinguishable from a car that has asked to reverse. Every car in a pack brakes at
+    // the same moment, so one car easing off behind traffic used to reverse into the car
+    // behind it, and that car then reversed into the one behind it. The separate issue is
+    // that nothing modelled the car ahead's SPEED at all, so a pack had no way to hold a gap
+    // and simply folded up on itself.
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// A follower never travels more than the closing cap faster than the car ahead, and
+    /// never faster at all once the gap is inside the desired headway. Without this the
+    /// target is a function of distance alone and every car in the pack computes the same
+    /// one.
+    /// </summary>
+    [Test]
+    public void AIDriver_SlowerLeaderCapsFollowerSpeedByClosingAllowance()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 250f);
+
+        // A lead car far enough away that the old distance ramp was barely awake, so this
+        // test measures the following term rather than the blind speed clamp.
+        sensor.forwardDistance = 60f;
+        GameObject leader = CreateRigidCar("Lead Car", new Vector3(0f, 0f, 30f));
+        Rigidbody leaderRb = leader.GetComponent<Rigidbody>();
+
+        driver.baseLookaheadDistance = 18f;
+        driver.lookaheadPerKmh = 0f;
+        driver.overtakeTrigger = 0.99f; // never decide to pass; we want pure following.
+
+        // The leader is doing 90 km/h, well below this car's target of 250.
+#if UNITY_6000_0_OR_NEWER
+        leaderRb.linearVelocity = new Vector3(0f, 0f, 25f); // 90 km/h
+#else
+        leaderRb.velocity = new Vector3(0f, 0f, 25f);
+#endif
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = new Vector3(0f, 0f, 50f);
+#else
+        rb.velocity = new Vector3(0f, 0f, 50f);
+#endif
+
+        coordinator.RefreshState();
+        sensor.Tick(true);
+        sensor.SampleLeaderState();
+        driver.Simulate();
+
+        float leaderKmh = sensor.LeaderSpeedKmh;
+        Assert.Greater(leaderKmh, 1f, "The sensor must be reading the lead car's speed.");
+
+        float ceiling = leaderKmh + driver.followMaxClosingKmh;
+        Assert.LessOrEqual(driver.LastFollowTargetKmh, ceiling + 0.01f,
+            $"A follower must not be allowed to travel more than the closing cap faster than the car " +
+            $"ahead. Leader was {leaderKmh:F1} km/h, cap {driver.followMaxClosingKmh:F1} km/h, so the " +
+            $"follower target must be at most {ceiling:F1} km/h but was {driver.LastFollowTargetKmh:F1} km/h.");
+
+        Object.DestroyImmediate(leader);
+        Object.DestroyImmediate(rig);
+    }
+
+    /// <summary>
+    /// A gap at or inside the desired headway must command the leader's own speed — no
+    /// closing allowance at all. This is the term that turns a pack into a convoy.
+    /// </summary>
+    [Test]
+    public void AIDriver_GapInsideHeadwayCommandsLeaderSpeedNotMore()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 250f);
+
+        // Place the leader so the gap is smaller than the desired headway even at speed.
+        sensor.forwardDistance = 60f;
+        float desiredGap = driver.followMinGap + driver.followTimeHeadway * (50f / 3.6f);
+        GameObject leader = CreateRigidCar("Lead Car Close", new Vector3(0f, 0f, desiredGap - 1f));
+        Rigidbody leaderRb = leader.GetComponent<Rigidbody>();
+
+        driver.baseLookaheadDistance = 18f;
+        driver.lookaheadPerKmh = 0f;
+        driver.overtakeTrigger = 0.99f;
+
+#if UNITY_6000_0_OR_NEWER
+        leaderRb.linearVelocity = new Vector3(0f, 0f, 40f);
+        rb.linearVelocity = new Vector3(0f, 0f, 50f);
+#else
+        leaderRb.velocity = new Vector3(0f, 0f, 40f);
+        rb.velocity = new Vector3(0f, 0f, 50f);
+#endif
+
+        coordinator.RefreshState();
+        sensor.Tick(true);
+        sensor.SampleLeaderState();
+        driver.Simulate();
+
+        Assert.LessOrEqual(sensor.FrontDistance, desiredGap + 0.5f,
+            "The test is only meaningful with the leader inside the desired headway.");
+        Assert.LessOrEqual(driver.LastFollowTargetKmh, sensor.LeaderSpeedKmh + 0.01f,
+            $"With no gap in hand the follower must match the leader's speed, not exceed it. " +
+            $"Leader {sensor.LeaderSpeedKmh:F1} km/h, target {driver.LastFollowTargetKmh:F1} km/h.");
+
+        Object.DestroyImmediate(leader);
+        Object.DestroyImmediate(rig);
+    }
+
+    /// <summary>
+    /// The regression itself: an AI stopped behind a slower car brakes, and that brake must
+    /// be a hold. Before the fix the drivetrain read it as reverse and the car drove
+    /// backwards into whatever was behind it.
+    /// </summary>
+    [Test]
+    public void AIDriver_TrafficBrakeAtStandstillDoesNotCommandReverse()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 200f);
+
+        DrivetrainBrakeSystem drivetrain = driver.gameObject.AddComponent<DrivetrainBrakeSystem>();
+        drivetrain.reverseMaxSpeedKmh = 12f;
+        coordinator.drivetrain = drivetrain;
+
+        // A stationary lead car right in front, so the follower is up against it and at rest.
+        GameObject leader = CreateRigidCar("Stationary Lead Car", new Vector3(0f, 0f, 3f));
+        driver.overtakeTrigger = 0.99f;
+        driver.stuckDetectionSeconds = 30f; // isolate the traffic brake from the recovery path.
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.zero;
+#else
+        rb.velocity = Vector3.zero;
+#endif
+
+        coordinator.RefreshState();
+        sensor.Tick(true);
+        driver.Simulate();
+
+        Assert.Greater(driver.LastBrakeInput, 0.5f,
+            "A car pinned against a slower car must be asking for brake.");
+        Assert.AreEqual(0f, driver.LastThrottleInput, 0.001f,
+            "A car pinned against a slower car must not be asking for throttle.");
+        Assert.IsTrue(coordinator.SuppressReverse,
+            "A brake used to hold position must be marked as a hold, not a reverse request.");
+
+        // Now the part that actually bites: hand those inputs to the drivetrain and confirm
+        // it brakes rather than reversing.
+        coordinator.RefreshState();
+        drivetrain.Simulate(coordinator);
+        for (int i = 0; i < 20; i++)
+            drivetrain.Simulate(coordinator);
+
+        Assert.AreEqual(0f, drivetrain.CurrentReverse, 0.001f,
+            "A car braking to hold position must not be driven backwards. CurrentReverse is the " +
+            "force actually applied, so a non-zero value here is the car reversing into the car " +
+            "behind it.");
+
+        Object.DestroyImmediate(leader);
+        Object.DestroyImmediate(rig);
+    }
+
+    /// <summary>
+    /// The stuck-recovery manoeuvre is a real reverse, and it must not fire into the car
+    /// behind. A wedged car with something in its rear must hold instead.
+    /// </summary>
+    [Test]
+    public void AIDriver_RecoveryRefusesToReverseIntoObstacleBehind()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out AIPerceptionSensor sensor, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 120f);
+        driver.stuckDetectionSeconds = 0.2f;
+        driver.recoveryReverseSeconds = 0.5f;
+        driver.requireRearClearanceToReverse = true;
+
+        // Wedge the car off the line so recovery is allowed to trigger at all.
+        coordinator.transform.position = new Vector3(4f, 0f, 0f);
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.zero;
+#else
+        rb.velocity = Vector3.zero;
+#endif
+
+        // A car sitting right behind, which is the thing the reverse would hit.
+        CreateRigidCar("Car Behind", new Vector3(4f, 0f, -4f));
+
+        int ticks = Mathf.CeilToInt(0.2f / Time.fixedDeltaTime) + 6;
+        for (int i = 0; i < ticks; i++)
+        {
+            coordinator.RefreshState();
+            sensor.Tick(true);
+            driver.Simulate();
+        }
+
+        Assert.IsFalse(driver.LastRearClearToReverse,
+            "A car with another car directly behind it has no reverse clearance.");
+        Assert.IsFalse(driver.InStuckRecovery,
+            "The recovery manoeuvre must be abandoned rather than reverse into the car behind.");
+        Assert.IsTrue(coordinator.SuppressReverse,
+            "Holding position behind must still be a hold, not a reverse request.");
+
+        Object.DestroyImmediate(rig);
+    }
+
+    /// <summary>
+    /// A car held at the start gate is not a stuck car. Without this the detector fires for
+    /// the whole grid during the countdown and the entire field reverses when the lights go
+    /// out.
+    /// </summary>
+    [Test]
+    public void AIDriver_StartGateLockIsNotTreatedAsBeingStuck()
+    {
+        GameObject rig = CreateAIDriverTestRig(out VehiclePhysicsCoordinator coordinator, out AIDriverController driver, out _, out Rigidbody rb);
+        SetAllLineSpeeds(driver.racingLine, 200f);
+        driver.stuckDetectionSeconds = 0.1f;
+        driver.recoveryReverseSeconds = 0.5f;
+
+        // On its line, stationary, locked at the gate — which is every car in the field.
+        coordinator.transform.position = Vector3.zero;
+        coordinator.InputLocked = true;
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = Vector3.zero;
+#else
+        rb.velocity = Vector3.zero;
+#endif
+
+        int ticks = Mathf.CeilToInt(0.5f / Time.fixedDeltaTime) + 6;
+        for (int i = 0; i < ticks; i++)
+        {
+            coordinator.RefreshState();
+            driver.Simulate();
+        }
+
+        Assert.IsFalse(driver.InStuckRecovery,
+            "A car parked at the start gate must never enter stuck recovery.");
+        Object.DestroyImmediate(rig);
+    }
+
+    /// <summary>
+    /// The end-to-end version of the reported defect, on the real car prefab with the real
+    /// drivetrain and real physics: a grid of AI cars launches from a standing start and
+    /// must not drive into each other.
+    ///
+    /// The specific failure being guarded is a REVERSE into the car behind. This drivetrain
+    /// expresses reverse by holding the brake, so when a whole field brakes at once at the
+    /// start every car in it reads its own brake as a reverse request and backs into the car
+    /// it is following. The chain reaction walks backwards up the grid, which is what "the AI
+    /// cars collide into themselves" looked like on screen.
+    ///
+    /// The unit tests above prove each mechanism in isolation. This proves the combination
+    /// on the thing the demo actually runs.
+    /// </summary>
+    [UnityTest]
+    public System.Collections.IEnumerator AIField_LaunchingGridNeverReversesIntoEachOther()
+    {
+        GameObject prefab = LoadAIPrefabOrSkip();
+        if (prefab == null)
+            yield break;
+
+        GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        ground.name = "AI Pack Test Ground";
+        ground.layer = LayerMask.NameToLayer("Ground");
+        ground.transform.position = new Vector3(0f, -0.5f, 0f);
+        ground.transform.localScale = new Vector3(80f, 1f, 600f);
+        Physics.SyncTransforms();
+
+        // A long straight is where a launch is decided and where a pack is closest together.
+        GameObject lineRoot = new GameObject("AI Pack Racing Line");
+        AIRacingLine line = lineRoot.AddComponent<AIRacingLine>();
+        line.loop = false;
+        for (int i = 0; i < 24; i++)
+        {
+            GameObject wp = new GameObject("WP_" + i);
+            wp.transform.SetParent(lineRoot.transform);
+            wp.transform.position = new Vector3(0f, 0f, i * 28f);
+            AIRacingWaypoint waypoint = wp.AddComponent<AIRacingWaypoint>();
+            waypoint.targetSpeedKmh = 220f;
+            waypoint.laneWidth = 16f;
+        }
+        line.RefreshWaypoints();
+
+        // Six cars, real prefab, staggered two-by-two the way the grid does it.
+        const int carCount = 6;
+        const float rowSpacing = 18f;
+        var cars = new List<AIDriverController>();
+        for (int i = 0; i < carCount; i++)
+        {
+            int row = i / 2;
+            float side = (i % 2 == 0) ? 6f : -6f;
+            Vector3 position = new Vector3(side, 0.05f, -row * rowSpacing);
+            GameObject car = Object.Instantiate(prefab, position, Quaternion.identity);
+            car.name = "AI Pack Car " + i;
+
+            AIDriverController driver = car.GetComponent<AIDriverController>();
+            AIPerceptionSensor sensor = car.GetComponent<AIPerceptionSensor>();
+            if (driver == null || sensor == null)
+            {
+                Object.DestroyImmediate(car);
+                Object.DestroyImmediate(ground);
+                Object.DestroyImmediate(lineRoot);
+                Assert.Fail("The AI prefab must carry both AIDriverController and AIPerceptionSensor.");
+                yield break;
+            }
+
+            driver.racingLine = line;
+            driver.perception = sensor;
+            driver.difficultyPreset = AIDifficultyPreset.Hard;
+            sensor.forwardDistance = 32f;
+            cars.Add(driver);
+        }
+
+        Physics.SyncTransforms();
+
+        // Let the pack launch and run. Sample every frame for a reverse and for contact.
+        float deadline = Time.time + 12f;
+        float worstGap = float.MaxValue;
+        string worstGapPair = null;
+        var reverseOffenders = new List<string>();
+
+        while (Time.time < deadline)
+        {
+            for (int i = 0; i < cars.Count; i++)
+            {
+                AIDriverController driver = cars[i];
+                if (driver == null) continue;
+                Rigidbody rb = driver.GetComponent<Rigidbody>();
+                if (rb == null) continue;
+
+                float forwardKmh = Vector3.Dot(rb.linearVelocity, driver.transform.forward) * 3.6f;
+                var coordinator = driver.GetComponent<VehiclePhysicsCoordinator>();
+                bool mayReverse = driver.InStuckRecovery || (coordinator != null && coordinator.InputLocked);
+
+                if (!mayReverse && forwardKmh < -2f && reverseOffenders.Count < 5)
+                {
+                    reverseOffenders.Add(
+                        $"{driver.name} rolled backwards at {forwardKmh:F1} km/h " +
+                        $"(clamp={driver.LastSpeedClampReason}, front={driver.perception.FrontDistance:F1} m)");
+                }
+
+                for (int j = i + 1; j < cars.Count; j++)
+                {
+                    Rigidbody other = cars[j] != null ? cars[j].GetComponent<Rigidbody>() : null;
+                    if (other == null) continue;
+                    float gap = Vector3.Distance(rb.position, other.position);
+                    if (gap < worstGap)
+                    {
+                        worstGap = gap;
+                        worstGapPair = $"{i} and {j}";
+                    }
+                }
+            }
+
+            yield return null;
+        }
+
+        var detail = reverseOffenders.Count > 0
+            ? " Cars that reversed: " + string.Join(" | ", reverseOffenders)
+            : "";
+
+        Assert.AreEqual(0, reverseOffenders.Count,
+            "No AI car may drive backwards except as a deliberate, rear-checked recovery. " +
+            "A car braking to hold position must not be read as a request to reverse, or the " +
+            "whole field reverses into itself off the line." + detail);
+
+        // The car is 4.48 m long and 2.02 m wide, so centres closer than this are overlapping.
+        Assert.Greater(worstGap, 2.5f,
+            $"AI cars {worstGapPair} came within {worstGap:F2} m of each other, which is " +
+            "contact for a car this size. The pack must hold a gap, not fold up.");
+
+        for (int i = 0; i < cars.Count; i++)
+        {
+            if (cars[i] != null) Object.DestroyImmediate(cars[i].gameObject);
+        }
+        Object.DestroyImmediate(ground);
+        Object.DestroyImmediate(lineRoot);
+    }
+
+    private static GameObject LoadAIPrefabOrSkip()
+    {
+#if UNITY_EDITOR
+        var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/AI_F1_Body.prefab");
+        if (prefab == null)
+            Assert.Ignore("The AI car prefab is not present at Assets/Prefabs/AI_F1_Body.prefab.");
+        return prefab;
+#else
+        Assert.Ignore("The AI car prefab can only be loaded in the editor.");
+        return null;
+#endif
+    }
+
+    private static GameObject CreateRigidCar(string name, Vector3 position)
+    {
+        GameObject car = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        car.name = name;
+        car.transform.position = position;
+        car.transform.localScale = new Vector3(2f, 1f, 4f);
+        Rigidbody body = car.AddComponent<Rigidbody>();
+        body.useGravity = false;
+        // Root-level on purpose: these must not share a parent with the car under test, or
+        // the sensor's self-collider filter (IsChildOf) would treat the "other car" as part
+        // of itself and the test would measure nothing.
+        //
+        // Tracked for teardown because a root-level object is NOT destroyed with the rig,
+        // and one that survives a failing assert is enough to poison every later test in
+        // the run — a stray car in the scene makes every subsequent AI look like it is
+        // driving into traffic.
+        _rigidCarsForCleanup.Add(car);
+        return car;
+    }
+
+    private static readonly List<GameObject> _rigidCarsForCleanup = new List<GameObject>();
+
+    [TearDown]
+    public void TearDownRigidCars()
+    {
+        for (int i = 0; i < _rigidCarsForCleanup.Count; i++)
+        {
+            if (_rigidCarsForCleanup[i] != null)
+                Object.DestroyImmediate(_rigidCarsForCleanup[i]);
+        }
+
+        _rigidCarsForCleanup.Clear();
+    }
+
+    private static readonly List<GameObject> _obstaclesForCleanup = new List<GameObject>();
+
+    [TearDown]
+    public void TearDownObstacles()
+    {
+        for (int i = 0; i < _obstaclesForCleanup.Count; i++)
+        {
+            if (_obstaclesForCleanup[i] != null)
+                Object.DestroyImmediate(_obstaclesForCleanup[i]);
+        }
+
+        _obstaclesForCleanup.Clear();
+    }
+
     [Test]
     public void RaycastWheel_ForwardVelocityDoesNotCreateLongitudinalSlip()
     {
@@ -1934,6 +2370,12 @@ public class F1FoundationPlayModeTests
         obstacle.name = name;
         obstacle.transform.position = position;
         obstacle.transform.localScale = new Vector3(2f, 1.5f, 2f);
+        // Root-level for the same reason CreateRigidCar is, and tracked for the same reason.
+        // Several callers assert *after* creating this, so an assertion that throws skips
+        // their own DestroyImmediate and leaves a 2x1.5x2 cube parked in the scene. The
+        // sensor under test then finds that cube as traffic for the rest of the run, which
+        // is why the AI failure count drifted between runs of identical code.
+        _obstaclesForCleanup.Add(obstacle);
         return obstacle;
     }
 }

@@ -10,13 +10,13 @@ using F1.UI;
 
 public class UIBuilder
 {
-    private const string Folder = "Assets/Prefabs/";
+    internal const string Folder = "Assets/Prefabs/";
 
-    private static readonly Color PanelBg = new Color(0.04f, 0.05f, 0.08f, 1f);
-    private static readonly Color ButtonBg = new Color(0.15f, 0.17f, 0.22f, 1f);
-    private static readonly Color ToggleBg = new Color(0.13f, 0.15f, 0.20f, 1f);
-    private static readonly Color CardBg = new Color(0.08f, 0.10f, 0.14f, 1f);
-    private static readonly Color Green = new Color(0.3f, 1f, 0.3f, 1f);
+    internal static readonly Color PanelBg = new Color(0.04f, 0.05f, 0.08f, 1f);
+    internal static readonly Color ButtonBg = new Color(0.15f, 0.17f, 0.22f, 1f);
+    internal static readonly Color ToggleBg = new Color(0.13f, 0.15f, 0.20f, 1f);
+    internal static readonly Color CardBg = new Color(0.08f, 0.10f, 0.14f, 1f);
+    internal static readonly Color Green = new Color(0.3f, 1f, 0.3f, 1f);
 
     [MenuItem("Tools/BuildUIPrefabs")]
     public static void BuildAll()
@@ -40,14 +40,14 @@ public class UIBuilder
 
     // --- Shared helpers ---
 
-    private static GameObject NewUI(string name)
+    internal static GameObject NewUI(string name)
     {
         var go = new GameObject(name, typeof(RectTransform));
         go.layer = LayerMask.NameToLayer("UI");
         return go;
     }
 
-    private static GameObject Save(string name, GameObject go)
+    internal static GameObject Save(string name, GameObject go)
     {
         string path = Folder + name + ".prefab";
         GameObject asset = PrefabUtility.SaveAsPrefabAsset(go, path);
@@ -55,7 +55,7 @@ public class UIBuilder
         return asset;
     }
 
-    private static void SetRefs(Component impl, params (string prop, Object value)[] refs)
+    internal static void SetRefs(Component impl, params (string prop, Object value)[] refs)
     {
         var so = new SerializedObject(impl);
         foreach (var (prop, value) in refs)
@@ -69,7 +69,7 @@ public class UIBuilder
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
-    private static RectTransform Anchor(GameObject go, Vector2 anchor, Vector2 size)
+    internal static RectTransform Anchor(GameObject go, Vector2 anchor, Vector2 size)
     {
         var rt = (RectTransform)go.transform;
         rt.anchorMin = anchor;
@@ -79,7 +79,7 @@ public class UIBuilder
         return rt;
     }
 
-    private static TMP_Text AddText(Transform parent, string name, Vector2 anchor, Vector2 size,
+    internal static TMP_Text AddText(Transform parent, string name, Vector2 anchor, Vector2 size,
         string content, int fontSize, Color color, FontStyles style = FontStyles.Normal)
     {
         GameObject go = NewUI(name);
@@ -95,7 +95,7 @@ public class UIBuilder
     }
 
     // Full-rect centered label (used inside buttons/toggles).
-    private static TMP_Text AddLabel(Transform parent, string content, int fontSize)
+    internal static TMP_Text AddLabel(Transform parent, string content, int fontSize)
     {
         GameObject go = NewUI("Label");
         go.transform.SetParent(parent, false);
@@ -112,7 +112,7 @@ public class UIBuilder
         return tmp;
     }
 
-    private static Button AddButton(Transform parent, string name, Vector2 anchor, Vector2 size,
+    internal static Button AddButton(Transform parent, string name, Vector2 anchor, Vector2 size,
         string label, Component impl, UnityAction onClick)
     {
         GameObject go = NewUI(name);
@@ -173,7 +173,7 @@ public class UIBuilder
     // 3D stops being visible at all, while the camera underneath keeps rendering perfectly
     // and can still be captured to a render texture. Any screen that overlays gameplay must
     // pass opaqueBackground: false.
-    private static GameObject ScreenRoot(string name, bool opaqueBackground = true)
+    internal static GameObject ScreenRoot(string name, bool opaqueBackground = true)
     {
         GameObject go = NewUI(name);
         var rt = (RectTransform)go.transform;
@@ -326,6 +326,17 @@ public class UIBuilder
         Save("TrackSelectionScreen_Prefab", go);
     }
 
+    /// <summary>
+    /// The wing screen used to be built here with two bare Toggles and nothing else. They sat
+    /// on top of the car, carried no artwork, and gave no selected state — and the generated
+    /// wing art assigned to WingAeroProfile.icon was read by no line of code in the project.
+    ///
+    /// The screen is now a strip of WingCardImpl tiles that drive WingAngleDriver. That build
+    /// lives in WingScreenUiBuilder (Tools/Wing/Build Wing Screen UI) because it also owns
+    /// WingCard_Prefab and the camera framing, and because this file's BuildAll is
+    /// destructive to prefabs other passes have since re-laid out — the track screen above
+    /// is one. This method only has to produce something valid and compilable.
+    /// </summary>
     private static void BuildWingSetup()
     {
         GameObject go = ScreenRoot("WingSetupScreen_Prefab");
@@ -334,17 +345,17 @@ public class UIBuilder
             "Wing Setup", 36, Color.white);
         var rec = AddText(go.transform, "RecommendationText", new Vector2(0.5f, 0.68f), new Vector2(700f, 40f),
             "Select wing configuration", 18, new Color(0.5f, 0.7f, 1f, 1f));
-        var high = AddToggle(go.transform, "HighDownforceToggle", 0.5f, "High Downforce", impl, impl.OnHighDownforceToggled);
-        var low = AddToggle(go.transform, "LowDownforceToggle", 0.4f, "Low Downforce", impl, impl.OnLowDownforceToggled);
         var cont = AddButton(go.transform, "ContinueButton", new Vector2(0.7f, 0.2f), new Vector2(200f, 50f),
             "Continue", impl, impl.OnContinueClicked);
         var back = AddButton(go.transform, "BackButton", new Vector2(0.3f, 0.2f), new Vector2(200f, 50f),
             "Back", impl, impl.OnBackClicked);
+        // _tileStrip and _wingCardPrefab are deliberately left unset: Tools/Wing/Build Wing
+        // Screen UI adds the strip and points the screen at the tile prefab. Running this
+        // method alone yields a screen with no wing options, which is a clear and harmless
+        // failure rather than a second, competing layout.
         SetRefs(impl,
             ("_titleText", title),
             ("_recommendationText", rec),
-            ("_highDownforceToggle", high),
-            ("_lowDownforceToggle", low),
             ("_continueButton", cont),
             ("_backButton", back));
         Save("WingSetupScreen_Prefab", go);

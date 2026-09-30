@@ -53,6 +53,31 @@ namespace F1.GameFlow
     }
 
     /// <summary>
+    /// The lobby — the 3D garage, showing car selection.
+    ///
+    /// The screen is always active while the garage is on screen, and it is always showing
+    /// the car tiles. There is no hub state and no Start Race button any more, so nothing
+    /// here decides which panels are up: <see cref="Show"/> is the plain active toggle the
+    /// base class defines.
+    /// </summary>
+    public abstract class LobbyScreen : ScreenController, ILobbyScreen
+    {
+        public event Action OnNextPressed;
+        public event Action<CarDefinition> OnCarChosen;
+
+        public override void Initialize(GameFlowManager flowManager) { }
+        public override void Show() { gameObject.SetActive(true); }
+        public override void Hide() { gameObject.SetActive(false); }
+
+        public abstract void SetCurrency(int amount);
+        public abstract void RefreshFromProfile();
+        public abstract void SetChosenCar(CarDefinition car);
+
+        protected void TriggerNextPressed() => OnNextPressed?.Invoke();
+        protected void TriggerCarChosen(CarDefinition car) => OnCarChosen?.Invoke(car);
+    }
+
+    /// <summary>
     /// Car selection screen — shows owned, rentable, locked cars by generation.
     /// </summary>
     public abstract class CarSelectionScreen : ScreenController, ICarSelectionScreen

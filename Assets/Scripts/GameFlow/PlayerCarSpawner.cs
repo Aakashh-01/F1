@@ -96,10 +96,57 @@ namespace F1.GameFlow
 
             ApplyWingProfile(flow, coordinator);
             AttachTiming(track);
+            PutOnTrafficLayer();
             PlaceAtStartPose(track);
 
             Debug.Log($"[PlayerCarSpawner] Spawned player car at {PlayerCar.transform.position}.");
             return true;
+        }
+
+        /// <summary>
+        /// Moves the player's colliders onto the Traffic layer.
+        ///
+        /// The AI sense traffic and nothing else: their perception mask is the Traffic layer
+        /// alone, so that the road surface, kerbs and walls cannot register as obstacles and
+        /// park a car in a permanent full brake against the tarmac. That only works if the
+        /// player is on that layer too — otherwise every AI drives straight through the
+        /// player, which is a far worse bug than the one this fixes.
+        ///
+        /// Done here rather than on the prefab on purpose. The player's car prefab is
+        /// hand-authored (its camera rig is worth weeks of tuning) and a layer change is a
+        /// spawn-time concern, not an authoring one: it must hold for any prefab the
+        /// developer later points this spawner at.
+        /// </summary>
+        private void PutOnTrafficLayer()
+        {
+            int traffic = LayerMask.NameToLayer("Traffic");
+            if (traffic < 0)
+            {
+                Debug.LogWarning(
+                    "[PlayerCarSpawner] No 'Traffic' layer in the project, so the player's " +
+                    "colliders were left where they are. AI perception is masked to the " +
+                    "Traffic layer, so the AI will not be able to see the player's car.",
+                    this);
+                return;
+            }
+
+            foreach (var col in PlayerCar.GetComponentsInChildren<Collider>())
+            {
+                // Only the colliders move. Renderers and the camera rig stay on their own
+                // layers so culling and the chase camera are untouched.
+                col.gameObject.layer = traffic;
+            }
+
+            // ...which means the lap tracker's grounded check can no longer pass by finding
+            // the car's own body. Point it at the layer the track surface is actually on.
+            // Without this the player's lap times silently stop accumulating the moment the
+            // car is on the Traffic layer. See LapTracker.TrackLayer.
+            int ground = LayerMask.NameToLayer("Ground");
+            if (ground >= 0)
+            {
+                foreach (var tracker in PlayerCar.GetComponentsInChildren<LapTracker>(true))
+                    tracker.TrackLayer = ground;
+            }
         }
 
         /// <summary>
@@ -162,14 +209,32 @@ namespace F1.GameFlow
                 return;
             }
 
-            // Move the *body*, not the transform. The car is instantiated parented to the
-            // spawner, which sits at the world origin, and PhysX caches the rigidbody at the
-            // pose it was created in. A transform write is therefore reverted on the next
-            // physics step: the car appears on the start line for the frame the spawner logs,
-            // then snaps back to the origin. Writing rb.position/rb.rotation moves the body
-            // and the transform together, so the pose survives.
+            // Both the body and the transform, and the order matters — the same rule
+            // RaceGridManager.PositionCarOnGrid follows, and for the same reason.
+            //
+            // The car is instantiated parented to the spawner, which sits at the world
+            // origin, so before this the car is at the origin. PhysX caches a rigidbody at
+            // the pose it was created in and reverts a transform-only write on the next
+            // step, so the body write is not optional. The transform write is not optional
+            // either: Physics.autoSyncTransforms is False here, so a later
+            // Physics.SyncTransforms() pushes the transform's pose down into the body, and a
+            // transform left behind at the origin wins.
+            //
+            // Writing one without the other cannot hold, which is why the spawner logged
+            // "Spawned player car at (0.00, 1.00, 0.00)" while the car was somewhere else
+            // entirely — the log was reading the transform, and the transform was stale.
+            // The car root carries the rigidbody, so these are the same pose.
             body.position = spawnPosition;
             body.rotation = rotation;
+            PlayerCar.transform.SetPositionAndRotation(spawnPosition, rotation);
+
+            // The lift above is a starting guess, not the answer. This car's collider hangs
+            // 0.922 m below its rigidbody origin, so 0.6 m put the car 0.32 m INTO the road
+            // and PhysX shoved it back out on the next step. Measure instead — see
+            // VehicleGroundSnap. The lift is kept as a coarse first guess so the car starts
+            // roughly in the right place before the probe runs.
+            F1.Gameplay.VehicleGroundSnap.Snap(PlayerCar);
+
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.WakeUp();

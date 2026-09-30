@@ -39,6 +39,11 @@ public class DrivetrainBrakeSystem : MonoBehaviour
 
     private VehiclePhysicsCoordinator _coordinator;
     private const float ReverseForceMultiplier = 0.45f;
+
+    [Tooltip("How hard a parked car is damped to rest each fixed step, 0..1. High enough " +
+             "that a car on the grid cannot creep, low enough that it eases to a stop " +
+             "rather than snapping.")]
+    [Range(0.1f, 1f)] public float parkHoldDamping = 0.5f;
     private bool _wheelsFullyResolved;
     private bool _referencesResolved;
 
@@ -73,6 +78,19 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         {
             targetThrottle = coordinator.ThrottleInput;
             targetBrakeInput = coordinator.BrakeInput;
+
+            // A parked car gets no drive, no brake and above all no reverse, and is damped
+            // to rest instead. This has to be checked HERE rather than left to the input
+            // values, because the brake channel is exactly how this drivetrain expresses
+            // reverse: ShouldUseReverse treats "brake held, no throttle, stationary" as a
+            // reverse request. Anything that parks a car by holding the brake therefore
+            // drives it backwards, which is how a car waiting on the start line used to
+            // creep away from it.
+            if (coordinator.IsParked)
+            {
+                HoldAtRest();
+                return;
+            }
         }
         else
         {
@@ -291,13 +309,43 @@ public class DrivetrainBrakeSystem : MonoBehaviour
         brakeTarget = 0f;
         reverseTarget = 0f;
 
-        if (!ShouldUseReverse(brakeInput, throttleInput, GetSignedForwardSpeedKmh()))
+        // A caller that is braking to hold position rather than to reverse can say so, and
+        // the brake is then taken at face value. Without this, braking hard behind traffic
+        // becomes a reverse request the moment the car is at a standstill — see
+        // VehiclePhysicsCoordinator.SuppressReverse.
+        bool suppressReverse = _coordinator != null && _coordinator.SuppressReverse;
+
+        if (suppressReverse || !ShouldUseReverse(brakeInput, throttleInput, GetSignedForwardSpeedKmh()))
         {
             brakeTarget = brakeInput;
             return;
         }
 
         reverseTarget = brakeInput;
+    }
+
+    /// <summary>
+    /// Holds a parked car at rest: no drive, no brake, no reverse, and the body's linear
+    /// and angular velocity decayed to zero.
+    ///
+    /// Decaying rather than snapping, so a car that arrives at the line with a little
+    /// momentum eases to a stop over a few steps instead of twitching to a halt. The decay
+    /// runs every fixed step, so a parked car cannot creep: any velocity the solver or a
+    /// slope reintroduces is taken straight back out.
+    /// </summary>
+    private void HoldAtRest()
+    {
+        CurrentThrottle = 0f;
+        CurrentBrake = 0f;
+        CurrentReverse = 0f;
+
+        ApplyDrive(0f);
+        ApplyReverse(0f);
+        ApplyBrake(0f);
+
+        if (rb == null) return;
+        rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, Vector3.zero, parkHoldDamping);
+        rb.angularVelocity = Vector3.Lerp(rb.angularVelocity, Vector3.zero, parkHoldDamping);
     }
 
     private bool ShouldUseReverse(float brakeInput, float throttleInput, float forwardSpeedKmh)

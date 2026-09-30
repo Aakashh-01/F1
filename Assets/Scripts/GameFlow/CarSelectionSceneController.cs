@@ -67,23 +67,14 @@ namespace F1.GameFlow
                 Debug.LogWarning(
                     $"[CarSelectionSceneController] '{car?.CarId}' was not accepted as the " +
                     "session car. Check ownership or an active rental.");
-                return;
             }
 
-            // Whether the hub advances is derived from the scene list, not a serialized
-            // flag. A flag could disagree with reality in both directions: true while the
-            // scene is missing breaks the transition, false while it exists leaves a dead
-            // end that someone has to remember to flip.
-            if (!SceneFlowService.IsSceneAvailable(FlowSceneNames.TrackSelection))
-            {
-                Debug.Log(
-                    "[CarSelectionSceneController] Selected " + _flow.SelectedCar.DisplayName +
-                    $". '{FlowSceneNames.TrackSelection}' is not available yet, so the hub " +
-                    "stays here.", this);
-                return;
-            }
-
-            _flow.GoToTrackSelection();
+            // NOTE: this used to advance to track selection here, immediately, on click.
+            // It no longer does. The live route reaches car selection as the lobby's
+            // selection state, where choosing a tile only marks it and enables Next; see
+            // LobbySceneController. This scene is now off the main route, but the behaviour
+            // is kept consistent so returning to it does not reintroduce a hop the player
+            // cannot see coming.
         }
 
         private void OnCarUnlockRequested(CarDefinition car)

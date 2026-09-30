@@ -18,13 +18,32 @@ namespace F1.GameFlow
         {
             Branding, // Game logo / splash
             MainMenu, // "Start", "Options", "Quit"
-            CarSelection, // Pick car (owned/rented/locked)
+
+            /// <summary>
+            /// RETIRED, AND IT MUST STAY AT INDEX 2.
+            ///
+            /// Car selection used to be its own scene; it is now the lobby's only screen, and
+            /// 10_CarSelectionScene no longer ships. The member is kept only so the
+            /// integers after it keep their values — FlowSceneHost serializes its hosted
+            /// screen as this enum's integer, and deleting or moving this member would shift
+            /// TrackSelection, WingSetup, Qualifying, Race and Results down by one and leave
+            /// every remaining scene claiming the wrong screen. No scene hosts it any more.
+            /// </summary>
+            CarSelection,
+
             TrackSelection, // Pick track (owned/free/locked)
             WingSetup, // High/Low downforce selector
             Qualifying, // Unlimited laps, ghost car, sector timing
             Race, // Grid start, race to finish
             Results, // Post-race: points earned, unlocks
-            Options // Settings
+            Options, // Settings
+
+            /// <summary>
+            /// The lobby — the 3D garage, entered from loading and hosting car selection.
+            ///
+            /// APPENDED, never inserted, for the same reason CarSelection could not move.
+            /// </summary>
+            Lobby
         }
 
         [Header("Scene Names")]
@@ -34,8 +53,14 @@ namespace F1.GameFlow
         [SerializeField]
         private string _brandingScene = FlowSceneNames.Loading;
 
+        /// <summary>
+        /// The lobby the game opens into. This is the 3D garage; car selection happens
+        /// inside it as a second UI state rather than as a scene of its own, so nothing
+        /// navigates here automatically any more.
+        /// </summary>
+        [SerializeField] private string _lobbyScene = FlowSceneNames.Lobby;
+
         [SerializeField] private string _mainMenuScene = "";
-        [SerializeField] private string _carSelectionScene = FlowSceneNames.CarSelection;
         [SerializeField] private string _trackSelectionScene = FlowSceneNames.TrackSelection;
         [SerializeField] private string _wingSetupScene = FlowSceneNames.WingSetup;
         [SerializeField] private string _resultsScene = FlowSceneNames.Results;
@@ -76,6 +101,7 @@ namespace F1.GameFlow
 
         // Screen controllers (found after UI loads)
         private IBrandingScreen _brandingScreen;
+        private ILobbyScreen _lobbyScreen;
         private IMainMenuScreen _mainMenuScreen;
         private ICarSelectionScreen _carSelectionScreen;
         private ITrackSelectionScreen _trackSelectionScreen;
@@ -93,6 +119,14 @@ namespace F1.GameFlow
         public event Action<float> OnQualifyingTimeSet;
         public event Action OnQualifyingRetryRequested;
         public event Action<int, int> OnRaceFinished; // position, points
+
+        /// <summary>
+        /// A transition was asked for and refused — most often because the loader was
+        /// already busy, which is exactly what happens if a player presses a button while a
+        /// scene is still streaming. The flow has already rolled itself back to the screen
+        /// that is genuinely loaded by the time this fires.
+        /// </summary>
+        public event Action<GameScreen, SceneLoadResult> OnTransitionFailed;
 
         // Singleton
         public static GameFlowManager Instance { get; private set; }
@@ -175,6 +209,13 @@ namespace F1.GameFlow
         /// the hosting mechanism itself can be verified without reaching into privates.
         /// </summary>
         public ICarSelectionScreen CarSelectionScreenInstance => _carSelectionScreen;
+
+        /// <summary>
+        /// The lobby screen resolved from the hosting scene, or null. Exposed for the same
+        /// reason as the others: so the hosting mechanism can be verified without reaching
+        /// into privates.
+        /// </summary>
+        public ILobbyScreen LobbyScreenInstance => _lobbyScreen;
 
         /// <summary>
         /// The qualifying screen resolved from the hosting scene, or null.
@@ -293,10 +334,13 @@ namespace F1.GameFlow
 
         public void GoToMainMenu() => TransitionToScreen(GameScreen.MainMenu);
 
-        public void GoToCarSelection()
+        /// <summary>
+        /// Opens the lobby — the 3D garage. This is where the game starts after loading.
+        /// </summary>
+        public void GoToLobby()
         {
-            _session.FlowState = GameFlowState.CarSelection;
-            TransitionToScreen(GameScreen.CarSelection);
+            _session.FlowState = GameFlowState.Lobby;
+            TransitionToScreen(GameScreen.Lobby);
         }
 
         public void GoToTrackSelection()
@@ -441,6 +485,21 @@ namespace F1.GameFlow
             return position;
         }
 
+        /// <summary>
+        /// Records where the player is actually starting, when that is not what the
+        /// qualifying result earned.
+        ///
+        /// A caller that overrides the grid slot must say so here as well. The stored value
+        /// is what the race HUD reads through <see cref="RaceGridPosition"/>, so overriding
+        /// only the slot the car is placed into would leave the HUD reporting a pole position
+        /// the car was never in — a number a viewer can check against the grid, and wrong.
+        ///
+        /// The qualifying result is not erased by this. It is still resolved and still means
+        /// something; this only says the car is not standing on it.
+        /// </summary>
+        public void SetRaceGridPositionOverride(int oneBasedPosition) =>
+            _session.SetRaceGridPosition(oneBasedPosition);
+
         public void RestartSession()
         {
             if (_session.SessionType == SessionType.Qualifying) GoToQualifying();
@@ -461,13 +520,17 @@ namespace F1.GameFlow
             if (_currentScreen == targetScreen) return;
 
             UnityEngine.Debug.Log($"[GameFlowManager] Transition: {_currentScreen} -> {targetScreen}");
-            _currentScreen = targetScreen;
+
+            // Captured so a failed load can be undone. The screen is NOT committed below
+            // until the load reports success.
+            GameScreen previousScreen = _currentScreen;
 
             string sceneName = GetSceneNameForScreen(targetScreen);
 
             if (string.IsNullOrEmpty(sceneName))
             {
                 // This screen is a UI overlay hosted by the current flow scene.
+                _currentScreen = targetScreen;
                 InitializeScreenController(targetScreen);
                 OnScreenChanged?.Invoke(targetScreen);
                 return;
@@ -486,14 +549,70 @@ namespace F1.GameFlow
             {
                 if (!result.Success)
                 {
+                    // Rolled back rather than left pointing at a scene that never loaded.
+                    //
+                    // This used to set _currentScreen (and, in the GoTo* callers, the
+                    // session's FlowState) *before* asking for the load, so a failure left
+                    // the manager convinced it had arrived. Reproduced by asking for the
+                    // race while the loading scene was still mid-transition: the service
+                    // refuses with Busy, the manager logged the error and returned, and the
+                    // flow sat in the lobby reporting FlowState == Race with no way back —
+                    // every later GoToRace short-circuited on "already there".
+                    //
+                    // A refused load is a legitimate outcome, not a broken one. The screen
+                    // that is actually loaded is still the previous one, so saying so is
+                    // the only truthful answer, and it leaves the player somewhere they can
+                    // press a button and try again.
                     UnityEngine.Debug.LogError(
                         $"[GameFlowManager] Failed to enter {targetScreen} — {result}");
+
+                    _currentScreen = previousScreen;
+                    _session.FlowState = FlowStateFor(previousScreen);
+
+                    // Re-announced so any screen controller that optimistically moved on is
+                    // put back in step with the screen that is really hosted.
+                    OnScreenChanged?.Invoke(previousScreen);
+                    OnTransitionFailed?.Invoke(targetScreen, result);
                     return;
                 }
 
+                _currentScreen = targetScreen;
+                // The committing transition owns the state as well as the screen. Without
+                // this, an overlapping pair of transitions could leave them disagreeing: a
+                // refused transition rolls the state back, and a different transition that
+                // was already in flight then succeeds and moves the screen without moving
+                // the state, so the flow reports one thing and shows another. Every GoTo*
+                // caller sets the same value up front — this does not change any of them,
+                // it just makes the value a property of the screen that actually loaded
+                // rather than of whichever call happened to be written last.
+                _session.FlowState = FlowStateFor(targetScreen);
                 InitializeScreenController(targetScreen);
                 OnScreenChanged?.Invoke(targetScreen);
             });
+        }
+
+        /// <summary>
+        /// The session state a screen implies, used to roll a failed transition back to a
+        /// truthful value. Branding and the main menu are overlay-only and never own a scene,
+        /// so they map to <see cref="GameFlowState.Loading"/>, which is where a session that
+        /// has not chosen anything belongs.
+        /// </summary>
+        private static GameFlowState FlowStateFor(GameScreen screen)
+        {
+            switch (screen)
+            {
+                case GameScreen.Lobby: return GameFlowState.Lobby;
+                case GameScreen.TrackSelection: return GameFlowState.TrackSelection;
+                case GameScreen.WingSetup: return GameFlowState.WingSetup;
+                // The screen is Qualifying even though the scene and the state are both
+                // called PreRace — 40_PreRaceScene hosts the qualifying HUD. Matching the
+                // scene name here would not compile, which is the only reason this is worth
+                // stating: the two vocabularies genuinely differ.
+                case GameScreen.Qualifying: return GameFlowState.PreRace;
+                case GameScreen.Race: return GameFlowState.Race;
+                case GameScreen.Results: return GameFlowState.Results;
+                default: return GameFlowState.Loading;
+            }
         }
 
         private string GetSceneNameForScreen(GameScreen screen)
@@ -501,8 +620,8 @@ namespace F1.GameFlow
             switch (screen)
             {
                 case GameScreen.Branding: return _brandingScene;
+                case GameScreen.Lobby: return _lobbyScene;
                 case GameScreen.MainMenu: return _mainMenuScene;
-                case GameScreen.CarSelection: return _carSelectionScene;
                 case GameScreen.TrackSelection: return _trackSelectionScene;
                 case GameScreen.WingSetup: return _wingSetupScene;
                 case GameScreen.Qualifying: return _qualifyingScene;
@@ -559,6 +678,7 @@ namespace F1.GameFlow
             switch (screen)
             {
                 case GameScreen.Branding: _brandingScreen = controller as BrandingScreen; break;
+                case GameScreen.Lobby: _lobbyScreen = controller as LobbyScreen; break;
                 case GameScreen.MainMenu: _mainMenuScreen = controller as MainMenuScreen; break;
                 case GameScreen.CarSelection: _carSelectionScreen = controller as CarSelectionScreen; break;
                 case GameScreen.TrackSelection: _trackSelectionScreen = controller as TrackSelectionScreen; break;

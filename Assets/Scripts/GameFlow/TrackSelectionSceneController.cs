@@ -71,7 +71,14 @@ namespace F1.GameFlow
             _flow.GoToWingSetup();
         }
 
-        private void OnBackPressed() => _flow.GoToCarSelection();
+        /// <summary>
+        /// Back returns to the LOBBY, not to a car selection scene.
+        ///
+        /// This used to be GoToCarSelection(). Car selection now happens inside the lobby as
+        /// a second UI state, so 10_CarSelectionScene is retired and no longer ships — which
+        /// would have left this button routing into a scene that is not in the build.
+        /// </summary>
+        private void OnBackPressed() => _flow.GoToLobby();
 
         private void OnTrackUnlockRequested(TrackDefinition track)
         {
