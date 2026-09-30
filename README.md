@@ -144,7 +144,7 @@ Assets/
 
 ### Prerequisites
 
-- **Unity 2020.3 LTS** or later (tested on 2022+)
+- **Unity 6000.0.63f1** (the version this project is developed and built against — see `ProjectSettings/ProjectVersion.txt`)
 - **Windows, Mac, or Linux** development environment
 - **Visual Studio** or preferred C# IDE
 - **3GB+ disk space** for project files
@@ -157,13 +157,29 @@ Assets/
    cd F1
    ```
 
-2. **Open in Unity**
+2. **Import the purchased art (required)**
+
+   Two art packs are **not in this repository**. They were bought from the Unity
+   Asset Store, and its EULA does not permit redistributing purchased content in a
+   public repository, so they are listed in `.gitignore` and kept local. **The game
+   and any build need them on disk** — the lobby will not assemble without them.
+
+   | Pack | Import to | Used by |
+   |---|---|---|
+   | **Simple Garage** | `Assets/Simple Garage/` | `Assets/Editor/LobbyBuilder.cs` instantiates `Prefabs/Garage.prefab`; the 3D lobby scene references it by GUID |
+   | **SlimUI — Modern Menu 1** | `Assets/SlimUI/` | `Assets/Editor/SlimUiSkin.cs` re-skins its button/panel sprites onto our own uGUI screens (we use its *art*, not its prefabs) |
+
+   Import each `.unitypackage` from your own Asset Store download into the paths
+   above. If Unity reports missing references in `05_LobbyScene` or the UI
+   prefabs, this step was missed.
+
+3. **Open in Unity**
    - Launch **Unity Hub**
    - Click **"Open Project"** (or add to your library)
    - Navigate to the cloned F1 folder
    - Wait for project to load and compile (~2-3 minutes first time)
 
-3. **Verify Setup**
+4. **Verify Setup**
    - Open `Assets/Scenes/` and locate the main scene
    - Ensure all script references resolve (no missing components)
    - Run the scene to verify physics initialization

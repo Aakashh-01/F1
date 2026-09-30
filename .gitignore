@@ -120,3 +120,17 @@ CAMERA_RESTORE_PLAN.md
 
 # The full-size art originals (car1..6, Track1..5, Wing1..2) were deleted after the
 # downscaled, correctly-named copies were wired in. Nothing references them.
+
+# Purchased Unity Asset Store art. ~153 MB, and the Asset Store EULA does not allow
+# redistributing purchased content in a public repository, so these stay local.
+# The game and the Windows build both need them present on disk:
+#   * "Simple Garage" -> Assets/Simple Garage/Prefabs/Garage.prefab, instantiated by
+#     Assets/Editor/LobbyBuilder.cs and referenced by GUID from 05_LobbyScene.
+#   * "SlimUI / Modern Menu 1" -> button and panel sprites, re-skinned onto our own
+#     uGUI screens by Assets/Editor/SlimUiSkin.cs (we use its art, not its prefabs).
+# Import them from your own Asset Store download before building. See the README.
+/Assets/Simple Garage/
+/Assets/Simple Garage.meta
+/Assets/SlimUI/
+/Assets/SlimUI.meta
+
