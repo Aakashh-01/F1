@@ -733,3 +733,77 @@ assets as three difficulties.
   controller still targets the speed of the single waypoint ahead (D1) through a proportional
   speed-error controller with a ~47 km/h coast band (D2).
 
+---
+
+## 9. P1 landed (commits `e79547a`, `0a6b6c5`)
+
+EditMode **175/175 green** (159 at session start, +16 new). Production code compiles with no new
+warnings.
+
+### What was built
+
+**`Assets/Scripts/Brain/AILongitudinalPlanner.cs`** — the missing half of P1. `AISpeedProfile` was
+pure arithmetic and correct; nothing called it. This class is the part that needs a car: it walks
+the real line, measures the budget, and holds the learning state.
+
+- `SolvePlannedSpeedKmh` takes the **minimum over every waypoint inside a braking horizon**, not
+  the next waypoint. The horizon is `v² / (2·a) · 1.25`, floored at `minimumBrakingHorizonMetres`
+  and capped at `maxBrakingHorizonWaypoints` entries — a *distance*, so it is ~175 m at 240 km/h
+  and ~45 m in a hairpin. A waypoint *count* would get one of those two wrong.
+- `MeasureBrakeDecelMs2` derives the budget from the clamp the simulation **actually enforces**:
+  `Σ_grounded (NormalForce × tireForceLimitMultiplier) / mass`, scaled by measured
+  `advancedBraking.BrakeEfficiency`. This follows D10 — there is no longitudinal tyre model to
+  read (`RaycastWheel.cs:135` hard-zeroes `LocalSlipVector.y`, so `LongGripCoeff` ≡ 0), so the
+  budget comes from `DrivetrainBrakeSystem.cs:252`'s force cap rather than from a traction limit
+  that does not exist.
+- Learning from `MeasureBrakeDecel` is gated on the brake having been **≥ 0.8 applied**, and the
+  result is a `Min` against the measured clamp. Both directions are load-bearing: a soft brake
+  sheds speed for reasons unrelated to capability, and observation must never raise the budget
+  above a force the physics will refuse.
+
+**Wiring** (`AIDriverController.Simulate`) — the plan is applied **last**, after the overtake
+boost and the recovery clamp, not before. The boost raises the target by up to 7%; applying the
+minimum earlier would let a committed pass ask for a corner entry speed the car cannot brake for.
+
+**The longitudinal law** — feed-forward plus a narrow trim replaces the proportional band. The
+brake term is `excess / horizonSeconds / budget`, so it ramps in continuously as a corner
+approaches. The old law had a dead zone of ~47 km/h (any error in [−31, +16] km/h commanded
+neither pedal), which is *why* the oscillation was the corner-independent rhythm it was.
+
+### Two defects the new tests caught
+
+Both were in my own work, and both are the original defect wearing a different costume:
+
+1. **The horizon recorded segment length, not distance from the car.** Every constraint was
+   recorded ~11 m away, so the solver granted corners the speed a car would have after braking
+   over one segment — and never slowed for them. `EachWaypointIsConstrainedByTheGapAheadOfItNot
+   TheGapBehindIt` already existed for this class of error in the pure solver; the same care was
+   needed one level up.
+2. **`SolveAllowedSpeedKmh` read the whole buffer.** The planner reuses per-tick arrays sized to
+   the largest horizon, so the zero-filled tail was fed in as real constraints — a zero target
+   speed at zero distance pinned every result to a standstill. It now takes an explicit `count`.
+   Caught as two safety-law failures reading `"Line target 0 km/h, clamped to 0 km/h"`.
+
+### Verification
+
+- `Assets/Tests/EditMode/AILongitudinalPlannerTests.cs` — **12 tests**. Horizon length against real
+  speed; a slow car getting a *short* horizon (catching a horizon that silently degenerated to
+  scanning the whole line); the minimum beating the next waypoint; the budget formula pinned as a
+  *formula* (sum over grounded wheels / mass) rather than a value, so it does not rot when the car's
+  mass changes; ungrounded wheels excluded; the three learning gates.
+- `Assets/Tests/EditMode/AIRealTrackPlannerTests.cs` — **4 tests**, and the answer to **D13**. Solves
+  the plan from **every one of the 300 real waypoints** and independently recomputes the tightest
+  constraint in that horizon, asserting the permitted speed never exceeds what the brakes allow.
+  Recomputing separately keeps it a check *on* the planner rather than of it against its own
+  output. Two further tests guard the first from passing vacuously — the line must genuinely carry
+  a spread of corner speeds, and the planner must see more than one waypoint.
+
+### Still open
+
+- **The PlayMode gate.** No test yet drives a car along the real line in motion and watches the
+  brake telemetry. The static geometry check is a real improvement on D13 but it is not the same
+  thing: it proves the plan is *feasible*, not that the controller *chases* it. P1's own
+  verification (c) — a live race showing one braking event per corner — is also unrun.
+- **The coast band is gone but unmeasured on track.** The dead zone is closed in code; nothing yet
+  asserts the resulting lap behaviour.
+
