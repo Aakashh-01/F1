@@ -1,5 +1,23 @@
 # Fix plan — AI field deadlock and race-mode controls
 
+> **SUPERSEDED — do not work from this document without re-verifying against the source.**
+> Written 2026-09-28. Several of its claims were already stale when last read (2026-10-04):
+>
+> - **§2A is wrong.** It states all six `CarDefinition` assets point `_basePhysicsProfile` at
+>   `F1_AI_Physics`. They point at `F1_Player_Physics` — flipped in commit `c82b3f5`. Verified by
+>   GUID. The "controls change in race mode" symptom this describes was real at the time and has
+>   since been corrected at the asset level.
+> - **§1 defects A–D are fixed.** The overtake ease is at `AIDriverController.cs:755-759`, the
+>   closing-speed gate at `:839-840`, `CalculateFollowTargetKmh` at `:875-882`, and the timed
+>   grid window at `:530-533`. Note however that the overtake branch at `:758` currently **raises**
+>   the traffic clamp — see `PLAN-AI-RACING-PHASE-2-3.md` §"STOP", defect S-A. The branch was
+>   correct when this document was written and a later change removed the guard that kept it so.
+> - The file also does not mention the three-layer override problem (code defaults, prefab
+>   overrides, and `VehiclePhysicsProfile` assets applied at `Awake`, in that order of
+>   precedence), which is the root cause behind most of what this plan was chasing.
+>
+> `PLAN-AI-RACING-PHASE-2-3.md` supersedes it.
+
 Written 2026-09-28 after an inspection pass. Nothing in this plan has been applied yet except
 the two items marked DONE. Every claim below was verified by reading the source or by
 measuring the live editor, not inferred.

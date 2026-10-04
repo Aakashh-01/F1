@@ -58,6 +58,26 @@ namespace F1.GameFlow
         private RaceGridManager _grid;
         private bool _sessionReady;
 
+        /// <summary>
+        /// The player's own lap tracker, once the car exists. Held rather than re-found every
+        /// frame so the finish test is a field read and a comparison.
+        /// </summary>
+        private LapTracker _playerTracker;
+
+        /// <summary>
+        /// Whether the chequered flag has already been taken this race.
+        ///
+        /// A guard, not a nicety. The finish test below runs every frame, so it is evaluated
+        /// again on the frame after the race ends and on every frame while the results screen
+        /// is still up. Without this, the second evaluation would classify the field a second
+        /// time and award the points a second time — and career points are the one number
+        /// nothing else in the game double-checks.
+        /// </summary>
+        private bool _raceFinished;
+
+        /// <summary>Set once the finish has been handled, for anything that wants to ask.</summary>
+        public bool RaceFinished => _raceFinished;
+
         /// <summary>Laps this race is run over, once the session is up.</summary>
         public int TotalLaps { get; private set; }
 
@@ -154,8 +174,21 @@ namespace F1.GameFlow
 
             int gridPosition = PlaceOnGrid();
 
-            _sessionReady = true;
+            _playerTracker = _spawner.PlayerCar != null
+                ? _spawner.PlayerCar.GetComponent<LapTracker>()
+                : null;
+            if (_playerTracker == null)
+            {
+                Debug.LogError(
+                    "[RaceSceneController] The player car has no LapTracker, so lap completions " +
+                    "cannot be read and this race could never finish.", this);
+                yield break;
+            }
+
+            // PublishRaceInfo before _sessionReady, not after: it is what computes TotalLaps,
+            // and Update starts testing that value the instant _sessionReady goes true.
             PublishRaceInfo();
+            _sessionReady = true;
 
             // Held at the line until the countdown releases it. The overlay finds this
             // scene's gate through ISessionStartGate and drives the clock.
@@ -247,6 +280,80 @@ namespace F1.GameFlow
         }
 
         /// <summary>
+        /// Ends the race once the player has completed every lap.
+        ///
+        /// Polled, not subscribed to <see cref="LapTracker.OnLapCompleted"/> — and that is not a
+        /// style preference, it is forced by how the tracker updates.
+        ///
+        /// <c>LapTracker</c> raises the event from inside <c>CompleteLap()</c>, which it calls
+        /// in a loop BEFORE assigning <c>CompletedLaps = lapsDone</c>. So during the event the
+        /// public count still holds the value from before this update: finishing lap 2 of 2
+        /// raises the event while <c>CompletedLaps</c> still reads 1. An event handler testing
+        /// that count against the lap total therefore reads it one lap stale forever, and a
+        /// race can never end — which is exactly what happened.
+        ///
+        /// Polling from <see cref="Update"/> reads the count after the assignment has committed,
+        /// so it sees the true value. It is also the safer shape for this particular test:
+        /// "the player has completed the race" is a level, not an edge, so a frame missed costs
+        /// nothing — the next frame still sees it.
+        /// </summary>
+        private void CheckForFinish()
+        {
+            if (_raceFinished || _playerTracker == null) return;
+
+            if (_playerTracker.CompletedLaps < TotalLaps) return;
+
+            FinishRace();
+        }
+
+        /// <summary>
+        /// Classifies the race, holds the field, scores it, and moves on to the results.
+        ///
+        /// The order is load-bearing. Position is read BEFORE the input is locked: locking does
+        /// not stop a car rolling, but it does stop the AI steering, and a car that keeps its
+        /// momentum for another frame while its driver goes numb can cross a rival and change
+        /// the very standings the number was read from. The result is recorded BEFORE the
+        /// transition is asked for, so the results screen has something to present the moment
+        /// its scene finishes loading rather than an empty frame that waits for it.
+        /// </summary>
+        private void FinishRace()
+        {
+            _raceFinished = true;
+
+            int position = ComputePlayerPosition();
+            if (position <= 0)
+            {
+                // The tracker or the grid went missing, so the standings could not be read at
+                // all. Fall back to the slot the car was actually placed in. It is a worse
+                // answer than a real classification, but it is a truthful one — and far better
+                // than the default of P1, which would pay a car that finished last a points
+                // haul for winning.
+                position = _playerGridSlot >= 0 ? _playerGridSlot + 1 : 1;
+                Debug.LogWarning(
+                    $"[RaceSceneController] Could not classify the field at the flag, so the " +
+                    $"grid slot P{position} is being used as the finishing position.", this);
+            }
+
+            // Hold the whole field, not just the player. The transition is taking the player's
+            // car off the road and it does not take the AI with it, and cars driving unattended
+            // across the grid while the results build reads as a fault on a client's screen.
+            SetStartGateLocked(true);
+
+            int points = _flow.CompleteRace(position);
+
+            Debug.Log(
+                $"[RaceSceneController] Flag on lap {_playerTracker.CompletedLaps}/{TotalLaps}. " +
+                $"Finished P{position}, +{points} pts.", this);
+
+            // Worth pushing even though the transition usually hides it: if the results scene
+            // fails to load, the flow rolls back to the race with the panel up, and the player
+            // is told they finished rather than being left mid-lap with the input locked.
+            _flow.RaceScreenInstance?.ShowFinishPosition(position, points);
+
+            _flow.GoToResults();
+        }
+
+        /// <summary>
         /// Laps and grid position onto the race screen, if this scene hosts one yet.
         ///
         /// The race HUD is a later step, so the screen is legitimately absent for now. The
@@ -284,6 +391,12 @@ namespace F1.GameFlow
         private void Update()
         {
             if (!_sessionReady) return;
+
+            // Ahead of everything else, and deliberately not on the HUD throttle: the finish
+            // must be judged the frame it happens, not once every tenth of a second, or the
+            // car keeps driving past the line while the HUD waits its turn.
+            CheckForFinish();
+            if (_raceFinished) return;
 
             _hudPushTimer -= Time.unscaledDeltaTime;
             if (_hudPushTimer > 0f) return;

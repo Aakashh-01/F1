@@ -99,6 +99,23 @@ namespace F1.GameFlow
         private int _raceFinishPosition = 1;
         private int _pointsEarned = 0;
 
+        /// <summary>Where the player finished the current race, once one has been recorded.</summary>
+        public int RaceFinishPosition => _raceFinishPosition;
+
+        /// <summary>Career points the current race paid, once one has been recorded.</summary>
+        public int PointsEarned => _pointsEarned;
+
+        /// <summary>
+        /// Whether a result has been recorded for the race in progress.
+        ///
+        /// This is what makes <see cref="CompleteRace"/> safe to call twice. A lap can be
+        /// completed on the final lap and the shell can also be told the race ended by
+        /// something else, and awarding the points twice would silently double a career
+        /// total — the one number the whole unlock economy is denominated in, and the one
+        /// number nothing else in the codebase double-checks.
+        /// </summary>
+        public bool HasRaceResult { get; private set; }
+
         // Screen controllers (found after UI loads)
         private IBrandingScreen _brandingScreen;
         private ILobbyScreen _lobbyScreen;
@@ -330,6 +347,102 @@ namespace F1.GameFlow
             OnRaceFinished?.Invoke(finishPosition, pointsEarned);
         }
 
+        /// <summary>
+        /// Records the end of the race: scores the finishing position, awards the points, and
+        /// marks a result as present so it can never be awarded twice.
+        ///
+        /// The scoring itself lives in <see cref="RacePointsTable"/>, which is a pure function;
+        /// this is the seam that turns a position into a career balance change and is the only
+        /// place the two are joined — the same split <see cref="ResolveRaceGridPosition"/> uses
+        /// for the grid.
+        /// </summary>
+        /// <param name="finishPosition">One-based finishing position, where 1 is the win.</param>
+        /// <returns>The points awarded. An already-recorded race returns its first award.</returns>
+        public int CompleteRace(int finishPosition)
+        {
+            // Idempotent on purpose. See HasRaceResult: the career total is the number the
+            // whole unlock economy is denominated in, and a second call would quietly double
+            // it in a way no test in the suite is watching.
+            if (HasRaceResult)
+            {
+                UnityEngine.Debug.Log(
+                    $"[GameFlowManager] CompleteRace called again for P{finishPosition}, but " +
+                    $"P{_raceFinishPosition} is already recorded. Keeping the first result.");
+                return _pointsEarned;
+            }
+
+            int points = RacePointsTable.PointsForPosition(finishPosition);
+
+            // Set before SetRaceResult, not after. SetRaceResult raises OnRaceFinished, and a
+            // listener on that event is entitled to ask whether a result is present — it should
+            // not be able to observe a moment where one is being awarded and not yet flagged.
+            HasRaceResult = true;
+            SetRaceResult(finishPosition, points);
+            return points;
+        }
+
+        /// <summary>
+        /// Pushes a recorded result onto the results screen.
+        ///
+        /// Called from the transition that *commits* to the results screen, not by whoever
+        /// asked for it: the screen does not exist until that scene has finished loading, so
+        /// presenting immediately after asking for the transition would present into a null.
+        /// Running it here also means a refused load never presents anything, because a
+        /// refused transition rolls back before this point.
+        /// </summary>
+        private void PresentRaceResult()
+        {
+            if (_resultsScreen == null || !HasRaceResult) return;
+
+            var profile = PlayerProfileManager.Current;
+            int total = profile != null ? profile.careerPoints : _pointsEarned;
+
+            CarDefinition affordableCar;
+            TrackDefinition affordableTrack;
+            FindNewlyAffordableUnlocks(out affordableCar, out affordableTrack);
+
+            _resultsScreen.ShowResults(_raceFinishPosition, _pointsEarned, total,
+                affordableCar, affordableTrack);
+        }
+
+        /// <summary>
+        /// The cheapest car and track the player can now afford but does not own.
+        ///
+        /// This ANNOUNCES an unlock; it does not perform one. Granting — and spending the
+        /// points to do it — stays where it already is, on the unlock button in the lobby and
+        /// on the track selection screen, because spending a player's points without them
+        /// asking is not a decision a results screen is entitled to make on their behalf. The
+        /// GDD's loop is "earn points, then unlock", and the unlock stays a deliberate act.
+        ///
+        /// Under-construction circuits are skipped. They are listed but unplayable, so
+        /// announcing one as newly affordable would be offering something that cannot be
+        /// raced — the exact "COMING SOON" the track screen already refuses to sell.
+        /// </summary>
+        private static void FindNewlyAffordableUnlocks(
+            out CarDefinition car, out TrackDefinition track)
+        {
+            car = null;
+            track = null;
+
+            var profile = PlayerProfileManager.Current;
+            if (profile == null) return;
+
+            foreach (var candidate in ProgressionRegistry.GetLockedCars())
+            {
+                if (!profile.CanAffordCar(candidate.UnlockCostPoints)) continue;
+                if (car == null || candidate.UnlockCostPoints < car.UnlockCostPoints)
+                    car = candidate;
+            }
+
+            foreach (var candidate in ProgressionRegistry.GetLockedTracks())
+            {
+                if (candidate.UnderConstruction) continue;
+                if (!profile.CanAffordTrack(candidate.UnlockCostPoints)) continue;
+                if (track == null || candidate.UnlockCostPoints < track.UnlockCostPoints)
+                    track = candidate;
+            }
+        }
+
         // --- Navigation ---
 
         public void GoToMainMenu() => TransitionToScreen(GameScreen.MainMenu);
@@ -363,6 +476,15 @@ namespace F1.GameFlow
 
         public void GoToRace()
         {
+            // Entering a race is the only moment a previous result stops being the current
+            // one. Clearing it here rather than on the way out of results is deliberate: the
+            // retry button returns through RestartSession -> GoToRace without ever passing
+            // through StartRaceSession, so clearing in the results screen would leave the
+            // retry path awarding the first race's points a second time.
+            HasRaceResult = false;
+            _raceFinishPosition = 1;
+            _pointsEarned = 0;
+
             _session.FlowState = GameFlowState.Race;
             TransitionToScreen(GameScreen.Race);
         }
@@ -587,6 +709,13 @@ namespace F1.GameFlow
                 // rather than of whichever call happened to be written last.
                 _session.FlowState = FlowStateFor(targetScreen);
                 InitializeScreenController(targetScreen);
+
+                // The results screen is the one screen whose content was decided before it
+                // existed, so it is presented from the transition that commits to it rather
+                // than by whoever asked to navigate — and a refused transition never reaches
+                // here, so a failed load presents nothing.
+                if (targetScreen == GameScreen.Results) PresentRaceResult();
+
                 OnScreenChanged?.Invoke(targetScreen);
             });
         }
