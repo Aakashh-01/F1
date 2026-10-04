@@ -139,11 +139,6 @@ public class AIDriverController : MonoBehaviour
         get => _overrideThrottleFullErrorKmh ?? Tuning.throttleFullErrorKmh;
         set => _overrideThrottleFullErrorKmh = value;
     }
-    public float brakeFullErrorKmh
-    {
-        get => _overrideBrakeFullErrorKmh ?? Tuning.brakeFullErrorKmh;
-        set => _overrideBrakeFullErrorKmh = value;
-    }
     public float blockedTargetSpeedKmh
     {
         get => _overrideBlockedTargetSpeedKmh ?? Tuning.blockedTargetSpeedKmh;
@@ -442,7 +437,6 @@ public class AIDriverController : MonoBehaviour
     private float? _overrideBrakeMeasurementMinSpeedKmh;
     private float? _overrideBrakeTrimSeconds;
     private float? _overrideThrottleFullErrorKmh;
-    private float? _overrideBrakeFullErrorKmh;
     private float? _overrideBlockedTargetSpeedKmh;
     private float? _overrideSteeringThrottleReduction;
     private float? _overrideBaseCornerCautionStrength;

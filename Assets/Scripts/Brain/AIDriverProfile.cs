@@ -90,11 +90,6 @@ public class AIDriverProfile : ScriptableObject
     [Tooltip("Speed error, in km/h, at which throttle reaches full.")]
     [Range(1f, 80f)] public float throttleFullErrorKmh = 16f;
 
-    [Tooltip("Speed error, in km/h, at which brake reaches full, before the difficulty braking " +
-             "margin scales it. A large value means the car coasts for a wide band of error " +
-             "before it commits to either pedal.")]
-    [Range(1f, 100f)] public float brakeFullErrorKmh = 42f;
-
     [Tooltip("Speed an immovable obstacle holds the car to, at the far end of the sensor. Only " +
              "reachable for scenery, which is currently never seen — see the perception mask.")]
     [Range(10f, 160f)] public float blockedTargetSpeedKmh = 45f;
