@@ -58,6 +58,34 @@ public class AIDriverProfile : ScriptableObject
     [Tooltip("Segments searched forward when re-acquiring the racing line after a disturbance.")]
     [Range(1, 10)] public int forwardProgressSearchSteps = 4;
 
+    [Header("Longitudinal Planner")]
+    [Tooltip("Fallback braking capability, in m/s^2, used when the car cannot be measured — " +
+             "airborne, or a car with no drivetrain. The real budget is measured from the " +
+             "drivetrain's own per-wheel force clamp every tick, so this only covers the frames " +
+             "where that measurement is meaningless.")]
+    [Range(2f, 60f)] public float fallbackBrakeDecelMs2 = 18f;
+
+    [Tooltip("Shortest braking horizon, in metres. The horizon is normally a braking distance, " +
+             "which is short in a slow corner; this floor stops a crawling car from seeing only " +
+             "the waypoint it is standing on.")]
+    [Range(10f, 200f)] public float minimumBrakingHorizonMetres = 45f;
+
+    [Tooltip("Cap on waypoints examined per tick. Bounds the per-tick walk over the line; a " +
+             "long horizon at low speed can otherwise cover a third of the track.")]
+    [Range(4, 64)] public int maxBrakingHorizonWaypoints = 24;
+
+    [Tooltip("Speed below which an observed deceleration is discarded rather than learned " +
+             "from. Near a standstill the reading is dominated by drivetrain spool-up.")]
+    [Range(5f, 120f)] public float brakeMeasurementMinSpeedKmh = 35f;
+
+    [Tooltip("Time constant, in seconds, of the brake trim term. This is the width of the band " +
+             "over which a speed excess is corrected proportionally. It is deliberately narrow: " +
+             "the feed-forward term already carries the steady state, and a wide trim here would " +
+             "reproduce the dead band this replaced — a wide one on the old controller meant " +
+             "any error inside it commanded neither pedal, so the car coasted out of the band, " +
+             "saturated, and oscillated.")]
+    [Range(0.05f, 1.5f)] public float brakeTrimSeconds = 0.25f;
+
     [Header("Speed Control")]
     [Tooltip("Speed error, in km/h, at which throttle reaches full.")]
     [Range(1f, 80f)] public float throttleFullErrorKmh = 16f;

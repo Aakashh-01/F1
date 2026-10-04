@@ -106,6 +106,33 @@ public class AIDriverController : MonoBehaviour
         set => _overrideForwardProgressSearchSteps = value;
     }
 
+    // Longitudinal Planner
+    public float fallbackBrakeDecelMs2
+    {
+        get => _overrideFallbackBrakeDecelMs2 ?? Tuning.fallbackBrakeDecelMs2;
+        set => _overrideFallbackBrakeDecelMs2 = value;
+    }
+    public float minimumBrakingHorizonMetres
+    {
+        get => _overrideMinimumBrakingHorizonMetres ?? Tuning.minimumBrakingHorizonMetres;
+        set => _overrideMinimumBrakingHorizonMetres = value;
+    }
+    public int maxBrakingHorizonWaypoints
+    {
+        get => _overrideMaxBrakingHorizonWaypoints ?? Tuning.maxBrakingHorizonWaypoints;
+        set => _overrideMaxBrakingHorizonWaypoints = value;
+    }
+    public float brakeMeasurementMinSpeedKmh
+    {
+        get => _overrideBrakeMeasurementMinSpeedKmh ?? Tuning.brakeMeasurementMinSpeedKmh;
+        set => _overrideBrakeMeasurementMinSpeedKmh = value;
+    }
+    public float brakeTrimSeconds
+    {
+        get => _overrideBrakeTrimSeconds ?? Tuning.brakeTrimSeconds;
+        set => _overrideBrakeTrimSeconds = value;
+    }
+
     // Speed Control
     public float throttleFullErrorKmh
     {
@@ -379,6 +406,10 @@ public class AIDriverController : MonoBehaviour
     [HideInInspector] public bool LastRearClearToReverse = true;
     [HideInInspector] public float LastLeaderSpeedKmh;
     [HideInInspector] public float LastClosingSpeedKmh;
+    [HideInInspector] public float LastPlannedSpeedKmh;
+    [HideInInspector] public float LastBrakeDecelMs2;
+    [HideInInspector] public float LastBrakingHorizonMetres;
+    [HideInInspector] public int LastBrakingHorizonWaypoints;
 
     private AIDifficultyProfile _runtimeDifficulty;
     private bool _hasProgressIndex;
@@ -392,6 +423,8 @@ public class AIDriverController : MonoBehaviour
 
     private AIDriverProfile _runtimeTuning;
 
+    private AILongitudinalPlanner _planner = new AILongitudinalPlanner();
+
     /// <summary>
     /// Per-instance overrides written through the tuning properties' setters. Null means
     /// "this driver uses the profile's value", which is the state every car starts in.
@@ -403,6 +436,11 @@ public class AIDriverController : MonoBehaviour
     private float? _overrideLaneOffsetMoveSpeed;
     private float? _overrideWaypointReachDistance;
     private int? _overrideForwardProgressSearchSteps;
+    private float? _overrideFallbackBrakeDecelMs2;
+    private float? _overrideMinimumBrakingHorizonMetres;
+    private int? _overrideMaxBrakingHorizonWaypoints;
+    private float? _overrideBrakeMeasurementMinSpeedKmh;
+    private float? _overrideBrakeTrimSeconds;
     private float? _overrideThrottleFullErrorKmh;
     private float? _overrideBrakeFullErrorKmh;
     private float? _overrideBlockedTargetSpeedKmh;
@@ -559,6 +597,41 @@ public class AIDriverController : MonoBehaviour
         LastTargetSpeedKmh = waypoint.targetSpeedKmh * difficulty.speedMultiplier * cornerScale;
         LastTargetSpeedKmh *= Mathf.Lerp(1f, 1f - waypoint.brakingCaution * cautionStrength, LastCornerCurvature);
 
+        // The single waypoint ahead is NOT the speed the car may carry. It is the speed of a
+        // point about 11 m away, and the corner that actually governs the next few seconds may
+        // be 120 m further on. Taking it directly is why every corner used to arrive as a wall:
+        // the AI could not see the braking zone until it was already inside it, so the only
+        // available response was to saturate the brake and oscillate.
+        //
+        // The planner instead takes the MINIMUM over every waypoint within a braking horizon —
+        // a distance derived from the speed the car actually has and the braking it can actually
+        // do, both measured this tick. The line's own targetSpeedKmh already encodes a backward
+        // braking pass from bake time; what this adds is re-solving that pass from the car's real
+        // position with a real budget, which is what makes it brake early instead of on arrival.
+        float brakeDecelMs2 = _planner.Tick(
+            coordinator,
+            speedKmh,
+            fallbackBrakeDecelMs2,
+            brakeMeasurementMinSpeedKmh,
+            Time.fixedDeltaTime);
+
+        LastPlannedSpeedKmh = _planner.SolvePlannedSpeedKmh(
+            racingLine,
+            lookaheadSegmentIndex,
+            transform.position,
+            speedKmh,
+            brakeDecelMs2,
+            difficulty.speedMultiplier,
+            difficulty.cornerConfidence,
+            cautionStrength,
+            minimumBrakingHorizonMetres,
+            maxBrakingHorizonWaypoints,
+            LastTargetSpeedKmh);
+
+        LastBrakeDecelMs2 = _planner.LastBrakeDecelMs2;
+        LastBrakingHorizonMetres = _planner.LastHorizonMetres;
+        LastBrakingHorizonWaypoints = _planner.LastHorizonWaypointCount;
+
         UpdateTrackRecoveryState(waypoint);
         UpdateLaneOffset(waypoint, difficulty);
         if (IsOvertaking)
@@ -566,6 +639,13 @@ public class AIDriverController : MonoBehaviour
 
         if (IsRecoveringTrack)
             LastTargetSpeedKmh = Mathf.Min(LastTargetSpeedKmh, trackRecoverySpeedKmh);
+
+        // Applied LAST, so the plan governs every intent above rather than being overridden by
+        // it. The overtake boost in particular raises the target by up to 7%, and applying the
+        // minimum before it would let a committed pass ask for a corner entry speed the car
+        // cannot physically brake for. A driver may want to go faster than the brakes allow; the
+        // brakes are what actually arrive.
+        LastTargetSpeedKmh = Mathf.Min(LastTargetSpeedKmh, LastPlannedSpeedKmh);
 
         LastUnblockedTargetSpeedKmh = LastTargetSpeedKmh;
         Vector3 targetPoint = lookaheadPoint + racingLine.GetSegmentRight(lookaheadSegmentIndex) * CurrentLaneOffset;
@@ -1097,9 +1177,56 @@ public class AIDriverController : MonoBehaviour
         }
 
         LastSpeedTargetKmh = speedTarget;
+
+        // Feed-forward plus trim, replacing a pure proportional band on speed error.
+        //
+        // The old law was `throttle = error/16`, `brake = -error/(42 * margin)`. On a Hard car
+        // the brake saturates at 31 km/h of error and the throttle at 16, so ANY error between
+        // -31 and +16 km/h commanded neither pedal: a ~47 km/h-wide dead band. The controller
+        // could not act inside it, so it drifted out of the band, saturated, overshot, and came
+        // back — the oscillation, not the corner, was setting the brake rhythm.
+        //
+        // The trim is a narrow proportional term that closes the residual. The feed-forward is
+        // what removes the dead band: it derives the pedal from the distance still available to
+        // shed the excess, so the brake ramps in continuously as the corner approaches instead of
+        // waiting for an error large enough to escape a band.
         float speedError = speedTarget - speedKmh;
-        LastThrottleInput = Mathf.Clamp01(speedError / throttleFullErrorKmh);
-        LastBrakeInput = Mathf.Clamp01(-speedError / (brakeFullErrorKmh * Mathf.Max(0.2f, difficulty.brakingMargin)));
+        float speedMs = speedKmh / 3.6f;
+        float brakeDecel = Mathf.Max(0.5f, LastBrakeDecelMs2);
+
+        if (speedError > 0f)
+        {
+            // Below target: throttle. No feed-forward term is meaningful here — there is no
+            // schedule of corners to be ahead of, only a shortfall to close.
+            LastThrottleInput = Mathf.Clamp01(speedError / throttleFullErrorKmh);
+            LastBrakeInput = 0f;
+        }
+        else
+        {
+            // Above target. How much brake is needed is set by how quickly the excess has to go,
+            // and the only honest answer is the braking horizon: the excess must be shed before
+            // the distance runs out, so the demand is spread over the horizon rather than
+            // applied as a step.
+            //
+            // Two guards keep this honest. The horizon is floored so a slow car still has room
+            // to work with, and the result is limited to 1 because beyond full brake there is no
+            // more deceleration to be had — asking for 4x the brake force buys nothing and only
+            // destabilises the tyre model.
+            float excessMs = -speedError / 3.6f;
+            float horizonSeconds = Mathf.Max(0.05f, LastBrakingHorizonMetres / Mathf.Max(1f, speedMs));
+            float requiredDecel = excessMs / horizonSeconds;
+
+            float feedForward = Mathf.Clamp01(requiredDecel / brakeDecel);
+
+            // Trim on top, for the residual the feed-forward cannot see: a car that is off the
+            // line, on a surface that grips worse than the budget assumed, or simply not yet
+            // responding. Narrow, because the feed-forward is carrying the steady state and a
+            // wide trim here would reintroduce exactly the band this replaced.
+            float trim = Mathf.Clamp01(excessMs / Mathf.Max(1f, brakeTrimSeconds * brakeDecel));
+
+            LastBrakeInput = Mathf.Clamp01(Mathf.Max(feedForward, trim) * difficulty.brakingMargin);
+            LastThrottleInput = 0f;
+        }
 
         float steeringLoad = Mathf.Abs(LastSteeringInput);
         float steeringThrottleScale = IsOvertaking
@@ -1193,6 +1320,12 @@ public class AIDriverController : MonoBehaviour
 
         if (IsRecoveringTrack && LastSpeedClampReason == AISpeedClampReason.None)
             LastSpeedClampReason = AISpeedClampReason.TrackRecovery;
+
+        // Recorded here, at the very end, so the planner learns from the brake that was actually
+        // commanded — including the emergency override above, which is the strongest signal there
+        // is. Recorded earlier it would learn from a value the emergency then overwrote, and
+        // would attribute to the tyres a deceleration the corner law never asked for.
+        _planner.RecordBrakeCommand(LastBrakeInput);
     }
 
     /// <summary>

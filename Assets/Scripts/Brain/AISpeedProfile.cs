@@ -41,8 +41,34 @@ public static class AISpeedProfile
         float brakeDecelMs2)
     {
         if (targetSpeedsKmh == null || distancesMetres == null) return float.PositiveInfinity;
+        return SolveAllowedSpeedKmh(
+            targetSpeedsKmh,
+            distancesMetres,
+            Mathf.Min(targetSpeedsKmh.Length, distancesMetres.Length),
+            brakeDecelMs2);
+    }
 
-        int count = Mathf.Min(targetSpeedsKmh.Length, distancesMetres.Length);
+    /// <summary>
+    /// As above, but over an explicit prefix of the arrays.
+    ///
+    /// <para>
+    /// This exists because the per-tick caller reuses buffers sized to the largest horizon it
+    /// might see, and fills only as many entries as the horizon actually reached. Reading the
+    /// whole buffer would treat the unused tail as real constraints — and since those are
+    /// zero-filled, a zero target speed at zero distance pins the result to a standstill.
+    /// </para>
+    /// </summary>
+    /// <param name="count">How many leading entries of each array are live. Clamped to the
+    /// arrays' lengths; a count of zero returns <see cref="float.PositiveInfinity"/>.</param>
+    public static float SolveAllowedSpeedKmh(
+        float[] targetSpeedsKmh,
+        float[] distancesMetres,
+        int count,
+        float brakeDecelMs2)
+    {
+        if (targetSpeedsKmh == null || distancesMetres == null) return float.PositiveInfinity;
+
+        count = Mathf.Clamp(count, 0, Mathf.Min(targetSpeedsKmh.Length, distancesMetres.Length));
         if (count == 0) return float.PositiveInfinity;
 
         float allowedMs = float.PositiveInfinity;
