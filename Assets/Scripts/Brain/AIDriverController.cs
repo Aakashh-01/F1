@@ -18,150 +18,340 @@ public class AIDriverController : MonoBehaviour
     public AIPerceptionSensor perception;
     public AIDifficultyProfile difficultyProfile;
 
+    /// <summary>
+    /// Every tunable this driver uses, in one asset.
+    ///
+    /// <para>
+    /// This is the only place AI tuning is authored. It used to be fifty-two public fields
+    /// on this component, and the AI car prefab serialised overrides for thirty of them, so
+    /// the prefab won every time and the values in the code were decorative. See the block
+    /// comment above the tuning properties for the full account.
+    /// </para>
+    /// </summary>
+    public AIDriverProfile driverProfile;
+
     [Header("Difficulty")]
     public AIDifficultyPreset difficultyPreset = AIDifficultyPreset.Medium;
 
-    [Header("Path Following")]
-    [Range(2f, 60f)] public float baseLookaheadDistance = 12f;
-    [Range(0f, 0.4f)] public float lookaheadPerKmh = 0.08f;
-    [Range(1, 6)] public int curvatureLookaheadSteps = 2;
-    [Range(15f, 90f)] public float steeringAngleForFullInput = 38f;
-    [Range(0.2f, 8f)] public float laneOffsetMoveSpeed = 3.5f;
-    [Range(1f, 25f)] public float waypointReachDistance = 8f;
-    [Range(1, 10)] public int forwardProgressSearchSteps = 4;
+    // ---------------------------------------------------------------------
+    // Tuning
+    //
+    // Every value below is a property, not a field. They used to be public fields on this
+    // component, which meant Unity could serialise an override for any of them into
+    // AI_F1_Body.prefab — and it had, for thirty of them. Unity deserialisation prefers the
+    // prefab, so the code below these declarations was not what the cars ran on, and
+    // changing a default here silently did nothing. The proof that this was not
+    // hypothetical: trackRecoverySpeedKmh carries a tooltip saying 95 km/h was a bug and
+    // this value is 45, while the prefab still said 95. A documented fix that had never
+    // been in effect, because a field is a value a prefab is allowed to overrule and a
+    // property is not.
+    //
+    // The values now live in AIDriverProfile and are read through it, so there is exactly
+    // one place to tune and nothing left to shadow it. The prefab serialises a single
+    // reference to the profile instead.
+    //
+    // The setters exist for the callers that legitimately want a per-car value: the grid
+    // gives each entry its own lane offset and overtake side, and the safety-law tests pin
+    // values to build a scenario. Writing sets an override on THIS instance only; reading
+    // returns the override when one was set and the profile's value otherwise. That is
+    // deliberately not the same as writing to the profile — a shared asset a test could
+    // mutate would leak its scenario into every other car in the session, and would dirty
+    // the asset on disk.
+    //
+    // Nullable-per-field rather than one override object holding 52 flags. It is one
+    // branch per read and no allocation, and these are read several times per physics
+    // tick; a dictionary or a boxed "has override" struct would both cost more than the
+    // thing they are optimising.
+    //
+    // The [Tooltip]s that used to sit on these fields moved with the values, onto the
+    // profile, where the inspector now reads them from. They are not repeated here:
+    // properties are not serialised, so a tooltip on one would never be displayed.
+    // ---------------------------------------------------------------------
 
-    [Header("Speed Control")]
-    [Range(1f, 80f)] public float throttleFullErrorKmh = 22f;
-    [Range(1f, 100f)] public float brakeFullErrorKmh = 34f;
-    [Range(10f, 160f)] public float blockedTargetSpeedKmh = 45f;
-    [Range(0f, 1f)] public float steeringThrottleReduction = 0.24f;
 
-    [Header("Competitive Pace")]
-    [Range(0f, 0.5f)] public float baseCornerCautionStrength = 0.28f;
-    [Range(0f, 0.5f)] public float competitiveCornerCautionStrength = 0.1f;
-    [Range(0f, 0.25f)] public float overtakeSpeedBoost = 0.08f;
-    [Range(0f, 1f)] public float overtakeTrafficSlowdownScale = 0.35f;
-    [Range(0f, 1f)] public float overtakeSteeringThrottleScale = 0.5f;
+    // Path Following
+    public float baseLookaheadDistance
+    {
+        get => _overrideBaseLookaheadDistance ?? Tuning.baseLookaheadDistance;
+        set => _overrideBaseLookaheadDistance = value;
+    }
+    public float lookaheadPerKmh
+    {
+        get => _overrideLookaheadPerKmh ?? Tuning.lookaheadPerKmh;
+        set => _overrideLookaheadPerKmh = value;
+    }
+    public int curvatureLookaheadSteps
+    {
+        get => _overrideCurvatureLookaheadSteps ?? Tuning.curvatureLookaheadSteps;
+        set => _overrideCurvatureLookaheadSteps = value;
+    }
+    public float steeringAngleForFullInput
+    {
+        get => _overrideSteeringAngleForFullInput ?? Tuning.steeringAngleForFullInput;
+        set => _overrideSteeringAngleForFullInput = value;
+    }
+    public float laneOffsetMoveSpeed
+    {
+        get => _overrideLaneOffsetMoveSpeed ?? Tuning.laneOffsetMoveSpeed;
+        set => _overrideLaneOffsetMoveSpeed = value;
+    }
+    public float waypointReachDistance
+    {
+        get => _overrideWaypointReachDistance ?? Tuning.waypointReachDistance;
+        set => _overrideWaypointReachDistance = value;
+    }
+    public int forwardProgressSearchSteps
+    {
+        get => _overrideForwardProgressSearchSteps ?? Tuning.forwardProgressSearchSteps;
+        set => _overrideForwardProgressSearchSteps = value;
+    }
 
-    [Header("Overtaking")]
-    public bool preferRightOvertake = true;
-    [Range(0f, 1f)] public float overtakeTrigger = 0.35f;
-    [Range(0.1f, 4f)] public float overtakeCommitSeconds = 1.25f;
+    // Speed Control
+    public float throttleFullErrorKmh
+    {
+        get => _overrideThrottleFullErrorKmh ?? Tuning.throttleFullErrorKmh;
+        set => _overrideThrottleFullErrorKmh = value;
+    }
+    public float brakeFullErrorKmh
+    {
+        get => _overrideBrakeFullErrorKmh ?? Tuning.brakeFullErrorKmh;
+        set => _overrideBrakeFullErrorKmh = value;
+    }
+    public float blockedTargetSpeedKmh
+    {
+        get => _overrideBlockedTargetSpeedKmh ?? Tuning.blockedTargetSpeedKmh;
+        set => _overrideBlockedTargetSpeedKmh = value;
+    }
+    public float steeringThrottleReduction
+    {
+        get => _overrideSteeringThrottleReduction ?? Tuning.steeringThrottleReduction;
+        set => _overrideSteeringThrottleReduction = value;
+    }
 
-    [Header("Race Craft")]
-    [Range(-1f, 1f)] public float preferredLaneOffset01;
-    [Range(0f, 1f)] public float freeTrackLaneUse = 0.62f;
-    [Range(0f, 1f)] public float waypointLaneInfluence = 0.72f;
-    [Range(0f, 4f)] public float laneEdgeSafetyMargin = 1.4f;
-    [Range(0f, 1f)] public float laneVariationStrength = 0.18f;
-    [Range(0.01f, 0.5f)] public float laneVariationFrequency = 0.06f;
+    // Competitive Pace
+    public float baseCornerCautionStrength
+    {
+        get => _overrideBaseCornerCautionStrength ?? Tuning.baseCornerCautionStrength;
+        set => _overrideBaseCornerCautionStrength = value;
+    }
+    public float competitiveCornerCautionStrength
+    {
+        get => _overrideCompetitiveCornerCautionStrength ?? Tuning.competitiveCornerCautionStrength;
+        set => _overrideCompetitiveCornerCautionStrength = value;
+    }
+    public float overtakeSpeedBoost
+    {
+        get => _overrideOvertakeSpeedBoost ?? Tuning.overtakeSpeedBoost;
+        set => _overrideOvertakeSpeedBoost = value;
+    }
+    public float overtakeTrafficSlowdownScale
+    {
+        get => _overrideOvertakeTrafficSlowdownScale ?? Tuning.overtakeTrafficSlowdownScale;
+        set => _overrideOvertakeTrafficSlowdownScale = value;
+    }
+    public float overtakeSteeringThrottleScale
+    {
+        get => _overrideOvertakeSteeringThrottleScale ?? Tuning.overtakeSteeringThrottleScale;
+        set => _overrideOvertakeSteeringThrottleScale = value;
+    }
 
-    [Header("Car Following")]
-    [Tooltip("Gap a follower wants beyond the leader's car, in metres.")]
-    [Range(0.5f, 12f)] public float followMinGap = 5f;
-    [Tooltip("Seconds of headway a follower keeps on top of the minimum gap. This is what " +
-             "scales the gap with speed: a car doing 300 km/h needs far more room than a car " +
-             "in the slow corners, and a fixed gap guarantees contact at the fast end. Note the " +
-             "sensor only reaches ~32 m, so at very high speed the desired gap is out of range " +
-             "and the follower settles for holding the leader's speed instead of the full gap — " +
-             "which is still a convoy rather than a pile-up.")]
-    [Range(0.2f, 4f)] public float followTimeHeadway = 1.5f;
-    [Tooltip("How much of a surplus gap a follower is allowed to eat, in km/h per metre. " +
-             "Small values make the car sit back and take a pass slowly; large values make it " +
-             "attack. Combined with the closing cap below this is what stops a car diving into " +
-             "the back of a slower one.")]
-    [Range(0.1f, 4f)] public float followApproachKmhPerMetre = 1f;
-    [Tooltip("Hard ceiling on how much faster a follower may travel than the car ahead, km/h. " +
-             "This is the guarantee that a follower never closes on a slower leader faster " +
-             "than it can shed the difference.")]
-    [Range(0f, 60f)] public float followMaxClosingKmh = 20f;
-    [Tooltip("Speed, in km/h, below which this car and its leader both count as standing " +
-             "still rather than queueing. A following law converts spare gap into a speed " +
-             "advantage, which is right for a car in motion and useless on the grid: every " +
-             "car is at a standstill, so every car is told it may only be a few km/h faster " +
-             "than the car in front, and a field that cannot launch is a field that never " +
-             "races. Below this pace, with the leader also below it, there is no closing to " +
-             "manage and the car drives at its own target. The exemption ends the moment " +
-             "either car is genuinely moving, so it is a launch, not a permanent blind spot.")]
-    [Range(0f, 30f)] public float launchStandingSpeedKmh = 5f;
+    // Overtaking
+    public bool preferRightOvertake
+    {
+        get => _overridePreferRightOvertake ?? Tuning.preferRightOvertake;
+        set => _overridePreferRightOvertake = value;
+    }
+    public float overtakeTrigger
+    {
+        get => _overrideOvertakeTrigger ?? Tuning.overtakeTrigger;
+        set => _overrideOvertakeTrigger = value;
+    }
+    public float overtakeCommitSeconds
+    {
+        get => _overrideOvertakeCommitSeconds ?? Tuning.overtakeCommitSeconds;
+        set => _overrideOvertakeCommitSeconds = value;
+    }
 
-    [Header("Traffic Safety")]
-    [Range(0f, 2f)] public float sideTrafficLaneHoldBuffer = 0.35f;
-    [Range(0f, 1f)] public float sideTrafficTurnThrottleScale = 0.74f;
-    [Range(0f, 0.5f)] public float sideTrafficTurnBrake = 0.12f;
-    [Range(0f, 1f)] public float sideTrafficSteeringThreshold = 0.32f;
-    [Range(0f, 1f)] public float packCornerCurvatureThreshold = 0.42f;
-    [Range(0.2f, 1f)] public float packCornerSpeedScale = 0.82f;
+    // Race Craft
+    public float preferredLaneOffset01
+    {
+        get => _overridePreferredLaneOffset01 ?? Tuning.preferredLaneOffset01;
+        set => _overridePreferredLaneOffset01 = value;
+    }
+    public float freeTrackLaneUse
+    {
+        get => _overrideFreeTrackLaneUse ?? Tuning.freeTrackLaneUse;
+        set => _overrideFreeTrackLaneUse = value;
+    }
+    public float waypointLaneInfluence
+    {
+        get => _overrideWaypointLaneInfluence ?? Tuning.waypointLaneInfluence;
+        set => _overrideWaypointLaneInfluence = value;
+    }
+    public float laneEdgeSafetyMargin
+    {
+        get => _overrideLaneEdgeSafetyMargin ?? Tuning.laneEdgeSafetyMargin;
+        set => _overrideLaneEdgeSafetyMargin = value;
+    }
+    public float laneVariationStrength
+    {
+        get => _overrideLaneVariationStrength ?? Tuning.laneVariationStrength;
+        set => _overrideLaneVariationStrength = value;
+    }
+    public float laneVariationFrequency
+    {
+        get => _overrideLaneVariationFrequency ?? Tuning.laneVariationFrequency;
+        set => _overrideLaneVariationFrequency = value;
+    }
 
-    [Header("Emergency Braking")]
-    [Tooltip("Floor on the emergency trigger distance, and its value at a standstill. Kept at " +
-             "the old fixed 6 m on purpose: the trigger only ever grows with speed from here, " +
-             "so no behaviour at rest is tightened, only the part that was genuinely too late.")]
-    [Range(1f, 12f)] public float emergencyMinGap = 6f;
-    [Tooltip("Seconds of headway reserved for the emergency stop. The old behaviour braked hard " +
-             "at a fixed 6 m, which at racing speed is inside the car's own stopping distance — " +
-             "by the time it triggered, contact was already unavoidable. The trigger distance " +
-             "now grows with speed so the car starts stopping while it still can.")]
-    [Range(0.1f, 4f)] public float emergencyTimeHeadway = 1.1f;
-    [Tooltip("Extra metres per m/s of speed added to the emergency trigger, on top of the time " +
-             "headway, to cover the drivetrain's brake spool-up.")]
-    [Range(0f, 3f)] public float emergencySpeedMargin = 1.2f;
-    [Tooltip("Closing speed, in km/h, below which a car ahead is a queue rather than a hazard. " +
-             "The trigger is otherwise a pure distance test, and on the grid every car has a " +
-             "stationary neighbour well inside it — so every car brakes at 0.85, no car moves, " +
-             "no car's leader ever moves, and the whole field deadlocks on the line. Closing " +
-             "speed is what actually decides whether a contact is imminent: two stationary cars " +
-             "4 m apart are not about to collide. Immovable scenery is exempt from this, " +
-             "because a wall does not need to move for you to hit it.")]
-    [Range(0f, 30f)] public float emergencyClosingKmh = 4f;
+    // Car Following
+    public float followMinGap
+    {
+        get => _overrideFollowMinGap ?? Tuning.followMinGap;
+        set => _overrideFollowMinGap = value;
+    }
+    public float followTimeHeadway
+    {
+        get => _overrideFollowTimeHeadway ?? Tuning.followTimeHeadway;
+        set => _overrideFollowTimeHeadway = value;
+    }
+    public float followApproachKmhPerMetre
+    {
+        get => _overrideFollowApproachKmhPerMetre ?? Tuning.followApproachKmhPerMetre;
+        set => _overrideFollowApproachKmhPerMetre = value;
+    }
+    public float followMaxClosingKmh
+    {
+        get => _overrideFollowMaxClosingKmh ?? Tuning.followMaxClosingKmh;
+        set => _overrideFollowMaxClosingKmh = value;
+    }
+    public float launchStandingSpeedKmh
+    {
+        get => _overrideLaunchStandingSpeedKmh ?? Tuning.launchStandingSpeedKmh;
+        set => _overrideLaunchStandingSpeedKmh = value;
+    }
 
-    [Header("Reverse Guard")]
-    [Tooltip("A wedged car only reverses if the space behind it is clear. Reversing into the " +
-             "car following it is the worst possible way to lose a start, and on a dense grid " +
-             "the car behind is always there.")]
-    public bool requireRearClearanceToReverse = true;
+    // Traffic Safety
+    public float sideTrafficLaneHoldBuffer
+    {
+        get => _overrideSideTrafficLaneHoldBuffer ?? Tuning.sideTrafficLaneHoldBuffer;
+        set => _overrideSideTrafficLaneHoldBuffer = value;
+    }
+    public float sideTrafficTurnThrottleScale
+    {
+        get => _overrideSideTrafficTurnThrottleScale ?? Tuning.sideTrafficTurnThrottleScale;
+        set => _overrideSideTrafficTurnThrottleScale = value;
+    }
+    public float sideTrafficTurnBrake
+    {
+        get => _overrideSideTrafficTurnBrake ?? Tuning.sideTrafficTurnBrake;
+        set => _overrideSideTrafficTurnBrake = value;
+    }
+    public float sideTrafficSteeringThreshold
+    {
+        get => _overrideSideTrafficSteeringThreshold ?? Tuning.sideTrafficSteeringThreshold;
+        set => _overrideSideTrafficSteeringThreshold = value;
+    }
+    public float packCornerCurvatureThreshold
+    {
+        get => _overridePackCornerCurvatureThreshold ?? Tuning.packCornerCurvatureThreshold;
+        set => _overridePackCornerCurvatureThreshold = value;
+    }
+    public float packCornerSpeedScale
+    {
+        get => _overridePackCornerSpeedScale ?? Tuning.packCornerSpeedScale;
+        set => _overridePackCornerSpeedScale = value;
+    }
 
-    [Header("Side Overlap Escape")]
-    [Tooltip("Seconds after the level loads during which a car still counts as being on the " +
-             "grid, and the grid-launch exemption still applies to it. Measured on the clock " +
-             "rather than on distance travelled: a distance test silently depends on the lap " +
-             "tracker being bound, and a tracker that never bound reports zero forever, " +
-             "which would hold the exemption open for the whole race.")]
-    [Range(1f, 30f)] public float gridLaunchWindowSeconds = 8f;
+    // Emergency Braking
+    public float emergencyMinGap
+    {
+        get => _overrideEmergencyMinGap ?? Tuning.emergencyMinGap;
+        set => _overrideEmergencyMinGap = value;
+    }
+    public float emergencyTimeHeadway
+    {
+        get => _overrideEmergencyTimeHeadway ?? Tuning.emergencyTimeHeadway;
+        set => _overrideEmergencyTimeHeadway = value;
+    }
+    public float emergencySpeedMargin
+    {
+        get => _overrideEmergencySpeedMargin ?? Tuning.emergencySpeedMargin;
+        set => _overrideEmergencySpeedMargin = value;
+    }
+    public float emergencyClosingKmh
+    {
+        get => _overrideEmergencyClosingKmh ?? Tuning.emergencyClosingKmh;
+        set => _overrideEmergencyClosingKmh = value;
+    }
 
-    [Tooltip("How close a car alongside counts as contact rather than company. The car is " +
-             "about 2 m wide, so anything under this is inside it.")]
-    [Range(0.5f, 4f)] public float sideOverlapEscapeMetres = 1.8f;
+    // Reverse Guard
+    public bool requireRearClearanceToReverse
+    {
+        get => _overrideRequireRearClearanceToReverse ?? Tuning.requireRearClearanceToReverse;
+        set => _overrideRequireRearClearanceToReverse = value;
+    }
 
-    [Tooltip("How far to move sideways in one tick when escaping a contact, in metres.")]
-    [Range(0.1f, 4f)] public float sideOverlapEscapeShift = 1.6f;
+    // Side Overlap Escape
+    public float gridLaunchWindowSeconds
+    {
+        get => _overrideGridLaunchWindowSeconds ?? Tuning.gridLaunchWindowSeconds;
+        set => _overrideGridLaunchWindowSeconds = value;
+    }
+    public float sideOverlapEscapeMetres
+    {
+        get => _overrideSideOverlapEscapeMetres ?? Tuning.sideOverlapEscapeMetres;
+        set => _overrideSideOverlapEscapeMetres = value;
+    }
+    public float sideOverlapEscapeShift
+    {
+        get => _overrideSideOverlapEscapeShift ?? Tuning.sideOverlapEscapeShift;
+        set => _overrideSideOverlapEscapeShift = value;
+    }
+    public float overlapEscapeMinSpeedKmh
+    {
+        get => _overrideOverlapEscapeMinSpeedKmh ?? Tuning.overlapEscapeMinSpeedKmh;
+        set => _overrideOverlapEscapeMinSpeedKmh = value;
+    }
 
-    [Tooltip("Speed floor a car in contact is allowed to keep. Enough to slide clear of a " +
-             "car on top of it; the contact is mutual, so a follow-the-leader clamp would " +
-             "otherwise hold both at a standstill with neither able to restart.")]
-    [Range(0f, 80f)] public float overlapEscapeMinSpeedKmh = 40f;
+    // Track Recovery
+    public float trackRecoveryMargin
+    {
+        get => _overrideTrackRecoveryMargin ?? Tuning.trackRecoveryMargin;
+        set => _overrideTrackRecoveryMargin = value;
+    }
+    public float trackRecoverySpeedKmh
+    {
+        get => _overrideTrackRecoverySpeedKmh ?? Tuning.trackRecoverySpeedKmh;
+        set => _overrideTrackRecoverySpeedKmh = value;
+    }
 
-    [Header("Track Recovery")]
-    [Range(0f, 8f)] public float trackRecoveryMargin = 1.25f;
-
-    [Tooltip("Speed an off-line car is held to while it rejoins. This used to be 95 km/h, " +
-             "which is faster than most corners: a car that had drifted wide was therefore " +
-             "steered back toward the racing line — where the traffic is — at near-racing " +
-             "speed, with the side-traffic guard stood down. A recovering car is the least " +
-             "controlled car on the track and it is the last one that should be flat out.")]
-    [Range(20f, 180f)] public float trackRecoverySpeedKmh = 45f;
-
-    [Header("Stuck Recovery")]
-    [Tooltip("Speed below which the AI counts as not making progress.")]
-    [Range(0f, 20f)] public float stuckSpeedThresholdKmh = 6f;
-    [Tooltip("How long the AI must want to move without progressing before recovering.")]
-    [Range(0.5f, 15f)] public float stuckDetectionSeconds = 4f;
-    [Tooltip("How long the reverse manoeuvre lasts.")]
-    [Range(0.3f, 5f)] public float recoveryReverseSeconds = 1.2f;
-    [Tooltip("Minimum delay between recovery attempts.")]
-    [Range(0f, 10f)] public float recoveryCooldownSeconds = 4f;
-    [Tooltip("Throttle demand required to consider the AI 'trying to move'.")]
-    [Range(0f, 1f)] public float stuckThrottleDemandThreshold = 0.25f;
+    // Stuck Recovery
+    public float stuckSpeedThresholdKmh
+    {
+        get => _overrideStuckSpeedThresholdKmh ?? Tuning.stuckSpeedThresholdKmh;
+        set => _overrideStuckSpeedThresholdKmh = value;
+    }
+    public float stuckDetectionSeconds
+    {
+        get => _overrideStuckDetectionSeconds ?? Tuning.stuckDetectionSeconds;
+        set => _overrideStuckDetectionSeconds = value;
+    }
+    public float recoveryReverseSeconds
+    {
+        get => _overrideRecoveryReverseSeconds ?? Tuning.recoveryReverseSeconds;
+        set => _overrideRecoveryReverseSeconds = value;
+    }
+    public float recoveryCooldownSeconds
+    {
+        get => _overrideRecoveryCooldownSeconds ?? Tuning.recoveryCooldownSeconds;
+        set => _overrideRecoveryCooldownSeconds = value;
+    }
+    public float stuckThrottleDemandThreshold
+    {
+        get => _overrideStuckThrottleDemandThreshold ?? Tuning.stuckThrottleDemandThreshold;
+        set => _overrideStuckThrottleDemandThreshold = value;
+    }
 
     [Header("Debug")]
     public bool drawDebug = true;
@@ -200,11 +390,103 @@ public class AIDriverController : MonoBehaviour
     private float _recoveryTimer;
     private float _recoveryCooldownTimer;
 
+    private AIDriverProfile _runtimeTuning;
+
+    /// <summary>
+    /// Per-instance overrides written through the tuning properties' setters. Null means
+    /// "this driver uses the profile's value", which is the state every car starts in.
+    /// </summary>
+    private float? _overrideBaseLookaheadDistance;
+    private float? _overrideLookaheadPerKmh;
+    private int? _overrideCurvatureLookaheadSteps;
+    private float? _overrideSteeringAngleForFullInput;
+    private float? _overrideLaneOffsetMoveSpeed;
+    private float? _overrideWaypointReachDistance;
+    private int? _overrideForwardProgressSearchSteps;
+    private float? _overrideThrottleFullErrorKmh;
+    private float? _overrideBrakeFullErrorKmh;
+    private float? _overrideBlockedTargetSpeedKmh;
+    private float? _overrideSteeringThrottleReduction;
+    private float? _overrideBaseCornerCautionStrength;
+    private float? _overrideCompetitiveCornerCautionStrength;
+    private float? _overrideOvertakeSpeedBoost;
+    private float? _overrideOvertakeTrafficSlowdownScale;
+    private float? _overrideOvertakeSteeringThrottleScale;
+    private bool? _overridePreferRightOvertake;
+    private float? _overrideOvertakeTrigger;
+    private float? _overrideOvertakeCommitSeconds;
+    private float? _overridePreferredLaneOffset01;
+    private float? _overrideFreeTrackLaneUse;
+    private float? _overrideWaypointLaneInfluence;
+    private float? _overrideLaneEdgeSafetyMargin;
+    private float? _overrideLaneVariationStrength;
+    private float? _overrideLaneVariationFrequency;
+    private float? _overrideFollowMinGap;
+    private float? _overrideFollowTimeHeadway;
+    private float? _overrideFollowApproachKmhPerMetre;
+    private float? _overrideFollowMaxClosingKmh;
+    private float? _overrideLaunchStandingSpeedKmh;
+    private float? _overrideSideTrafficLaneHoldBuffer;
+    private float? _overrideSideTrafficTurnThrottleScale;
+    private float? _overrideSideTrafficTurnBrake;
+    private float? _overrideSideTrafficSteeringThreshold;
+    private float? _overridePackCornerCurvatureThreshold;
+    private float? _overridePackCornerSpeedScale;
+    private float? _overrideEmergencyMinGap;
+    private float? _overrideEmergencyTimeHeadway;
+    private float? _overrideEmergencySpeedMargin;
+    private float? _overrideEmergencyClosingKmh;
+    private bool? _overrideRequireRearClearanceToReverse;
+    private float? _overrideGridLaunchWindowSeconds;
+    private float? _overrideSideOverlapEscapeMetres;
+    private float? _overrideSideOverlapEscapeShift;
+    private float? _overrideOverlapEscapeMinSpeedKmh;
+    private float? _overrideTrackRecoveryMargin;
+    private float? _overrideTrackRecoverySpeedKmh;
+    private float? _overrideStuckSpeedThresholdKmh;
+    private float? _overrideStuckDetectionSeconds;
+    private float? _overrideRecoveryReverseSeconds;
+    private float? _overrideRecoveryCooldownSeconds;
+    private float? _overrideStuckThrottleDemandThreshold;
+
     /// <summary>
     /// Cached lap tracker, used only to tell a grid launch from a mid-race pile-up. Null is
     /// legitimate — a car that is not being timed simply keeps the old behaviour.
     /// </summary>
     private LapTracker _tracker;
+
+    /// <summary>
+    /// The profile the tunables read, or a cached runtime default when none is assigned.
+    ///
+    /// <para>
+    /// Cached for the same reason <see cref="Difficulty"/> caches its fallback: these reads
+    /// happen several times per physics tick per car, and <c>CreateInstance</c> per read
+    /// would allocate a ScriptableObject per property per frame. Unlike the difficulty
+    /// fallback there is no preset to invalidate against, so the cache is written once and
+    /// never rebuilt.
+    /// </para>
+    ///
+    /// <para>
+    /// The fallback matters because a car with no profile must still drive. These
+    /// properties are read unconditionally, several of them inside
+    /// <see cref="CalculateInputs"/>, so a null here would surface as a
+    /// <c>NullReferenceException</c> thrown from the middle of a physics step rather than
+    /// as an inspector warning someone would notice.
+    /// </para>
+    /// </summary>
+    private AIDriverProfile Tuning
+    {
+        get
+        {
+            if (driverProfile != null)
+                return driverProfile;
+
+            if (_runtimeTuning == null)
+                _runtimeTuning = AIDriverProfile.CreateRuntimeProfile();
+
+            return _runtimeTuning;
+        }
+    }
 
     private AIDifficultyProfile Difficulty
     {
@@ -662,6 +944,12 @@ public class AIDriverController : MonoBehaviour
 
             float cautionTarget;
 
+            // The speed the follow law settled on, before the overtake branch touches it.
+            // The overtake eases toward THIS and is floored by it. It used to ease toward
+            // `targetSpeedKmh` — the speed of a road with nothing on it — which is why a
+            // committed overtaker aimed 114 km/h into a car doing 36.
+            float followCeilingKmh = targetSpeedKmh;
+
             // A standing start is not a traffic jam, and the following law cannot tell the
             // difference on its own. It converts spare gap into a speed advantage, which is
             // the right model for a car in motion and the wrong one for the grid: on a
@@ -717,6 +1005,7 @@ public class AIDriverController : MonoBehaviour
                 // metres — enough to peel the car off a bumper, not enough to strangle the
                 // approach for the whole 32 m.
                 float followTarget = CalculateFollowTargetKmh(speedKmh);
+                followCeilingKmh = followTarget;
                 cautionTarget = Mathf.Lerp(followTarget, 0f, distanceBlend * distanceBlend);
                 LastFollowTargetKmh = cautionTarget;
             }
@@ -724,38 +1013,57 @@ public class AIDriverController : MonoBehaviour
             {
                 // Static scenery has no speed to follow, so the distance ramp is all there is.
                 cautionTarget = Mathf.Lerp(blockedTargetSpeedKmh, 0f, distanceBlend * difficulty.avoidanceCaution);
+
+                // The ceiling here is the speed the car is allowed past an obstacle at all.
+                // Leaving it at the racing-line speed — the default set above this branch —
+                // would mean an overtake against scenery has nothing to ease toward and the
+                // clamp collapses to the obstacle's own caution, which is the opposite of
+                // what committing to a pass is for. A driver who has moved out to pass
+                // something should be allowed to get past it.
+                followCeilingKmh = blockedTargetSpeedKmh;
                 LastFollowTargetKmh = cautionTarget;
             }
 
-            // An overtake eases the clamp, but it must never RAISE it.
+            // An overtake eases the clamp, but only toward the car ahead.
             //
-            // This used to blend the caution speed back toward the unblocked target by
+            // This used to blend the caution speed back toward the UNBLOCKED target by
             // overtakeTrafficSlowdownScale, which meant the act of deciding to pass undone the
             // very reaction that noticed the car being passed. Worked through on a Hard car
             // with a 15 m gap on a straight: the leader braked to 36 km/h while the overtaker
-            // — seeing the same car at the same distance — commanded 196 km/h, a 44 m/s
-            // closing speed and contact in about a third of a second. The faster a driver was
-            // willing to overtake, the harder it drove into the car it was overtaking, which
-            // is backwards.
+            // — seeing the same car at the same distance — commanded 114 km/h, contact in about
+            // a third of a second. The faster a driver was willing to overtake, the harder it
+            // drove into the car it was overtaking, which is backwards.
             //
-            // Easing now works the other way: the overtake still relaxes the clamp, but only
-            // toward the target it is trying to reach, and never above it. A driver that has
-            // committed to a pass therefore closes at a speed it can still shed, and a driver
-            // that has NOT committed gets the full caution.
+            // The `Mathf.Min(eased, targetSpeedKmh)` here was a no-op that hid it.
+            // Lerp(cautionTarget, targetSpeedKmh, t) with t in [0,1] always returns a value
+            // inside [cautionTarget, targetSpeedKmh], and targetSpeedKmh is above cautionTarget
+            // whenever there is traffic to ease out of — so `eased` was never above
+            // targetSpeedKmh and the Min handed it straight back. The branch raised the clamp.
             //
-            // The guard used to be Mathf.Min(cautionTarget, eased), which made this whole
-            // branch a no-op. Lerp(cautionTarget, targetSpeedKmh, t) with t in [0,1] returns
-            // a value inside [cautionTarget, targetSpeedKmh], and targetSpeedKmh is above
-            // cautionTarget whenever there is traffic to ease out of — so `eased` was always
-            // >= cautionTarget, and Min handed back cautionTarget unchanged. A committed
-            // overtaker and a car that gave up were clamped to exactly the same speed; the
-            // decision to pass changed the lane and nothing else. The cap that actually
-            // matters is the one at the speedTarget assignment below, which already holds the
-            // result to targetSpeedKmh.
-            if (IsOvertaking)
+            // The ease now runs toward `followCeilingKmh` — the speed the following law itself
+            // chose for this leader and this gap — and is floored by it. Both bounds are
+            // load-bearing:
+            //
+            //   * the floor holds a committed overtaker at or below the safe following speed,
+            //     which is what stops it driving into the car it is passing;
+            //   * the blend toward the ceiling is what makes the overtake still DO something.
+            //
+            // Simply forbidding the branch from raising the clamp would satisfy a
+            // "never exceeds the leader" test by making the decision to pass change the lane
+            // and nothing else — the earlier bug wearing the other hat. Committing to a pass
+            // has to buy back some speed or there is no reason to commit.
+            //
+            // The `followCeilingKmh > cautionTarget` guard is what makes the two bounds mean
+            // different things. When the ceiling is ABOVE the caution there is room to ease
+            // upward into, and the branch buys some of it. When it is not — the leader reads
+            // zero, so the follow law put the ceiling at 0 as well — there is nothing to ease
+            // toward and the branch leaves the caution exactly where the follow law put it.
+            // Easing toward a ceiling below the caution would not be an ease at all; it would
+            // slow the car further, which is the opposite of what committing to a pass means.
+            if (IsOvertaking && followCeilingKmh > cautionTarget)
             {
-                float eased = Mathf.Lerp(cautionTarget, targetSpeedKmh, overtakeTrafficSlowdownScale);
-                cautionTarget = Mathf.Min(eased, targetSpeedKmh);
+                float eased = Mathf.Lerp(cautionTarget, followCeilingKmh, overtakeTrafficSlowdownScale);
+                cautionTarget = Mathf.Min(eased, followCeilingKmh);
             }
 
             // A car that is already touching a rival is not following it, and must not be
@@ -824,20 +1132,52 @@ public class AIDriverController : MonoBehaviour
             float emergencyDistance = GetEmergencyDistanceMetres(speedKmh);
             LastEmergencyDistance = emergencyDistance;
 
-            // Scaling the trigger with speed is only half the fix. Above about 40 km/h the
-            // speed-scaled distance exceeds the sensor's own reach, so the cap binds and the
-            // trigger becomes "is there anything at all inside 32 m" — which is not a hazard
-            // test, it is a presence test. It never consulted the leader's speed, so a car
-            // running alongside a rival doing 200 km/h on a straight got a full 0.85 brake
-            // application, and at the line every stationary car braked for its stationary
-            // neighbour and the field never started at all.
+            // Scaling the trigger with speed is only half the fix. A trigger that
+            // outgrows the sensor's 32 m reach can never be "not reached" again, so on its
+            // own it would fire on anything it can see — which is a presence test, not a
+            // hazard test. Two extra terms make it a hazard test at every speed.
             //
             // What decides a contact is closing speed, and the sensor already measures it.
             // LastClosingSpeedKmh was being recorded for exactly this and read by nothing.
-            // Scenery keeps the pure distance test, because a wall does not have to move for
-            // you to hit it.
-            bool needsRiskCheck = perception.LeaderIsMovable;
-            bool risky = !needsRiskCheck || perception.ClosingSpeedKmh > emergencyClosingKmh;
+            // A closing-rate gate alone is not enough either: a car matching its leader's
+            // speed 6 m behind is in exactly the same position as one closing at 40 km/h into
+            // it, and the brake that helps is the same brake.
+            //
+            // So the trigger is two independent conditions, and either one is an emergency:
+            //
+            //   * CONTACT — inside emergencyMinGap, whatever the closing rate. This is the
+            //     proximity term, and it is what makes the brake still fire at 6 m with the
+            //     speed differential near zero.
+            //   * CLOSING — inside the speed-scaled trigger AND genuinely closing faster than
+            //     emergencyClosingKmh. This is what keeps a 30 m queue at 250 km/h, where the
+            //     gap lasts ~17 seconds, off the emergency brake entirely. The following law
+            //     is the right tool for a queue.
+            //
+            // The closing gate is a TIME TO CONTACT, not a closing rate. A rate on its own
+            // has no idea how much room there is: 6 km/h of closing sounds alarming until
+            // you notice the gap is 30 m and therefore lasts eighteen seconds. What makes it
+            // dangerous is closing fast AND having little room, and the two have to be
+            // multiplied together. emergencyClosingKmh stays as the deadband that keeps
+            // sensor noise and a stationary leader out of the division entirely.
+            //
+            // Scenery is NOT exempt. It used to be — `!needsRiskCheck || ...` handed a wall
+            // the emergency brake at any range, on the reasoning that a wall does not have to
+            // move for you to hit it. That was true and it was still wrong, because the
+            // trigger had been capped at the sensor's reach and this law is not: with the
+            // cap gone, "any range" became "any range the car can see", and an obstacle
+            // 20 m up the road took a 0.85 brake application off the side-traffic and
+            // traffic-caution laws that exist to handle exactly that case. A wall reports no
+            // closing speed, so `closingFast` is false for it and the contact term is the
+            // only thing that can fire — which is the correct reading anyway. The emergency
+            // brake is for "this is now", not for "there is a wall somewhere ahead".
+            bool atContactRange = perception.FrontDistance <= emergencyMinGap;
+            bool closingFast = perception.ClosingSpeedKmh > emergencyClosingKmh;
+
+            float closingMs = Mathf.Max(0.01f, perception.ClosingSpeedKmh / 3.6f);
+            float timeToContact = perception.FrontDistance / closingMs;
+            bool imminent = closingFast && timeToContact < emergencyTimeHeadway;
+
+            bool risky = atContactRange || imminent;
 
             if (perception.FrontDistance < emergencyDistance && risky)
             {
@@ -886,8 +1226,32 @@ public class AIDriverController : MonoBehaviour
     {
         float speedMs = Mathf.Max(0f, speedKmh / 3.6f);
         float distance = emergencyMinGap + emergencyTimeHeadway * speedMs + emergencySpeedMargin * speedMs;
-        float sensorReach = perception != null ? perception.forwardDistance : 32f;
-        return Mathf.Min(distance, sensorReach);
+
+        // The old law ended here:
+        //
+        //     float sensorReach = perception != null ? perception.forwardDistance : 32f;
+        //     return Mathf.Min(distance, sensorReach);
+        //
+        // With the shipped values that is min(6 + 2.3 * v_ms, 32). The cap binds above
+        // 26 / 2.3 = 11.3 m/s = 40.7 km/h, so for every speed the game actually races at,
+        // emergencyDistance came back as exactly 32 — the sensor's own reach. FrontDistance
+        // is a cast TRAVEL distance and is therefore always <= forwardDistance, so
+        // `FrontDistance < emergencyDistance` was true on essentially every blocked tick.
+        // The distance test was vacuous above 41 km/h.
+        //
+        // What it was left resting on was the closing-rate gate alone, and that gate is a
+        // threshold of 4 km/h. A car holding 250 km/h with a rival doing 246 four seconds up
+        // the road was 0.85 braking at full throttle-off, and every car in a train did it to
+        // the car in front. That is the "no erratic braking" acceptance criterion failing, and
+        // it explains S-A as well: the overtake raised the target, the car closed, closing
+        // passed 4 km/h, the emergency fired, speed dropped, closing went negative, the brake
+        // released — a full-throttle/full-brake transient for the whole of every pass.
+        //
+        // The trigger now grows with speed all the way up, so it stays a hazard test across
+        // the range the game is played at rather than becoming a presence test at 41 km/h.
+        // That alone is not enough — a trigger wider than the sensor is unreachable — so the
+        // caller pairs it with a proximity term and a closing-rate term. See the branch above.
+        return distance;
     }
 
     private bool HasSideTrafficTurnRisk(float steeringLoad)
