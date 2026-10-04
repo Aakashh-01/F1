@@ -28,6 +28,10 @@ public class AILongitudinalPlannerTests
 
     private static float Ms(float kmh) => kmh * KmhToMs;
 
+    /// <summary>Mean segment spacing on the baked Track_01 line, metres. Measured, not assumed:
+    /// the plan records it as 11.17-11.33 m, and a horizon sized in waypoints depends on it.</summary>
+    private const float MeanSegmentMetres = 11.33f;
+
     /// <summary>
     /// The speed a car may carry at the origin if a single constraint of
     /// <paramref name="limitKmh"/> sits <paramref name="distanceMetres"/> ahead, given
@@ -329,6 +333,50 @@ public class AILongitudinalPlannerTests
             "is in the air and would plan braking the car cannot perform.");
     }
 
+    [Test]
+    public void TheWaypointCapNeverTruncatesTheHorizonOnTheRealLine()
+    {
+        // The cap on the per-tick walk is a performance guard, not a horizon length. If it binds,
+        // the planner silently stops looking partway down the braking zone and permits a corner
+        // speed it cannot brake for -- the single-waypoint defect in a smaller dose, and one that
+        // only appears at speed.
+        //
+        // The figure that matters: at the top of this car's range the budget this physics
+        // produces asks for ~22 waypoints, so a cap near 24 has almost no headroom, and a WET
+        // line lowers the budget and lengthens the horizon at exactly the same time.
+        AIRacingLine line = OpenRealLine();
+        AILongitudinalPlanner planner = new AILongitudinalPlanner();
+
+        // Deliberately pessimistic. A budget this low is roughly half what the physics produces on a
+        // dry track, and it is the case that matters: a weaker budget means a LONGER horizon,
+        // so a cap sized only for dry running would truncate the walk exactly when the car
+        // most needs to see the corner. This is the budget the cap is documented against.
+        const float degradedBudget = 8f;
+        const int topSpeedKmh = 282;
+
+        float horizonMetres = Mathf.Max(
+            Mathf.Pow(topSpeedKmh / 3.6f, 2f) / (2f * degradedBudget) * 1.25f, 45f);
+
+        int waypointsNeeded = Mathf.CeilToInt(horizonMetres / MeanSegmentMetres);
+        int cap = AIDriverProfile.CreateRuntimeProfile().maxBrakingHorizonWaypoints;
+
+        Assert.GreaterOrEqual(cap, waypointsNeeded,
+            $"At {topSpeedKmh} km/h with a degraded {degradedBudget} m/s^2 budget the horizon " +
+            $"is {horizonMetres:F0} m, which is {waypointsNeeded} waypoints at this line's " +
+            $"{MeanSegmentMetres:F2} m spacing. The cap is {cap}, so the walk would stop " +
+            $"{waypointsNeeded - cap} waypoints short and miss a corner it needed to brake " +
+            "for. Raise maxBrakingHorizonWaypoints rather than accepting a shorter horizon.");
+
+        // And the same must hold at the budget this physics actually produces at rest.
+        float dryBudget = 1000f * 9.81f * 1.6f / 1000f;   // mg over four wheels, at the 1.6 clamp
+        float dryHorizon = Mathf.Max(Mathf.Pow(topSpeedKmh / 3.6f, 2f) / (2f * dryBudget) * 1.25f, 45f);
+        int dryNeeded = Mathf.CeilToInt(dryHorizon / MeanSegmentMetres);
+
+        Assert.GreaterOrEqual(cap, dryNeeded,
+            $"Even at the dry budget of {dryBudget:F1} m/s^2 the top speed needs {dryNeeded} " +
+            $"waypoints and the cap is {cap}.");
+    }
+
     // ------------------------------------------------------------------ learning
 
     [Test]
@@ -458,6 +506,24 @@ public class AILongitudinalPlannerTests
     /// the shape that exposes a single-waypoint reader: the fast waypoint immediately ahead
     /// always permits more than the slow corner further on.
     /// </summary>
+    /// <summary>
+    /// Opens the real baked Track_01 line. Needed by the cap test, because a horizon sized in
+    /// waypoints depends on this line's spacing and no synthetic fixture can stand in for it.
+    /// </summary>
+    private AIRacingLine OpenRealLine()
+    {
+        UnityEditor.SceneManagement.EditorSceneManager.OpenScene(
+            "Assets/Scenes/Track_01.unity", UnityEditor.SceneManagement.OpenSceneMode.Single);
+
+        AIRacingLine line = Object.FindAnyObjectByType<AIRacingLine>();
+        Assert.IsNotNull(line,
+            "Track_01 must carry a baked AIRacingLine, or the horizon cannot be sized against " +
+            "the real track's geometry.");
+        Assert.Greater(line.Count, 100,
+            "The real baked line is 300 waypoints; found " + line.Count + ".");
+        return line;
+    }
+
     private AIRacingLine BuildLine(
         out GameObject root,
         float straightSpeedKmh,

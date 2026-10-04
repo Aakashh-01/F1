@@ -70,9 +70,14 @@ public class AIDriverProfile : ScriptableObject
              "the waypoint it is standing on.")]
     [Range(10f, 200f)] public float minimumBrakingHorizonMetres = 45f;
 
-    [Tooltip("Cap on waypoints examined per tick. Bounds the per-tick walk over the line; a " +
-             "long horizon at low speed can otherwise cover a third of the track.")]
-    [Range(4, 64)] public int maxBrakingHorizonWaypoints = 24;
+    [Tooltip("Cap on waypoints examined per tick, bounding the per-tick walk over the line. Sized " +
+             "against a DEGRADED budget of 8 m/s^2 — roughly half what this physics produces on " +
+             "a dry track — because that is the case where the horizon is longest and a shorter " +
+             "cap would truncate it. Truncating the walk silently shortens the horizon exactly " +
+             "when braking hardest, which is the single-waypoint defect in a smaller dose. " +
+             "Below that budget the horizon is deliberately truncated: a car that cannot shed " +
+             "8 m/s^2 is not rescued by reading 28 km further down a 3.4 km track.")]
+    [Range(16, 96)] public int maxBrakingHorizonWaypoints = 48;
 
     [Tooltip("Speed below which an observed deceleration is discarded rather than learned " +
              "from. Near a standstill the reading is dominated by drivetrain spool-up.")]

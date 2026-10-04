@@ -287,9 +287,12 @@ public class AILongitudinalPlanner
         float budget = Mathf.Max(0.5f, brakeDecelMs2);
         float speedMs = Mathf.Max(0f, speedKmh * KmhToMs);
 
-        // The horizon is a braking distance, not a waypoint count. At 250 km/h with a 40 m/s^2
-        // budget that is ~60 m — five or six waypoints — while a car in a hairpin needs barely
-        // one. Fixing the count instead would make one of those two wrong.
+        // The horizon is a braking distance, not a waypoint count. At 250 km/h with the budget this
+        // physics actually produces — about 15.7 m/s^2 at rest, from 1000 kg over four wheels at
+        // the 1.6 per-wheel clamp — that is ~190 m, or seventeen waypoints. A car in a hairpin
+        // needs barely one. Fixing the count instead would make one of those two badly wrong, and
+        // it is why the single waypoint the controller used to read was so far short: 11 m is
+        // less than a seventh of the 122 m that 240-to-90 actually takes at this budget.
         //
         // The safety factor covers the two things the pure distance ignores: the drivetrain needs
         // roughly 130-170 ms to reach full brake, and the sensor that would warn about a car
