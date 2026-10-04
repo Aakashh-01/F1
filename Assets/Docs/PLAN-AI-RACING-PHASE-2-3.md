@@ -784,6 +784,34 @@ Both were in my own work, and both are the original defect wearing a different c
    speed at zero distance pinned every result to a standstill. It now takes an explicit `count`.
    Caught as two safety-law failures reading `"Line target 0 km/h, clamped to 0 km/h"`.
 
+A third was caught later, by a test written after the code looked finished:
+**`maxBrakingHorizonWaypoints` was 24, and the horizon needs 22 at the top of the speed range.**
+A cap one waypoint from binding is a trap, because it binds hardest exactly when it matters — a
+weaker budget (wet line, lockup) lengthens the horizon at the same moment the car is braking
+hardest. A truncated walk stops looking partway down the braking zone, which is the single-waypoint
+defect again in a much harder-to-see dose. Now 48, sized against a *documented degraded* budget of
+8 m/s² rather than the dry one.
+
+### A correction to the plan's own figures
+
+This section's P1 text assumes 25-50 m/s² braking budgets and quotes "≈42 m ≈ 3.8 waypoints" for
+240→90 km/h. **The budget this physics actually produces is ~15.7 m/s² at rest** — 1000 kg over
+four wheels, each carrying an unconditional `mg/4` (`RaycastWheel.cs:101`), at the prefab's
+`tireForceLimitMultiplier` of 1.6 (`DrivetrainBrakeSystem.cs:252`). So on this car:
+
+| | at a=15.7 (measured) | at a=45 (the plan's figure) |
+|---|---|---|
+| braking 240→90 km/h | **122 m** ≈ 10.9 waypoints | 42 m ≈ 3.7 waypoints |
+| horizon at 250 km/h | **~190 m** ≈ 17 waypoints | ~45 m ≈ 4 waypoints |
+
+The single waypoint the controller used to read is **11 m — a ninth of the distance the car
+actually needs.** The plan's conclusion holds and is if anything understated, but its arithmetic
+was optimistic about the car's capability by about 3×. The baker's own backward pass
+(`TrackRacingLineBaker.cs:840`) assumes 18 m/s², which is close to the truth and 25% optimistic.
+
+**This also means D2's "47 km/h coast band" understates the problem**: with a 15.7 m/s² budget and
+`brakeFullErrorKmh: 42`, the band was wide relative to a much slower car than the tuning assumed.
+
 ### Verification
 
 - `Assets/Tests/EditMode/AILongitudinalPlannerTests.cs` — **12 tests**. Horizon length against real
@@ -798,7 +826,7 @@ Both were in my own work, and both are the original defect wearing a different c
   output. Two further tests guard the first from passing vacuously — the line must genuinely carry
   a spread of corner speeds, and the planner must see more than one waypoint.
 
-### Still open
+EditMode total after the cap fix: **176/176**.
 
 - **The PlayMode gate.** No test yet drives a car along the real line in motion and watches the
   brake telemetry. The static geometry check is a real improvement on D13 but it is not the same
