@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "F1.TrackData",
+        "F1.EditorTools",
         "F1.Gameplay",
         "F1.GameData",
         "F1.Progression",
