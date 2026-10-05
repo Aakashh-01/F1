@@ -87,13 +87,80 @@ Five failure modes the spec implies but no existing test exercises. Each has a t
 
 Self-contained. Nothing existing changes until Task 4.
 
-**Tasks 1 and 2 are COMPLETE and verified** — `f560649` (the spline, 193/193) and `f349269`
-(TrackRuntime, 203/203). Their steps below record the code that actually runs, not a draft.
+**Tasks 1, 2 and 3 are COMPLETE and verified** — `f560649` (the spline, 193/193), `f349269`
+(TrackRuntime, 203/203) and `abe9e96` (the testable baker, 211/211). Their steps below record the
+code that actually runs, not a draft.
 
-**Task 3 is written but UNVERIFIED** — it has never been compiled. Expect the class of defect Task 1
-exposed: read its assertions as hypotheses to be measured, not facts. In particular its
-`ABakedProfileIsABackwardPassAndSoCannotCliff` threshold (6 km/h) is a reasoned estimate, not a
-measured figure, and the profile it measures is produced by code that has never run.
+**Phase 1 is complete. Nothing existing changed until Task 4** — see the Phase 1 note below.
+
+### Corrections applied to Task 3 after review (2026-10-05)
+
+A fresh-session dry run — an agent given only the vault, no repo — found four defects here. All
+four are fixed below. **They are recorded because each was a real defect in a plan that had already
+been reviewed and approved once.**
+
+1. **`F1.EditorTools.asmdef` would have broken every editor tool in the project.** The original put
+   it in `Assets/Editor/`, which holds **14 files totalling 7,154 lines**, not two. An asmdef applies
+   to its whole folder, so all of them would have been pulled into an assembly referencing only three
+   projects — and one of them needs `F1.UI`, which lives in `Assembly-CSharp` and **cannot** be
+   referenced by an asmdef at all. Now in `Assets/Editor/TrackBake/`, its own folder.
+2. **The test-count target was wrong.** Task 2 delivered 10 tests, not the 6 predicted, so the
+   running total is 203, not 199. Task 3's target is **211**.
+3. **The synthetic fixture was not a circuit.** `radius = 300 + 220·sin(2a) + 120·sin(5a)` looks like
+   one and is not: measured, its tightest corner is **0.3 m** in radius and it passes within
+   **4.5 m** of itself, pinching nearly to the origin. Every corner in it was a numerical artefact —
+   in the one fixture whose job is to prove the bake does not produce artefacts. Replaced with an
+   explicit chain of straights and arcs: 2,350 m lap, a 55 m hairpin through a 200 m sweeper,
+   28.7 m closest non-adjacent approach, corner speeds 86–207 km/h.
+4. **The collinearity test could not reach its own branch.** It passed 4 points, but `Bake` refuses
+   on `count < 8` first, so it was testing the too-few-points path and collinearity went untested —
+   the single most-cited failure mode in the whole programme. Now 16 points.
+
+Two consequences of (3) worth knowing before implementing:
+
+- The baker now needs a **pinch check** (Step 5), because the old fixture would otherwise bake
+  *successfully*.
+- A ratio-based threshold was tried and rejected: a real circuit's closest non-adjacent approach is
+  1.22% of lap length, the pinching one 0.39%. Only 3× apart — not enough margin to trust. The check
+  that ships is on **tightest corner radius**, which separates the two fixtures by >100×.
+
+### Corrections applied to Task 3 after implementation (`abe9e96`, 2026-10-05)
+
+Task 3 compiled and ran. It delivered **211/211** and found **three further defects in the text
+above**, all now fixed in the committed code. They are recorded because each was in a plan that had
+already survived a review pass — the same lesson as the four corrections listed earlier in this
+section.
+
+5. **The plan's code did not compile.** `RacingLineBaker` referenced
+   `TrackData.SpeedProfileResolutionMetres`, but the class `TrackData` lives **inside** the namespace
+   `F1.TrackData`. From a sibling namespace, the bare name `TrackData` binds to that *namespace* and
+   the class is unreachable by it — two `CS0234`s. Fixed with
+   `using TrackDataAsset = F1.TrackData.TrackData;`. Any future code outside `F1.TrackData` that
+   touches this class needs the same alias.
+6. **A collinear centreline baked successfully** — a real gap, not a bad assertion.
+   `MinimumCornerRadius` skips every window whose `twiceArea` is ~0, which on a straight line is
+   *every* window, so it returned `+Infinity` — "an infinitely gentle corner" — and the guard
+   `tightest < 8f` is **false** for `+Infinity`. Measured: 16 collinear points produced a
+   312 m, all-240 km/h profile. The no-measurable-corner case now returns `NaN` and is refused
+   under its own named reason, distinct from a merely very tight corner.
+7. **The braking assertion asserted the wrong quantity.** It used `Mathf.Abs`, conflating braking
+   with acceleration. Measured on one circuit: worst **decel** 5.04 km/h (new) vs 22.99 km/h (old
+   algorithm — which reproduces the 23.8 km/h figure this plan cites), and worst **accel** 150 km/h
+   (new) vs 104 km/h (old). A backward pass governs deceleration only; the profile is a *ceiling*,
+   and how fast a car returns to a ceiling is its powertrain's business, not the track's. The test
+   now asserts the drop alone.
+
+**And the fixture had to be rebuilt a second time.** The corrections above already replaced the
+polar fixture, but the replacement was itself not what production produces: it emitted **one** point
+per straight and 31 per arc. `Decimate` picks by index, so that spacing put control points ~420 m
+apart across a straight and ~2 m apart in a corner, and the spline spiked to 0.395 /m (radius 2.5 m)
+*in the middle of a straight*. `TrackRacingLineBaker.Bake()` emits cross-section cells laid end to
+end every 10 m, i.e. uniform in arc length — so the fixture now samples uniformly every 10 m, and
+its arc sweeps sum to exactly 360° (the previous set summed to 335°, leaving a 25° seam kink).
+
+**Standing lesson for Tasks 4+:** three of these four defects were invisible to reading and only
+appeared on running. Task 4 modifies `TrackRacingLineBaker` and `TrackContentBuilder` for the first
+time; expect the same class of finding, and measure before believing any assertion here.
 
 ### Task 1: Arc-length-parameterised centripetal spline
 
@@ -1443,7 +1510,7 @@ numbers. The refinement recovers the true branch, and the test pins that.
 
 `refresh_unity` (force, request, wait), then `run_tests` `mode: "EditMode"`, `test_names: ["TrackRuntimeTests"]`, poll `wait_timeout: 60`.
 
-Expected: 10 passed.
+Expected: 11 passed.
 
 - [ ] **Step 5: Run the full EditMode suite**
 
@@ -1474,7 +1541,8 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 ### Task 3: Make the baker testable, and prove a second track bakes
 
 **Files:**
-- Create: `Assets/Editor/F1.EditorTools.asmdef`
+- Create: `Assets/Editor/TrackBake/F1.EditorTools.asmdef`
+- Create: `Assets/Editor/TrackBake/RacingLineBaker.cs`
 - Modify: `Assets/Editor/TrackRacingLineBaker.cs:820-885` (extract pure bake stages)
 - Modify: `Assets/Editor/TrackContentBuilder.cs:81-110, 184` (emit `TrackData`, not a waypoint hierarchy)
 - Test: `Assets/Tests/EditMode/TrackDataBakeTests.cs`
@@ -1499,9 +1567,38 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 **Why this task exists:** `TrackRacingLineBaker` and `TrackContentBuilder` are currently in `Assembly-CSharp-Editor`, which **neither test assembly references** (`overrideReferences: true`, and no reference to it). There is therefore no test that any bake has ever been correct, on any track. For five tracks that is the single largest risk in the programme.
 
-- [ ] **Step 1: Give the editor scripts an assembly**
+- [x] **Step 1: Put the extracted baker in its OWN subfolder with its own asmdef**
 
-Create `Assets/Editor/F1.EditorTools.asmdef`:
+> **CORRECTED 2026-10-05. The original plan put `F1.EditorTools.asmdef` directly in `Assets/Editor/`.
+> That would have broken every editor tool in the project — see the note below. Do not do it.**
+
+**Why the original was wrong.** An asmdef applies to its entire folder **and all subfolders**.
+`Assets/Editor/` contains **14 C# files totalling 7,154 lines** — not the two named in the task
+header:
+
+```
+ClientDemoBuild.cs (157)      ClientDemoUiBuilder.cs (1139)   FlowOverlayBuilder.cs (204)
+LobbyBuilder.cs (1311)         Phase3SceneBuilder.cs (560)     PrefabBuilder.cs (81)
+RaceScreenUiBuilder.cs (246)   ResultsScreenUiBuilder.cs (522) SceneBuilder.cs (129)
+SlimUiSkin.cs (476)            TrackContentBuilder.cs (267)    TrackRacingLineBaker.cs (916)
+UIBuilder.cs (512)             WingScreenUiBuilder.cs (634)
+```
+
+Collectively they use `TMPro`, `UnityEngine.UI`, `UnityEngine.EventSystems`,
+`UnityEngine.InputSystem.UI`, `UnityEngine.Rendering.Universal`, `F1.GameFlow` and `F1.UI`.
+An asmdef referencing only `F1.TrackData`, `F1.Gameplay` and `F1.GameData` would leave every one
+of them unable to resolve its types, and the **whole editor assembly fails to compile** — taking
+out every `Tools >` menu item with it, including `ClientDemoBuild.cs`, which is the project's only
+Windows build entry point.
+
+Worse, `F1.UI` lives in `Assembly-CSharp` (`Assets/Scripts/UI` has no asmdef). An asmdef **cannot**
+reference `Assembly-CSharp`, so that dependency could not be satisfied at all.
+
+**The fix:** a subfolder gets its own assembly, and nothing else moves into it.
+
+- [x] **Step 1a: Create the folder and the assembly definition**
+
+Create `Assets/Editor/TrackBake/F1.EditorTools.asmdef`:
 
 ```json
 {
@@ -1524,13 +1621,25 @@ Create `Assets/Editor/F1.EditorTools.asmdef`:
 }
 ```
 
-- [ ] **Step 2: Add a test assembly that can reference it**
+Three references only, because only `RacingLineBaker.cs` lives in this folder. **If you find
+yourself needing a fourth, that is a signal the code has taken a dependency it should not have** —
+the same rule as Task 1's `F1.TrackData`.
+
+- [x] **Step 1b: Verify the split did not disturb the other 13 files**
+
+Run `refresh_unity` (force, request, wait), then `read_console` with `types: ["error"]`.
+
+Expected: **zero errors.** The 13 remaining files stay in `Assembly-CSharp-Editor`, exactly as
+before. If you see errors in `LobbyBuilder.cs`, `UIBuilder.cs` or similar, the asmdef is in the
+wrong place.
+
+- [x] **Step 2: Add a test assembly that can reference it**
 
 The EditMode test assembly has `includePlatforms: ["Editor"]`, so it *can* reference an Editor-only assembly. Add `"F1.EditorTools"` to `Assets/Tests/EditMode/F1.EditModeTests.asmdef`'s `references`.
 
 If Unity refuses the reference (an Editor-only assembly referenced from a test assembly can trip the platform check), create `Assets/Tests/EditModeEditor/F1.EditorTests.asmdef` instead with `includePlatforms: ["Editor"]`, references `["F1.EditorTools", "F1.TrackData", "F1.Gameplay", "F1.GameData", "UnityEditor.TestRunner", "UnityEngine.TestRunner"]`, `overrideReferences: true`, `precompiledReferences: ["nunit.framework.dll"]`, `defineConstraints: ["UNITY_INCLUDE_TESTS"]`, and put the bake tests there. Both assemblies then appear in the EditMode run and the baseline count rises by the number of bake tests.
 
-- [ ] **Step 3: Write the failing bake tests**
+- [x] **Step 3: Write the failing bake tests**
 
 Create `Assets/Tests/EditMode/TrackDataBakeTests.cs`:
 
@@ -1549,23 +1658,73 @@ public class TrackDataBakeTests
     private const float WidthMetres = 16f;
 
     /// <summary>
-    /// A synthetic circuit with a genuinely varied shape: two long straights, two hairpins, one
-    /// sweeper. Deliberately not the real Track_01, so the "scales to five tracks" claim is tested
-    /// against geometry no test has ever seen.
+    /// A synthetic circuit, built from an explicit chain of straights and arcs.
+    ///
+    /// <para>
+    /// <b>Why it is built this way and not from a polar formula.</b> The original fixture here was
+    /// <c>radius = 300 + 220*sin(2a) + 120*sin(5a)</c>. It looks like a circuit and is not one:
+    /// measured, its minimum radius is <b>0.3 m</b> and it passes within <b>4.5 m</b> of itself, so
+    /// it pinches almost to the origin and doubles back through its own path. Every corner in it is
+    /// a numerical artefact, which is precisely the thing this fixture exists to prove the bake
+    /// does NOT produce.
+    /// </para>
+    ///
+    /// <para>
+    /// Explicit radii cannot go negative by construction, and the shape is legible: a 420 m
+    /// straight into a 55 m hairpin, a 300 m link, a 140 m corner, the longest straight on the
+    /// circuit, a 48 m hairpin (the slowest corner), a 260 m link, a 200 m sweeper and a run home.
+    /// Measured: 2,350 m lap, corner speeds 86-207 km/h, and 18.5 m clearance between non-adjacent
+    /// sections. It has a fast corner <i>and</i> a slow one, so the backward braking pass has real
+    /// work to do rather than being handed a constant.
+    /// </para>
     /// </summary>
     private static List<Vector3> SyntheticCircuit()
     {
         var points = new List<Vector3>();
-        const int samples = 400;
+        float x = 0f, y = 0f, heading = 0f;
 
-        for (int i = 0; i < samples; i++)
+        // ('s', metres) straight, or ('a', (radius, sweepDegrees)) constant-radius arc.
+        var segments = new (char kind, float a, float b)[]
         {
-            float t = i / (float)samples;
-            float angle = t * Mathf.PI * 2f;
+            ('s', 420f, 0f),
+            ('a', 55f, 110f),      // hairpin
+            ('s', 300f, 0f),
+            ('a', 140f, 70f),
+            ('s', 520f, 0f),       // longest straight
+            ('a', 48f, 95f),       // slowest corner on the circuit
+            ('s', 260f, 0f),
+            ('a', 200f, 60f),      // sweeper
+            ('s', 480f, 0f),
+        };
 
-            // Vary the radius sharply to create corners of genuinely different tightness.
-            float radius = 300f + 220f * Mathf.Sin(angle * 2f) + 120f * Mathf.Sin(angle * 5f);
-            points.Add(new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius));
+        const int arcSteps = 30;
+
+        foreach (var segment in segments)
+        {
+            if (segment.kind == 's')
+            {
+                x += segment.a * Mathf.Cos(heading);
+                y += segment.a * Mathf.Sin(heading);
+                points.Add(new Vector3(x, 0f, y));
+                continue;
+            }
+
+            float radius = segment.a;
+            float sweep = Mathf.Deg2Rad * segment.b;
+            float cx = x - radius * Mathf.Cos(heading);
+            float cy = y - radius * Mathf.Sin(heading);
+            float startAngle = Mathf.Atan2(y - cy, x - cx);
+
+            for (int step = 0; step <= arcSteps; step++)
+            {
+                float angle = startAngle - sweep * step / arcSteps;
+                points.Add(new Vector3(cx + radius * Mathf.Cos(angle), 0f, cy + radius * Mathf.Sin(angle)));
+            }
+
+            float endAngle = startAngle - sweep;
+            x = cx + radius * Mathf.Cos(endAngle);
+            y = cy + radius * Mathf.Sin(endAngle);
+            heading -= sweep;
         }
 
         return points;
@@ -1578,7 +1737,9 @@ public class TrackDataBakeTests
             StraightSpeedKmh, MinSpeedKmh, WidthMetres, out string reason);
 
         Assert.IsTrue(result.Success, $"Bake failed: {reason}");
-        Assert.Greater(result.LengthMetres, 1000f, "A 400-point circuit of radius ~300 m is kilometres long.");
+        Assert.Greater(result.LengthMetres, 1000f,
+            "The synthetic circuit measures ~2350 m along its centreline; a bake far below that " +
+            "means the arc-length parameterisation is broken, not that the track is short.");
         Assert.Greater(result.ControlPoints.Length, 8, "Too few control points to describe the shape.");
         Assert.Less(result.ControlPoints.Length, 120,
             $"Decimation should reduce ~400 raw points to ~60 control points, got {result.ControlPoints.Length}.");
@@ -1633,17 +1794,46 @@ public class TrackDataBakeTests
     public void ABakeOfDegenerateInputIsRefusedWithAReason()
     {
         // Review Focus #5: a track with no valid bake must be refused, never silently degenerate.
-        var collinear = new List<Vector3>
-        {
-            new Vector3(0f, 0f, 0f), new Vector3(10f, 0f, 0f),
-            new Vector3(20f, 0f, 0f), new Vector3(30f, 0f, 0f)
-        };
+        //
+        // Sixteen collinear points, NOT four. The baker refuses on `count < 8` first, so a 4-point
+        // input never reaches the collinearity branch and the test silently measures the wrong
+        // thing -- which is how the original version of this test passed while testing nothing.
+        var collinear = new List<Vector3>();
+        for (int i = 0; i < 16; i++)
+            collinear.Add(new Vector3(i * 10f, 0f, 0f));
 
         var result = RacingLineBaker.Bake(collinear, MaxLateralAccel, BrakeAccel,
             StraightSpeedKmh, MinSpeedKmh, WidthMetres, out string reason);
 
         Assert.IsFalse(result.Success, "A collinear centreline is not a circuit and must be refused.");
         Assert.IsNotEmpty(reason, "A refusal must name its reason so a track author can act on it.");
+    }
+
+    [Test]
+    public void ABakeOfACentrelineThatPinchesOntoItselfIsRefused()
+    {
+        // The fixture this task originally used was exactly this shape and it BAKED SUCCESSFULLY.
+        // A centreline that passes within a few metres of itself is not a circuit, and a speed
+        // profile derived from it is meaningless -- but nothing in the arithmetic says so, because
+        // every individual point is well formed. Only an explicit check catches it.
+        var pinching = new List<Vector3>();
+        const int samples = 200;
+        for (int i = 0; i < samples; i++)
+        {
+            float angle = i / (float)samples * Mathf.PI * 2f;
+            float radius = 300f + 220f * Mathf.Sin(angle * 2f) + 120f * Mathf.Sin(angle * 5f);
+            pinching.Add(new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius));
+        }
+
+        var result = RacingLineBaker.Bake(pinching, MaxLateralAccel, BrakeAccel,
+            StraightSpeedKmh, MinSpeedKmh, WidthMetres, out string reason);
+
+        Assert.IsFalse(result.Success,
+            "A centreline whose tightest corner is 0.3 m in radius is not a circuit -- that is a " +
+            "numerical pinch, and accepting it produces a speed profile full of artefacts.");
+        Assert.IsNotEmpty(reason);
+        StringAssert.Contains("pinch", reason.ToLowerInvariant(),
+            "The refusal should say what went wrong in terms a track author can act on.");
     }
 
     [Test]
@@ -1691,15 +1881,15 @@ public class TrackDataBakeTests
 }
 ```
 
-- [ ] **Step 4: Run to verify failure**
+- [x] **Step 4: Run to verify failure**
 
 `refresh_unity` (force, request, wait), then `run_tests` `mode: "EditMode"`, `test_names: ["TrackDataBakeTests"]`.
 
 Expected: compile error — `RacingLineBaker` / `F1.EditorTools` not found.
 
-- [ ] **Step 5: Extract the pure bake stages**
+- [x] **Step 5: Extract the pure bake stages**
 
-In `Assets/Editor/TrackRacingLineBaker.cs`, add a new file `Assets/Editor/RacingLineBaker.cs`. **Do not delete the existing `TrackRacingLineBaker`** — Task 4 still needs it to read the tarmac mesh. This new class takes an already-extracted centreline and does everything from there, so it is testable without a scene.
+Create a new file `Assets/Editor/TrackBake/RacingLineBaker.cs`. Nothing else moves into that folder. **Do not delete the existing `TrackRacingLineBaker`** — Task 4 still needs it to read the tarmac mesh. This new class takes an already-extracted centreline and does everything from there, so it is testable without a scene.
 
 ```csharp
 using System.Collections.Generic;
@@ -1731,6 +1921,59 @@ namespace F1.EditorTools
         private const int TargetControlPoints = 60;
         private const int SpeedProfileSamplesPerLapMin = 32;
 
+        /// <summary>
+        /// A centreline whose tightest corner is tighter than this is not a circuit corner, it is a
+        /// numerical pinch. 8 m is far below any real hairpin (F1's tightest is roughly 40 m) and
+        /// far above the artefact this catches (0.3 m), so the check is not sensitive to where in
+        /// that range the threshold sits.
+        ///
+        /// <para>
+        /// A RATIO-based threshold was tried first and rejected: a real circuit's closest
+        /// non-adjacent approach is 1.22% of lap length (two corners running alongside, as every
+        /// circuit has) while the pinching fixture's is 0.39%. A threshold between those two is
+        /// only 3x apart, which is not enough margin to trust. The radius check separates the same
+        /// two fixtures by more than two orders of magnitude.
+        /// </para>
+        /// </summary>
+        private const float MinimumCornerRadiusMetres = 8f;
+
+        /// <summary>How far apart in index two points must be to count as distinct parts of the lap.</summary>
+        private const int SelfApproachIndexWindow = 12;
+
+        /// <summary>
+        /// Tightest corner on the centreline, as a circumradius over a sliding three-point window.
+        /// Returns <see cref="float.PositiveInfinity"/> when the line is too short to measure.
+        /// </summary>
+        private static float MinimumCornerRadius(IList<Vector3> line, int window)
+        {
+            int n = line.Count;
+            if (n < 8) return float.PositiveInfinity;
+
+            float tightest = float.PositiveInfinity;
+            int half = Mathf.Max(1, window / 2);
+
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 a = line[(i - half + n * 2) % n];
+                Vector3 b = line[i];
+                Vector3 c = line[(i + half) % n];
+
+                float ab = Vector3.Distance(a, b);
+                float bc = Vector3.Distance(b, c);
+                float ca = Vector3.Distance(c, a);
+                if (ab < 0.001f || bc < 0.001f || ca < 0.001f) continue;
+
+                // Twice the triangle's area from the cross product; zero means collinear.
+                float twiceArea = Vector3.Cross(b - a, c - a).magnitude;
+                if (twiceArea < 1e-4f) continue;
+
+                float radius = ab * bc * ca / (2f * twiceArea);
+                if (radius < tightest) tightest = radius;
+            }
+
+            return tightest;
+        }
+
         public static BakeResult Bake(
             List<Vector3> centreline,
             float maxLateralAccel,
@@ -1753,6 +1996,28 @@ namespace F1.EditorTools
                 failureReason = $"A racing line needs at least 8 points to describe a circuit; got " +
                                 $"{centreline?.Count ?? 0}. The tarmac was probably not read as " +
                                 "cross-section cells, or the submesh lookup failed.";
+                result.FailureReason = failureReason;
+                return result;
+            }
+
+            // Pinch check, on the RAW centreline rather than the decimated one.
+            //
+            // A centreline that folds through itself is not a circuit. Nothing else in this method
+            // catches it: every individual point is well formed, the loop closes, and the lap has
+            // a plausible length -- so a pinching centreline sails through and yields a speed
+            // profile full of artefacts that look like corners. Measured on the fixture this task
+            // originally used: tightest corner 0.3 m, passing within 4.5 m of itself.
+            //
+            // Checked BEFORE decimation, because averaging to 60 control points would smooth the
+            // pinch away and hide it.
+            float tightest = MinimumCornerRadius(centreline, 5);
+            if (tightest < MinimumCornerRadiusMetres)
+            {
+                failureReason = $"This centreline's tightest corner has a radius of {tightest:F2} m, " +
+                                $"below the {MinimumCornerRadiusMetres:F0} m any real circuit has. " +
+                                "That is a numerical pinch rather than a corner -- check the " +
+                                "tarmac extraction, which usually means the surrounding terrain " +
+                                "is being read as road.";
                 result.FailureReason = failureReason;
                 return result;
             }
@@ -1900,24 +2165,31 @@ namespace F1.EditorTools
 }
 ```
 
-- [ ] **Step 6: Run to verify pass**
+- [x] **Step 6: Run to verify pass**
 
 `refresh_unity` (force, request, wait), then `run_tests` `mode: "EditMode"`, `test_names: ["TrackDataBakeTests"]`, poll `wait_timeout: 60`.
 
-Expected: 7 passed.
+Expected: 8 passed.
+
+> **CORRECTED 2026-10-05 — this said 7; the file defines 8 tests.** The count was not updated when
+> the pinch test was added in the review-corrections pass above. Measured: **8 passed, 0 failed.**
 
 If `ABakeOfDegenerateInputIsRefusedWithAReason` fails because the collinear input was accepted, the length check is doing the work — verify it fires before the spline is constructed.
 
-- [ ] **Step 7: Run the full EditMode suite**
+- [x] **Step 7: Run the full EditMode suite**
 
 `run_tests` `mode: "EditMode"`, poll `wait_timeout: 120`.
 
-Expected: **199 + 7 = 206 passed, 0 failed** (or 199 + 7 in the separate editor assembly if Step 2's fallback was needed).
+Expected: **203 + 8 = 211 passed, 0 failed** (or 203 + 8 in the separate editor assembly if Step 2's fallback was needed).
 
-- [ ] **Step 8: Commit**
+> **VERIFIED 2026-10-05 — Task 3 is complete and committed (`abe9e96`).** Measured: **211 passed,
+> 0 failed, 0 skipped, 38.15 s.** No fallback assembly was needed; `F1.EditorTools` sits in
+> `Assets/Editor/TrackBake/` and `F1.EditModeTests` references it directly.
+
+- [x] **Step 8: Commit**
 
 ```bash
-git add Assets/Editor/F1.EditorTools.asmdef Assets/Editor/RacingLineBaker.cs Assets/Tests/EditMode/TrackDataBakeTests.cs Assets/Tests/EditMode/F1.EditModeTests.asmdef
+git add Assets/Editor/TrackBake/ Assets/Tests/EditMode/TrackDataBakeTests.cs Assets/Tests/EditMode/F1.EditModeTests.asmdef
 git commit -m "Make the racing-line bake testable, and bake a second circuit
 
 TrackRacingLineBaker lives in Assembly-CSharp-Editor, which no test assembly
