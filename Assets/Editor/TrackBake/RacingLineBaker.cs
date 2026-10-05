@@ -40,17 +40,15 @@ namespace F1.EditorTools
         /// that range the threshold sits.
         ///
         /// <para>
-        /// A RATIO-based threshold was tried first and rejected: a real circuit's closest
-        /// non-adjacent approach is 1.22% of lap length (two corners running alongside, as every
-        /// circuit has) while the pinching fixture's is 0.39%. A threshold between those two is
-        /// only 3x apart, which is not enough margin to trust. The radius check separates the same
-        /// two fixtures by more than two orders of magnitude.
+        /// A RATIO-based threshold was tried first and rejected on the grounds that it would not
+        /// separate a real circuit from a pinching one by enough margin. That reasoning is sound,
+        /// but the specific figures quoted in earlier drafts of this comment were measured on
+        /// fixtures that were not themselves valid circuits, so they have been dropped rather than
+        /// restated. The radius check separates a real hairpin (12-40 m) from the degenerate case
+        /// (4.51 m at this window) by a wide margin, with 8 m comfortably between them.
         /// </para>
         /// </summary>
         private const float MinimumCornerRadiusMetres = 8f;
-
-        /// <summary>How far apart in index two points must be to count as distinct parts of the lap.</summary>
-        private const int SelfApproachIndexWindow = 12;
 
         /// <summary>
         /// Tightest corner on the centreline, as a circumradius over a sliding three-point window.
@@ -125,8 +123,8 @@ namespace F1.EditorTools
             // A centreline that folds through itself is not a circuit. Nothing else in this method
             // catches it: every individual point is well formed, the loop closes, and the lap has
             // a plausible length -- so a pinching centreline sails through and yields a speed
-            // profile full of artefacts that look like corners. Measured on the fixture this task
-            // originally used: tightest corner 0.3 m, passing within 4.5 m of itself.
+            // profile full of artefacts that look like corners. Measured at this window (5) on the
+            // polar fixture this task originally used: tightest corner 4.51 m.
             //
             // Checked BEFORE decimation, because averaging to 60 control points would smooth the
             // pinch away and hide it.
@@ -251,7 +249,6 @@ namespace F1.EditorTools
                     int i = count - 1 - step;
                     int j = (i + 1) % count;
 
-                    float v = speeds[i] * KmhToMs;
                     float vNext = speeds[j] * KmhToMs;
                     float reachable = Mathf.Sqrt(vNext * vNext + 2f * brakeAccel * sampleGap);
 
