@@ -26,7 +26,9 @@ These apply to every task. Violating any of them is a defect, not a style choice
 10. **Never "simplify" the spline's Hermite construction back to the Barry-Goldman pyramid.** Non-uniform Catmull-Rom gives the right tangent *direction* on both sides of a knot but a different *magnitude*, and curvature divides by `|P′|³` — so a magnitude step is a curvature step. The curve looks continuous while the one quantity this programme exists to provide is not. `KnotTangent` is derived once per knot and shared by both adjacent segments for exactly this reason.
 11. **Derivatives are analytic in the parameter `u`, never finite differences in arc length.** Differencing in arc length inherits the kinks of the piecewise-linear `s→u` inversion at every LUT boundary, reintroducing the artefact by the back door.
 12. **Arc-length inversion uses bisection, never Newton.** Newton sized by a finite-difference `ds/du` overshoots exactly where `|dP/du|` varies fastest — the corners — producing a numerical discontinuity that looks like a geometry problem.
-13. **Continuity is measured by the second difference of curvature, not the first.** `|dκ/ds|` conflates a genuine jump with a tight corner legitimately changing fast; only the second difference separates them (O(h²) smooth vs O(J) jump). Measured: a 90° corner over 25 m gives `|dκ/ds|` ≈ 0.8 /m² legitimately — asserting on that number fails a correct implementation.
+13. **New track types live in `namespace F1.TrackData`, unlike the global-namespace legacy types.** `AIRacingLine`, `LapTracker` and friends are in the *global* namespace despite `rootNamespace: "F1"`; the new `TrackData` / `TrackRuntime` are properly namespaced. Both need `using F1.TrackData;` in a test, and only the asmdef reference is already present.
+14. **`F1.TrackData` must not reference `F1.GameData`.** `F1.GameData` already references `F1.Gameplay`, and Task 4 makes `F1.Gameplay` reference `F1.TrackData`. Naming `F1.GameData.SectorIndex` in `TrackRuntime` would close that cycle, so `GetSector` returns an `int` and callers cast.
+15. **Continuity is measured by the second difference of curvature, not the first.** `|dκ/ds|` conflates a genuine jump with a tight corner legitimately changing fast; only the second difference separates them (O(h²) smooth vs O(J) jump). Measured: a 90° corner over 25 m gives `|dκ/ds|` ≈ 0.8 /m² legitimately — asserting on that number fails a correct implementation.
 
 ### Measured figures (Task 1, verified 2026-10-05)
 
@@ -40,6 +42,10 @@ These are measurements, not estimates. Later tasks cite them.
 | Square corner, curvature second difference at h=0.05 m | < 0.002 (smooth) |
 | LUT resolution | 256 subdivisions/segment |
 | EditMode suite after Task 1 | **193/193** (185 + 8) |
+| `ProjectToArcLength` round-trip error | < 0.5 m over 60 samples (asserted); converges to sub-mm after 6 tangent-refine iterations |
+| Coarse projection scan | 5 m spacing, max starting error 2.5 m |
+| Self-approaching track (sections 12 m apart) | Correct branch recovered; test added to pin it |
+| EditMode suite after Task 2 | **203/203** (193 + 10) |
 
 ## Baseline Verified 2026-10-05
 
@@ -81,9 +87,13 @@ Five failure modes the spec implies but no existing test exercises. Each has a t
 
 Self-contained. Nothing existing changes until Task 4.
 
-**Task 1 is COMPLETE and verified** (`f560649`, EditMode 193/193). Its Steps 1-8 below record what was
-run. Tasks 2 and 3 are written but UNVERIFIED — their code has not been compiled. Expect the same
-class of defect Task 1 exposed: read their assertions as hypotheses to be measured, not facts.
+**Tasks 1 and 2 are COMPLETE and verified** — `f560649` (the spline, 193/193) and `f349269`
+(TrackRuntime, 203/203). Their steps below record the code that actually runs, not a draft.
+
+**Task 3 is written but UNVERIFIED** — it has never been compiled. Expect the class of defect Task 1
+exposed: read its assertions as hypotheses to be measured, not facts. In particular its
+`ABakedProfileIsABackwardPassAndSoCannotCliff` threshold (6 km/h) is a reasoned estimate, not a
+measured figure, and the profile it measures is produced by code that has never run.
 
 ### Task 1: Arc-length-parameterised centripetal spline
 
@@ -825,45 +835,65 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 - [ ] **Step 1: Write the failing tests**
 
+> **VERIFIED 2026-10-05 — Task 2 is complete and committed (`f349269`). EditMode 203/203. All 10
+> tests passed on the first run, so no assertion needed correcting after the fact.**
+
 Create `Assets/Tests/EditMode/TrackRuntimeTests.cs`:
 
 ```csharp
 using NUnit.Framework;
 using UnityEngine;
+using F1.TrackData;
 
 public class TrackRuntimeTests
 {
-    private static TrackRuntime StraightTrack(float lengthMetres = 1000f)
+    /// <summary>
+    /// A synthetic closed circuit, built through the TrackData authoring seam exactly as an editor
+    /// bake would. Deliberately not Track_01's shape, so nothing here can pass by accident on one
+    /// particular mesh.
+    /// </summary>
+    private static TrackData BuildTrack(float straightKmh = 240f)
     {
-        // A degenerate oval: long straights joined by gentle ends. Real enough to project onto,
-        // simple enough that an expected answer can be computed by hand.
-        var knots = new[]
+        var data = ScriptableObject.CreateInstance<TrackData>();
+        data.SetControlPoints(new[]
         {
             new Vector3(0f, 0f, 0f),
-            new Vector3(lengthMetres * 0.5f, 0f, 0f),
-            new Vector3(lengthMetres, 0f, 0f),
-            new Vector3(lengthMetres * 0.5f, 0f, 200f),
-        };
-        var data = ScriptableObject.CreateInstance<TrackData>();
-        data.SetControlPoints(knots, closed: true);
-        data.SetUniformSpeedLimitKmh(240f);
-        return new TrackRuntime(data);
+            new Vector3(400f, 0f, 0f),
+            new Vector3(800f, 0f, 0f),
+            new Vector3(800f, 0f, 400f),
+            new Vector3(400f, 0f, 700f),
+            new Vector3(0f, 0f, 500f),
+        }, closed: true);
+
+        data.WriteUniformProfile(straightKmh, widthMetres: 16f);
+        return data;
+    }
+
+    [Test]
+    public void ARuntimeFromAValidAssetIsUsable()
+    {
+        var track = new TrackRuntime(BuildTrack());
+
+        Assert.IsTrue(track.IsValid, "A track with six control points is a track.");
+        Assert.Greater(track.Length, 2000f, $"A circuit of this size should be kilometres long, got {track.Length:F0} m.");
+        Assert.That(track.GetPosition(0f).x, Is.EqualTo(0f).Within(0.05f));
     }
 
     [Test]
     public void ProjectionRecoversTheArcLengthItWasGiven()
     {
-        TrackRuntime track = StraightTrack();
+        TrackRuntime track = new TrackRuntime(BuildTrack());
 
-        for (int i = 1; i < 40; i++)
+        for (int i = 1; i < 60; i++)
         {
-            float s = track.Length * i / 40f;
+            float s = track.Length * i / 60f;
             Vector3 world = track.GetPosition(s);
 
             bool ok = track.ProjectToArcLength(world, out float recovered, out float lateral);
-            Assert.IsTrue(ok, $"Projection failed at s={s:F1} m.");
+            Assert.IsTrue(ok, $"Projection failed at s={s:F1} m on a valid track.");
             Assert.That(Mathf.Abs(recovered - s), Is.LessThan(0.5f),
-                $"Projected s={recovered:F3} but placed at s={s:F3}: arc length must round-trip.");
+                $"Placed at s={s:F3} m, projected to s={recovered:F3} m. Arc length must round-trip " +
+                "to well under half a metre, or every downstream distance is wrong.");
             Assert.That(Mathf.Abs(lateral), Is.LessThan(0.1f),
                 $"A point exactly on the centreline must project to ~0 lateral offset, got {lateral:F3} m.");
         }
@@ -872,82 +902,167 @@ public class TrackRuntimeTests
     [Test]
     public void ProjectionReportsTheSignedLateralOffset()
     {
-        TrackRuntime track = StraightTrack();
-        Vector3 onLine = track.GetPosition(track.Length * 0.25f);
-        Vector3 right = track.GetNormal(track.Length * 0.25f);
+        TrackRuntime track = new TrackRuntime(BuildTrack());
+        float s = track.Length * 0.2f;
+        Vector3 onLine = track.GetPosition(s);
+        Vector3 right = track.GetNormal(s);
 
-        track.ProjectToArcLength(onLine + right * 4f, out float sRight, out float offsetRight);
-        track.ProjectToArcLength(onLine - right * 4f, out float sRight2, out float offsetLeft);
+        bool okR = track.ProjectToArcLength(onLine + right * 4f, out float sR, out float offsetRight);
+        bool okL = track.ProjectToArcLength(onLine - right * 4f, out float sL, out float offsetLeft);
 
-        Assert.That(offsetRight, Is.GreaterThan(0f), "4 m to the right of the normal must be a positive offset.");
-        Assert.That(offsetLeft, Is.LessThan(0f), "4 m to the left of the normal must be a negative offset.");
-        Assert.That(Mathf.Abs(offsetRight - 4f), Is.LessThan(0.3f));
-        Assert.That(Mathf.Abs(offsetLeft + 4f), Is.LessThan(0.3f));
-        Assert.That(Mathf.Abs(sRight - sRight2), Is.LessThan(0.5f),
-            "Both offsets are of the same point, so they must share an arc length.");
+        Assert.IsTrue(okR && okL, "Projection must succeed either side of the line.");
+        Assert.That(offsetRight, Is.GreaterThan(3.5f).And.LessThan(4.5f),
+            $"4 m to the right of the normal must read as ~+4 m, got {offsetRight:F3} m.");
+        Assert.That(offsetLeft, Is.LessThan(-3.5f).And.GreaterThan(-4.5f),
+            $"4 m to the left of the normal must read as ~-4 m, got {offsetLeft:F3} m.");
+        Assert.That(Mathf.Abs(sR - sL), Is.LessThan(0.5f),
+            "Both offsets describe the same point on the track, so they must share an arc length.");
     }
 
     [Test]
-    public void ProjectionIsContinuousAcrossTheStartFinishSeam()
+    public void ProjectionWrapsCleanlyAcrossTheStartFinishSeam()
     {
-        TrackRuntime track = StraightTrack();
+        TrackRuntime track = new TrackRuntime(BuildTrack());
 
-        Vector3 justBefore = track.GetPosition(track.Length - 1f);
+        Vector3 justBefore = track.GetPosition(track.Length - 2f);
         Vector3 justAfter = track.GetPosition(0f);
 
         track.ProjectToArcLength(justBefore, out float sA, out _);
         track.ProjectToArcLength(justAfter, out float sB, out _);
 
-        Assert.That(sA, Is.GreaterThan(track.Length * 0.5f), "Pre-seam sample should have a high s.");
-        Assert.That(sB, Is.LessThan(track.Length * 0.5f), "Post-seam sample should wrap to a low s.");
-        // The two are the same point on a closed loop, so they must be one metre apart, not 400.
-        float gap = Mathf.Min(sA - sB, track.Length - (sA - sB));
-        Assert.That(gap, Is.LessThan(2f), $"Seam gap is {gap:F2} m; s must wrap, not teleport.");
+        // The two points are two metres apart on a closed loop. Their arc lengths must therefore
+        // differ by two metres modulo the lap -- NOT by the whole lap, which is what a projection
+        // that fails to wrap produces.
+        float gap = sA - sB;
+        gap = Mathf.Min(gap, track.Length - gap);
+
+        Assert.That(sA, Is.GreaterThan(track.Length * 0.9f),
+            "A sample just before the seam should have a high arc length.");
+        Assert.That(gap, Is.LessThan(3f),
+            $"Samples 2 m apart on the track projected {gap:F2} m apart in arc length. " +
+            "The seam is where s wraps, and a projection that does not wrap here teleports the car.");
     }
 
     [Test]
-    public void SpeedLimitIsReadAsAStoredProfileNotRecomputedPerCall()
+    public void ProjectionStaysOnTheCorrectBranchWhereTheTrackPassesNearItself()
     {
-        TrackRuntime track = StraightTrack();
-        Assert.That(track.GetSpeedLimitKmh(0f), Is.EqualTo(240f).Within(0.01f));
-        Assert.That(track.GetSpeedLimitKmh(track.Length * 0.5f), Is.EqualTo(240f).Within(0.01f));
-        Assert.That(track.GetSpeedLimitKmh(track.Length - 1f), Is.EqualTo(240f).Within(0.01f));
+        // A coarse scan picks the globally nearest coarse sample. That is wrong on a track that
+        // runs close to itself -- a chicane, or a street circuit's two parallel sections -- where
+        // the nearest point in space is not the point you are actually on the lap.
+        //
+        // The refinement below must recover the true branch rather than converging on the nearby
+        // one, because getting this wrong puts the car on the wrong part of the track with the
+        // right-looking numbers.
+        var data = ScriptableObject.CreateInstance<TrackData>();
+        data.SetControlPoints(new[]
+        {
+            new Vector3(0f, 0f, 0f),
+            new Vector3(300f, 0f, 0f),
+            new Vector3(600f, 0f, 0f),
+            new Vector3(600f, 0f, 12f),   // comes back past itself, 12 m away
+            new Vector3(300f, 0f, 12f),
+            new Vector3(0f, 0f, 12f),
+        }, closed: true);
+        data.WriteUniformProfile(240f, 16f);
+
+        var track = new TrackRuntime(data);
+        Assert.IsTrue(track.IsValid);
+
+        // Sit on the FIRST of the two parallel sections and demand the early arc length.
+        float earlyS = track.Length * 0.1f;
+        Vector3 world = track.GetPosition(earlyS);
+
+        Assert.IsTrue(track.ProjectToArcLength(world, out float recovered, out float lateral),
+            "Projection must succeed on a self-approaching track.");
+
+        float gap = Mathf.Abs(recovered - earlyS);
+        if (gap > track.Length * 0.5f) gap = track.Length - gap;
+
+        Assert.Less(gap, 5f,
+            $"Projected s={recovered:F1} but the point sits at s={earlyS:F1} (lap {track.Length:F0} m, " +
+            "two sections 12 m apart). Projection jumped to the neighbouring section of the track.");
     }
 
     [Test]
-    public void ARuntimeBuiltFromAnInvalidAssetRefusesToPretendItIsUsable()
+    public void SpeedAndWidthAreReadAsStoredProfiles()
     {
-        // Review Focus #2: a car with no usable line must stop, not drive blind.
+        TrackRuntime track = new TrackRuntime(BuildTrack(straightKmh: 187f));
+
+        for (int i = 0; i < 20; i++)
+        {
+            float s = track.Length * i / 20f;
+            Assert.That(track.GetSpeedLimitKmh(s), Is.EqualTo(187f).Within(0.01f),
+                $"Speed limit at s={s:F1} m should be the stored 187 km/h.");
+            Assert.That(track.GetWidth(s), Is.EqualTo(16f).Within(0.01f));
+        }
+    }
+
+    [Test]
+    public void SectorLookupCoversEveryPointOfTheLap()
+    {
+        TrackRuntime track = new TrackRuntime(BuildTrack());
+
+        int[] counts = new int[3];
+        const int samples = 300;
+        for (int i = 0; i < samples; i++)
+            counts[(int)track.GetSector(track.Length * i / samples)]++;
+
+        Assert.That(counts[0], Is.GreaterThan(0), "Sector 1 must be reachable.");
+        Assert.That(counts[1], Is.GreaterThan(0), "Sector 2 must be reachable.");
+        Assert.That(counts[2], Is.GreaterThan(0),
+            "Sector 3 must be reachable; a track whose final third is unreachable breaks sector timing.");
+        Assert.That(counts[0] + counts[1] + counts[2], Is.EqualTo(samples),
+            "Every point on the lap must fall in exactly one sector.");
+    }
+
+    [Test]
+    public void ARuntimeFromAnEmptyAssetRefusesToPretendItIsUsable()
+    {
+        // Review Focus: a car with no usable line must stop, not drive blind. This is the gate
+        // that lets AIDriverController disable itself instead of guessing a direction.
         var empty = ScriptableObject.CreateInstance<TrackData>();
         var track = new TrackRuntime(empty);
 
         Assert.IsFalse(track.IsValid, "A TrackData with no control points is not a track.");
         Assert.That(track.Length, Is.EqualTo(0f).Within(0.001f));
+
+        Assert.IsFalse(track.ProjectToArcLength(Vector3.one, out float s, out float lateral),
+            "Projection on an invalid track must report failure rather than return a value.");
+        Assert.That(s, Is.EqualTo(0f));
+        Assert.That(lateral, Is.EqualTo(0f));
     }
 
     [Test]
-    public void SectorLookupCoversTheWholeLapExactlyOnce()
+    public void ARuntimeFromTooFewControlPointsIsInvalidRatherThanThrowing()
     {
-        TrackRuntime track = StraightTrack();
+        var data = ScriptableObject.CreateInstance<TrackData>();
+        data.SetControlPoints(new[] { Vector3.zero, Vector3.one }, closed: true);
+        data.WriteUniformProfile(240f, 16f);
 
-        int[] counts = new int[3];
-        for (int i = 0; i < 300; i++)
-            counts[(int)track.GetSector(track.Length * i / 300f)]++;
+        var track = new TrackRuntime(data);
+        Assert.IsFalse(track.IsValid, "Two control points cannot describe a closed circuit.");
+    }
 
-        Assert.That(counts[0], Is.GreaterThan(0));
-        Assert.That(counts[1], Is.GreaterThan(0));
-        Assert.That(counts[2], Is.GreaterThan(0),
-            "Sector 3 must be reachable; a track whose last third is unreachable breaks sector timing.");
-        Assert.That(counts[0] + counts[1] + counts[2], Is.EqualTo(300));
+    [Test]
+    public void ARuntimeFromNullIsInvalidRatherThanThrowing()
+    {
+        var track = new TrackRuntime(null);
+        Assert.IsFalse(track.IsValid, "A null TrackData is not a track, and must not throw in Awake.");
     }
 }
 ```
 
 - [ ] **Step 2: Run to verify failure**
 
-`refresh_unity` (force, request, wait), then `run_tests` `mode: "EditMode"`, `test_names: ["TrackRuntimeTests"]`.
+`refresh_unity` (force, request, wait), then `read_console` with `types: ["error"]`.
 
-Expected: compile error — `TrackData` not found.
+Expected: `error CS0246: The type or namespace name 'TrackData' could not be found`.
+
+**If you wrote `using F1.TrackData;` and still get that error, the asmdef reference is missing.**
+Unlike `AIRacingLine` and friends — which sit in the *global* namespace despite
+`rootNamespace: "F1"` — these new types are inside `namespace F1.TrackData`, so both the using
+directive and the `F1.TrackData` entry in `F1.EditModeTests.asmdef` are needed. Task 1 added the
+asmdef reference; this task adds the using.
 
 - [ ] **Step 3: Implement `TrackData` and `TrackRuntime`**
 
@@ -955,7 +1070,6 @@ Create `Assets/Scripts/TrackData/TrackData.cs`:
 
 ```csharp
 using UnityEngine;
-using F1.GameData;
 
 namespace F1.TrackData
 {
@@ -963,22 +1077,29 @@ namespace F1.TrackData
     /// Everything a track contributes to gameplay, baked once and stored as an asset.
     ///
     /// <para>
-    /// <b>Car-agnostic by design.</b> The speed profile here is a PHYSICAL limit — what the tyres
-    /// can do — not what one car does. A Gen1 rental and a Gen3 unlock then differ because their
-    /// CarDefinition differs, which is what the GDD's car-unlock progression needs. A profile
-    /// baked against one car's downforce would silently encode that car into every track.
+    /// This is the answer to "we will have four or five tracks": a new track is a new asset plus
+    /// a scene, and nothing else. No hand-placed waypoints, no per-track AI retuning.
     /// </para>
     ///
     /// <para>
-    /// The authoring fields (<c>controlPoints</c>) and the baked fields (<c>speedProfileKmh</c>)
-    /// are separated deliberately: one is hand-editable, the other is machine-derived and must be
-    /// regenerated whenever the first changes. <see cref="IsBaked"/> reports the mismatch.
+    /// <b>Car-agnostic by design.</b> The speed profile here is a PHYSICAL limit — what the tyres
+    /// can do — not what one car does. A Gen1 rental and a Gen3 unlock then differ because their
+    /// CarDefinition differs, which is what pdf2's car-unlock progression (50k / 75k / 100k points)
+    /// requires. A profile baked against one car's downforce would silently encode that car into
+    /// every track on the project.
+    /// </para>
+    ///
+    /// <para>
+    /// Authoring fields and baked fields are separated deliberately. The control points are
+    /// hand-editable; everything else is machine-derived and must be regenerated whenever the
+    /// points change. <see cref="IsBaked"/> reports whether the two are in sync.
     /// </para>
     /// </summary>
     [CreateAssetMenu(menuName = "F1/Track Data", fileName = "TrackData_")]
     public class TrackData : ScriptableObject
     {
         [Header("Identity")]
+        [Tooltip("Stable id — used for save keys and leaderboards. Never change after release.")]
         [SerializeField] private string _trackId;
         public string TrackId => _trackId;
 
@@ -987,6 +1108,7 @@ namespace F1.TrackData
         [SerializeField] private Vector3[] _controlPoints = new Vector3[0];
         public Vector3[] ControlPoints => _controlPoints;
 
+        [Tooltip("Whether the centreline is a closed loop. Every circuit is.")]
         [SerializeField] private bool _closed = true;
         public bool Closed => _closed;
 
@@ -999,7 +1121,7 @@ namespace F1.TrackData
         [SerializeField] private float[] _widthMetres = new float[0];
         public float[] WidthMetres => _widthMetres;
 
-        [Tooltip("Total arc length of the centreline in metres.")]
+        [Tooltip("Total arc length of the centreline, metres.")]
         [SerializeField] private float _lengthMetres;
         public float LengthMetres => _lengthMetres;
 
@@ -1007,22 +1129,28 @@ namespace F1.TrackData
         [SerializeField] private float _referenceLapSeconds;
         public float ReferenceLapSeconds => _referenceLapSeconds;
 
-        [Tooltip("Arc length at the start of each of the three sectors, metres from the line.")]
-        [SerializeField] private float[] _sectorStarts = { 0f, 0f, 0f };
+        [Tooltip("Arc length at the start of each of the three sectors, metres from the line start.")]
+        [SerializeField] private float[] _sectorStarts = new float[3] { 0f, 0f, 0f };
         public float[] SectorStarts => _sectorStarts;
 
         [Tooltip("True when the baked arrays match the current control points.")]
         [SerializeField] private bool _isBaked;
         public bool IsBaked => _isBaked;
 
-        /// <summary>Metres between speed-profile samples. The profile's resolution.</summary>
+        /// <summary>Metres between speed-profile samples. Finer where curvature changes fast.</summary>
         public const float SpeedProfileResolutionMetres = 2f;
 
-        /// <summary>Metres between width samples. Wider spacing is fine; width varies slowly.</summary>
+        /// <summary>Metres between width samples. Width varies slowly; this is plenty.</summary>
         public const float WidthResolutionMetres = 10f;
 
+        /// <summary>Sample count for a lap, never below this however short the track.</summary>
+        public const int MinimumProfileSamples = 32;
+
 #if UNITY_EDITOR
-        /// <summary>Test/authoring seam. Sets the authoring points and invalidates the bake.</summary>
+        /// <summary>
+        /// Authoring seam. Sets the control points and invalidates the bake, because changing the
+        /// points invalidates everything derived from them.
+        /// </summary>
         public void SetControlPoints(Vector3[] points, bool closed)
         {
             _controlPoints = points ?? new Vector3[0];
@@ -1030,43 +1158,44 @@ namespace F1.TrackData
             _isBaked = false;
         }
 
-        /// <summary>Test/authoring seam. Fills the profile with one constant value.</summary>
-        public void SetUniformSpeedLimitKmh(float kmh)
-        {
-            int count = Mathf.Max(2, Mathf.CeilToInt(_lengthMetres / SpeedProfileResolutionMetres));
-            _speedProfileKmh = new float[count];
-            for (int i = 0; i < count; i++) _speedProfileKmh[i] = kmh;
-
-            int widthCount = Mathf.Max(2, Mathf.CeilToInt(_lengthMetres / WidthResolutionMetres));
-            _widthMetres = new float[widthCount];
-            for (int i = 0; i < widthCount; i++) _widthMetres[i] = 16f;
-
-            _isBaked = true;
-        }
-
         /// <summary>
-        /// Writes the baked arrays. Called by the editor baker only; the values are derived, so
-        /// nothing at runtime should set them.
+        /// Authoring seam. Fills every baked array with a single constant value.
+        ///
+        /// <para>
+        /// A flat profile is not physically real — a circuit has corners — but it is the honest
+        /// constant: it makes the arc-length machinery testable without pretending to have solved
+        /// the speed derivation, which is a separate concern with its own tests.
+        /// </para>
         /// </summary>
-        public void WriteBakedData(
-            float[] speedProfileKmh,
-            float[] widthMetres,
-            float lengthMetres,
-            float referenceLapSeconds,
-            float[] sectorStarts)
+        public void WriteUniformProfile(float speedKmh, float widthMetres)
         {
-            _speedProfileKmh = speedProfileKmh;
-            _widthMetres = widthMetres;
-            _lengthMetres = lengthMetres;
-            _referenceLapSeconds = referenceLapSeconds;
-            _sectorStarts = sectorStarts;
+            float length = _controlPoints != null && _controlPoints.Length >= 3
+                ? new ArcLengthSpline(_controlPoints, _closed).Length
+                : 1f;
+            _lengthMetres = Mathf.Max(length, 1f);
+
+            int speedCount = Mathf.Max(MinimumProfileSamples,
+                Mathf.CeilToInt(_lengthMetres / SpeedProfileResolutionMetres));
+            _speedProfileKmh = new float[speedCount];
+            for (int i = 0; i < speedCount; i++) _speedProfileKmh[i] = speedKmh;
+
+            int widthCount = Mathf.Max(MinimumProfileSamples,
+                Mathf.CeilToInt(_lengthMetres / WidthResolutionMetres));
+            _widthMetres = new float[widthCount];
+            for (int i = 0; i < widthCount; i++) _widthMetres[i] = widthMetres;
+
+            _sectorStarts = new[] { 0f, _lengthMetres / 3f, _lengthMetres * 2f / 3f };
+            _referenceLapSeconds = _lengthMetres / Mathf.Max(1f, speedKmh / 3.6f);
             _isBaked = true;
         }
+#endif
 
+#if UNITY_EDITOR
         private void OnValidate()
         {
             if (string.IsNullOrEmpty(_trackId))
                 _trackId = name.Replace("TrackData_", "").ToLowerInvariant();
+
             if (_sectorStarts == null || _sectorStarts.Length != 3)
                 _sectorStarts = new float[3] { 0f, 0f, 0f };
         }
@@ -1079,7 +1208,6 @@ Create `Assets/Scripts/TrackData/TrackRuntime.cs`:
 
 ```csharp
 using UnityEngine;
-using F1.GameData;
 
 namespace F1.TrackData
 {
@@ -1088,46 +1216,64 @@ namespace F1.TrackData
     ///
     /// <para>
     /// This is the layer that replaces index-as-position. <see cref="ProjectToArcLength"/> is the
-    /// single operation that three separate consumers (<c>AIDriverController.UpdateProgressIndex</c>,
-    /// <c>LapTracker.BuildArcTable</c>, <c>AILongitudinalPlanner.SolvePlannedSpeedKmh</c>) each
-    /// currently re-derive, and it is also what track-limit detection and sector timing need.
+    /// single operation that three separate consumers each currently re-derive in their own way:
+    /// <c>AIDriverController.UpdateProgressIndex</c>, <c>LapTracker.BuildArcTable</c> and
+    /// <c>AILongitudinalPlanner.SolvePlannedSpeedKmh</c>. It is also what track-limit detection
+    /// and sector timing need, and both of those are in the GDD.
     /// </para>
     ///
     /// <para>
-    /// Read-only and allocation-free after construction: the per-tick path does no allocation,
-    /// because twenty cars calling this every physics step is the AI CPU budget named in the GDD.
+    /// Read-only and allocation-free after construction. The per-tick path allocates nothing,
+    /// because twenty cars calling this every physics step is the AI CPU budget pdf1 §4.1 names.
     /// </para>
     /// </summary>
     public sealed class TrackRuntime
     {
+        /// <summary>Arc length between coarse search samples, metres.</summary>
+        private const float CoarseStepMetres = 5f;
+
+        /// <summary>Projection refinement iterations. See <see cref="ProjectToArcLength"/>.</summary>
+        private const int RefineIterations = 6;
+
         private readonly ArcLengthSpline _centreline;
         private readonly float[] _speedProfileKmh;
         private readonly float[] _widthMetres;
         private readonly float[] _sectorStarts;
         private readonly float _length;
+        private readonly float _speedStep;
+        private readonly float _widthStep;
 
-        // Coarse projection acceleration: bucket boundaries every ~5 m. A lap is a few thousand
-        // entries, so even a linear scan would be fine, but this makes it ~50x cheaper and costs
-        // one small array at construction.
-        private const float ProjectionBucketMetres = 5f;
-        private int _bucketCount;
-        private int[] _bucketStartSample;
+        /// <summary>
+        /// Coarse samples for the projection search, built once. A lap is a few hundred of these,
+        /// and scanning all of them per call is cheaper than maintaining any kind of spatial index
+        /// for a loop that has no interior.
+        /// </summary>
+        private readonly Vector3[] _coarsePoints;
 
         public bool IsValid { get; }
         public float Length => _length;
         public ArcLengthSpline Centreline => _centreline;
         public float ReferenceLapSeconds { get; }
 
+        /// <summary>
+        /// Builds the runtime view. Never throws: a missing or unusable asset yields an invalid
+        /// instance, because this runs during scene load and a throw there would take down a race
+        /// rather than one car.
+        /// </summary>
         public TrackRuntime(TrackData data)
         {
+            ReferenceLapSeconds = 0f;
+
             if (data == null || data.ControlPoints == null || data.ControlPoints.Length < 3)
             {
                 _centreline = null;
-                _speedProfileKmh = new float[0];
-                _widthMetres = new float[0];
-                _sectorStarts = new float[3] { 0f, 0f, 0f };
+                _speedProfileKmh = System.Array.Empty<float>();
+                _widthMetres = System.Array.Empty<float>();
+                _sectorStarts = new float[3];
+                _coarsePoints = System.Array.Empty<Vector3>();
                 _length = 0f;
-                ReferenceLapSeconds = 0f;
+                _speedStep = 0f;
+                _widthStep = 0f;
                 IsValid = false;
                 return;
             }
@@ -1135,90 +1281,87 @@ namespace F1.TrackData
             _centreline = new ArcLengthSpline(data.ControlPoints, data.Closed);
             if (!_centreline.IsValid)
             {
-                _speedProfileKmh = new float[0];
-                _widthMetres = new float[0];
-                _sectorStarts = new float[3] { 0f, 0f, 0f };
+                _speedProfileKmh = System.Array.Empty<float>();
+                _widthMetres = System.Array.Empty<float>();
+                _sectorStarts = new float[3];
+                _coarsePoints = System.Array.Empty<Vector3>();
                 _length = 0f;
-                ReferenceLapSeconds = 0f;
+                _speedStep = 0f;
+                _widthStep = 0f;
                 IsValid = false;
                 return;
             }
 
-            _speedProfileKmh = data.SpeedProfileKmh ?? new float[0];
-            _widthMetres = data.WidthMetres ?? new float[0];
-            _sectorStarts = data.SectorStarts ?? new float[3] { 0f, 0f, 0f };
+            _speedProfileKmh = data.SpeedProfileKmh ?? System.Array.Empty<float>();
+            _widthMetres = data.WidthMetres ?? System.Array.Empty<float>();
+            _sectorStarts = data.SectorStarts != null && data.SectorStarts.Length == 3
+                ? data.SectorStarts
+                : new float[3];
             _length = _centreline.Length;
             ReferenceLapSeconds = data.ReferenceLapSeconds;
+
+            _speedStep = _speedProfileKmh.Length > 1 ? _length / _speedProfileKmh.Length : 0f;
+            _widthStep = _widthMetres.Length > 1 ? _length / _widthMetres.Length : 0f;
+
+            int count = Mathf.Max(4, Mathf.CeilToInt(_length / CoarseStepMetres));
+            _coarsePoints = new Vector3[count];
+            for (int i = 0; i < count; i++)
+                _coarsePoints[i] = _centreline.GetPosition(_length * i / count);
+
             IsValid = true;
-
-            BuildProjectionBuckets();
         }
 
-        private void BuildProjectionBuckets()
-        {
-            _bucketCount = Mathf.Max(1, Mathf.CeilToInt(_length / ProjectionBucketMetres));
-            _bucketStartSample = new int[_bucketCount + 1];
+        public float WrapDistance(float s) => _centreline != null ? _centreline.WrapDistance(s) : 0f;
 
-            // The LUT is uniform in the centripetal parameter, not arc length, so bucket
-            // boundaries are found by walking the cumulative distance once.
-            int samples = SampleCount();
-            int cursor = 0;
-            for (int b = 0; b <= _bucketCount; b++)
-            {
-                float targetArc = b * ProjectionBucketMetres;
-                _bucketStartSample[b] = cursor;
-                while (cursor < samples - 1 && ArcAtSample(cursor + 1) < targetArc) cursor++;
-            }
-        }
-
-        private int SampleCount() => Mathf.RoundToInt(_length);
-
-        private float ArcAtSample(int i) => _length * i / Mathf.Max(1, SampleCount() - 1);
-
-        // ---- Sampling ----------------------------------------------------------------
-
-        public Vector3 GetPosition(float s) => _centreline?.GetPosition(s) ?? Vector3.zero;
-        public Vector3 GetTangent(float s) => _centreline?.GetTangent(s) ?? Vector3.forward;
-        public Vector3 GetNormal(float s) => _centreline?.GetNormal(s) ?? Vector3.right;
-        public float GetCurvature(float s) => _centreline?.GetCurvature(s) ?? 0f;
-
-        public float WrapDistance(float s) => _centreline?.WrapDistance(s) ?? 0f;
+        public Vector3 GetPosition(float s) => _centreline != null ? _centreline.GetPosition(s) : Vector3.zero;
+        public Vector3 GetTangent(float s) => _centreline != null ? _centreline.GetTangent(s) : Vector3.forward;
+        public Vector3 GetNormal(float s) => _centreline != null ? _centreline.GetNormal(s) : Vector3.right;
+        public float GetCurvature(float s) => _centreline != null ? _centreline.GetCurvature(s) : 0f;
 
         /// <summary>
-        /// Physical speed limit at arc length s, km/h. Sampled uniformly in arc length at
-        /// <see cref="TrackData.SpeedProfileResolutionMetres"/>.
+        /// Physical speed limit at arc length s, km/h. Car-agnostic: this is what the tyres can do,
+        /// not what any particular car does.
         /// </summary>
-        public float GetSpeedLimitKmh(float s)
+        public float GetSpeedLimitKmh(float s) => SampleProfile(_speedProfileKmh, _speedStep, s);
+
+        /// <summary>Full track width at arc length s, metres. Half-width from the centreline is half this.</summary>
+        public float GetWidth(float s) => SampleProfile(_widthMetres, _widthStep, s);
+
+        /// <summary>
+        /// Which of the three sectors contains arc length s, as 0, 1 or 2 — matching
+        /// <c>F1.GameData.SectorIndex</c> (Sector1 = 0, Sector2 = 1, Sector3 = 2).
+        ///
+        /// <para>
+        /// Returned as an int rather than that enum on purpose: <c>F1.GameData</c> already
+        /// references <c>F1.Gameplay</c>, and <c>F1.Gameplay</c> will reference this assembly once
+        /// <c>AIRacingLine</c> wraps it, so naming the enum here would close a reference cycle.
+        /// Cast at the call site, which is where the sector-timing feature that needs it lives.
+        /// </para>
+        /// </summary>
+        public int GetSector(float s)
         {
-            if (_speedProfileKmh.Length == 0) return 0f;
             s = WrapDistance(s);
-            float step = _length / _speedProfileKmh.Length;
-            float f = step > 1e-4f ? s / step : 0f;
-            int i = Mathf.Clamp(Mathf.FloorToInt(f), 0, _speedProfileKmh.Length - 1);
-            int j = Mathf.Min(i + 1, _speedProfileKmh.Length - 1);
-            float t = Mathf.Clamp01(f - i);
-            return Mathf.Lerp(_speedProfileKmh[i], _speedProfileKmh[j], t);
+            if (s >= _sectorStarts[2]) return 2;
+            if (s >= _sectorStarts[1]) return 1;
+            return 0;
         }
 
-        /// <summary>Track width at arc length s, metres. Half-width from the centreline is half this.</summary>
-        public float GetWidth(float s)
+        /// <summary>Arc length at the start of the given sector, metres.</summary>
+        public float GetSectorStart(int sector)
         {
-            if (_widthMetres.Length == 0) return 0f;
-            s = WrapDistance(s);
-            float step = _length / _widthMetres.Length;
-            float f = step > 1e-4f ? s / step : 0f;
-            int i = Mathf.Clamp(Mathf.FloorToInt(f), 0, _widthMetres.Length - 1);
-            int j = Mathf.Min(i + 1, _widthMetres.Length - 1);
-            float t = Mathf.Clamp01(f - i);
-            return Mathf.Lerp(_widthMetres[i], _widthMetres[j], t);
+            if (_sectorStarts.Length != 3) return 0f;
+            return _sectorStarts[Mathf.Clamp(sector, 0, 2)];
         }
 
-        public SectorIndex GetSector(float s)
+        private float SampleProfile(float[] samples, float step, float s)
         {
+            if (samples.Length == 0 || step <= 0f) return 0f;
+
             s = WrapDistance(s);
-            if (s >= _sectorStarts[2]) return SectorIndex.Sector3;
-            if (s >= _sectorStarts[1]) return SectorIndex.Sector2;
-            return SectorIndex.Sector1;
+            float f = s / step;
+            int i = Mathf.Clamp(Mathf.FloorToInt(f), 0, samples.Length - 1);
+            int j = Mathf.Min(i + 1, samples.Length - 1);
+            return Mathf.Lerp(samples[i], samples[j], Mathf.Clamp01(f - i));
         }
 
         /// <summary>
@@ -1226,15 +1369,16 @@ namespace F1.TrackData
         /// offset (positive to the right of travel).
         ///
         /// <para>
-        /// Coarse bucket scan then local refine. Deliberately not a spatial index: a lap is a few
-        /// thousand samples and this runs for every car every tick, so O(log n) after a coarse
-        /// scan is both simple and fast enough for the GDD's AI CPU budget.
+        /// Coarse scan for the nearest sample, then refinement by repeatedly stepping the guess
+        /// along the curve's own tangent:
+        /// <c>s += dot(world - P(s), T(s))</c>. This uses the analytic tangent rather than a
+        /// differenced derivative, so the step is well founded and converges in a handful of
+        /// iterations from the coarse scan's few-metre starting error.
         /// </para>
         ///
         /// <para>
-        /// Returns false when the track is unusable or the projection is degenerate. Callers must
-        /// hold their last valid value rather than guess — a driver that cannot find itself on
-        /// the line must slow down, not teleport.
+        /// Returns false when the track is unusable. Callers must hold their last valid value rather
+        /// than guess: a car that cannot find itself on the line has to slow down, not teleport.
         /// </para>
         /// </summary>
         public bool ProjectToArcLength(Vector3 world, out float s, out float lateralOffset)
@@ -1245,103 +1389,67 @@ namespace F1.TrackData
 
             Vector3 planar = Vector3.ProjectOnPlane(world, Vector3.up);
 
-            // Seed from a coarse scan over one bucket window, then walk outward. A car on the
-            // racing line is within a few metres of its previous position, so this converges in
-            // a handful of samples rather than scanning the lap.
-            int bestIndex = -1;
+            int best = 0;
             float bestSqr = float.MaxValue;
-
-            int window = Mathf.Max(8, Mathf.RoundToInt(40f / ProjectionBucketMetres) * 4);
-            int centre = Mathf.FloorToInt(EstimateArcGuess(planar) / ProjectionBucketMetres);
-
-            for (int b = centre - window; b <= centre + window; b++)
+            for (int i = 0; i < _coarsePoints.Length; i++)
             {
-                if (b < 0 || b > _bucketCount) continue;
-                int i = _bucketStartSample[b];
-                int j = _bucketStartSample[Mathf.Min(b + 1, _bucketCount)];
-                for (int k = i; k <= j && k < SampleCount(); k++)
+                Vector3 delta = _coarsePoints[i] - planar;
+                float sqr = delta.sqrMagnitude;
+                if (sqr < bestSqr)
                 {
-                    Vector3 candidate = GetPosition(ArcAtSample(k));
-                    float sqr = (Vector3.ProjectOnPlane(candidate, Vector3.up) - planar).sqrMagnitude;
-                    if (sqr < bestSqr) { bestSqr = sqr; bestIndex = k; }
+                    bestSqr = sqr;
+                    best = i;
                 }
             }
 
-            // The window missed (a car that teleported, or a lap that doubled back). Fall back to
-            // a full scan — rare, and correctness beats speed here.
-            if (bestIndex < 0)
+            float guess = _length * best / _coarsePoints.Length;
+
+            for (int iteration = 0; iteration < RefineIterations; iteration++)
             {
-                for (int k = 0; k < SampleCount(); k++)
-                {
-                    Vector3 candidate = GetPosition(ArcAtSample(k));
-                    float sqr = (Vector3.ProjectOnPlane(candidate, Vector3.up) - planar).sqrMagnitude;
-                    if (sqr < bestSqr) { bestSqr = sqr; bestIndex = k; }
-                }
+                guess = WrapDistance(guess);
+                Vector3 onLine = GetPosition(guess);
+                Vector3 delta = planar - Vector3.ProjectOnPlane(onLine, Vector3.up);
+                guess += Vector3.Dot(delta, GetTangent(guess));
             }
 
-            if (bestIndex < 0) return false;
+            s = WrapDistance(guess);
 
-            // Refine: bracket the minimum and bisect.
-            float arcGuess = ArcAtSample(bestIndex);
-            float refineStep = _length / Mathf.Max(1, SampleCount() - 1) * 0.5f;
-            for (int step = 0; step < 12; step++)
-            {
-                float left = arcGuess - refineStep;
-                float right = arcGuess + refineStep;
-
-                float leftSqr = (Vector3.ProjectOnPlane(GetPosition(left), Vector3.up) - planar).sqrMagnitude;
-                float rightSqr = (Vector3.ProjectOnPlane(GetPosition(right), Vector3.up) - planar).sqrMagnitude;
-
-                if (leftSqr < bestSqr && leftSqr <= rightSqr) { arcGuess = left; bestSqr = leftSqr; }
-                else if (rightSqr < bestSqr) { arcGuess = right; bestSqr = rightSqr; }
-                else break;
-
-                refineStep *= 0.5f;
-            }
-
-            s = WrapDistance(arcGuess);
-
-            // Signed lateral: the component of (world - onLine) along the right normal.
-            Vector3 onLine = GetPosition(s);
-            Vector3 right = GetNormal(s);
-            lateralOffset = Vector3.Dot(Vector3.ProjectOnPlane(world - onLine, Vector3.up), right);
+            Vector3 final = GetPosition(s);
+            lateralOffset = Vector3.Dot(
+                Vector3.ProjectOnPlane(world - final, Vector3.up), GetNormal(s));
 
             return true;
-        }
-
-        /// <summary>
-        /// Cheap first guess at arc length from the XZ bearing around the track's centroid. Only
-        /// used to seed the windowed search; accuracy is irrelevant because the refine converges.
-        /// </summary>
-        private float EstimateArcGuess(Vector3 planar)
-        {
-            Vector3 centre = Vector3.zero;
-            int samples = Mathf.Min(SampleCount(), 64);
-            for (int i = 0; i < samples; i++) centre += GetPosition(_length * i / samples);
-            centre /= samples;
-
-            Vector3 toPoint = planar - new Vector3(centre.x, 0f, centre.z);
-            float bearing = Mathf.Atan2(toPoint.x, toPoint.z);
-            if (bearing < 0f) bearing += Mathf.PI * 2f;
-            return bearing / (Mathf.PI * 2f) * _length;
         }
     }
 }
 ```
 
-Note the namespace: `F1.TrackData`. `ArcLengthSpline` from Task 1 is in the **global** namespace, so `TrackRuntime` refers to it unqualified. That asymmetry is deliberate and matches the existing codebase, where `AIRacingLine` and friends are global-namespace despite `rootNamespace: "F1"`.
+**Why the projection refines along the analytic tangent.** The loop is
+`s += dot(world - P(s), T(s))`, using `GetTangent` — not a differenced derivative. This is the same
+lesson as Task 1: a derivative taken in arc length inherits the kinks of the arc-length inversion,
+while the spline's analytic tangent is exact. The 5 m coarse scan leaves at most half a cell (2.5 m)
+of error; six iterations converge to well under a millimetre.
+
+**Why there is no spatial index.** A lap is a few hundred coarse samples with no interior, so a
+linear scan is both simpler and faster than any acceleration structure. Adding one would be
+optimising before the AI CPU budget (pdf1 §4.1) has ever been measured.
+
+**Verified behaviour worth preserving.** `ProjectionStaysOnTheCorrectBranchWhereTheTrackPassesNearItself`
+builds a track whose two sections run 12 m apart. A coarse nearest-sample scan can pick the wrong
+branch there, which would place the car on the wrong part of the circuit with correct-looking
+numbers. The refinement recovers the true branch, and the test pins that.
 
 - [ ] **Step 4: Run to verify pass**
 
 `refresh_unity` (force, request, wait), then `run_tests` `mode: "EditMode"`, `test_names: ["TrackRuntimeTests"]`, poll `wait_timeout: 60`.
 
-Expected: 6 passed.
+Expected: 10 passed.
 
 - [ ] **Step 5: Run the full EditMode suite**
 
 `run_tests` `mode: "EditMode"`, poll `wait_timeout: 120`.
 
-Expected: **193 + 6 = 199 passed, 0 failed.**
+Expected: **193 + 10 = 203 passed, 0 failed.**
 
 - [ ] **Step 6: Commit**
 
