@@ -18,6 +18,7 @@ MonoBehaviour:
   _sceneName: SilverstoneGP
   _thumbnail: {fileID: 21300000, guid: 053a1a4b8efe8fd4a9cd1a62b16e9031, type: 3}
   _minimapTexture: {fileID: 0}
+  _underConstruction: 0
   _trackLengthMeters: 5891
   _standardRaceLaps: 52
   _useAutoSectors: 1
@@ -30,3 +31,4 @@ MonoBehaviour:
   _directPurchasePrice: 3.99
   _description: Birthplace of F1. Fast flowing corners. High downforce rewards commitment.
   _devBestLapTime: 117.82
+  _difficultyLabel: MEDIUM

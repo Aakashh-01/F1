@@ -18,6 +18,7 @@ MonoBehaviour:
   _sceneName: SuzukaGP
   _thumbnail: {fileID: 21300000, guid: bb045fa878c82ff4cb77746d9f2996c2, type: 3}
   _minimapTexture: {fileID: 0}
+  _underConstruction: 0
   _trackLengthMeters: 5807
   _standardRaceLaps: 53
   _useAutoSectors: 1
@@ -30,3 +31,4 @@ MonoBehaviour:
   _directPurchasePrice: 3.99
   _description: Figure-eight masterpiece. Sector 1 essess demand rhythm.
   _devBestLapTime: 116.14
+  _difficultyLabel: HARD

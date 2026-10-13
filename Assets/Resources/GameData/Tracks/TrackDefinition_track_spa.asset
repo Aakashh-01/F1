@@ -31,3 +31,4 @@ MonoBehaviour:
   _directPurchasePrice: 3.99
   _description: The Ardennes rollercoaster. High-speed sweepers, dramatic elevation.
   _devBestLapTime: 140.08
+  _difficultyLabel: HARD

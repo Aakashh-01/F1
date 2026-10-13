@@ -40,6 +40,7 @@ public static class GarageBuilder
     public static void BuildAll()
     {
         AuthorCarDisplayStats();
+        AuthorTrackMenuDisplay();
         BuildGarageScreenPrefab();
         BuildGarageScene();
         UpdateBuildSettingsAndFlowRoot();
@@ -130,6 +131,39 @@ public static class GarageBuilder
             .Where(c => c != null)
             .OrderBy(c => c.name)
             .ToList();
+    }
+
+    // ==================================================================================
+    // Track menu display (one-shot authoring pass)
+    // ==================================================================================
+
+    // Asset order is sorted by name: monaco, monza, silverstone, spa, suzuka.
+    private static readonly string[] TrackDifficulty =
+        { "HARD", "MEDIUM", "MEDIUM", "HARD", "HARD" };
+
+    /// <summary>
+    /// One-shot authoring of the track panel's display data, same contract as
+    /// AuthorCarDisplayStats: plausible placeholders, applied by sorted asset order.
+    /// </summary>
+    [MenuItem("Tools/Garage/Author Track Menu Display", priority = 14)]
+    public static void AuthorTrackMenuDisplay()
+    {
+        var tracks = AssetDatabase.FindAssets("t:TrackDefinition")
+            .Select(g => AssetDatabase.LoadAssetAtPath<TrackDefinition>(AssetDatabase.GUIDToAssetPath(g)))
+            .Where(t => t != null)
+            .OrderBy(t => t.name)
+            .ToList();
+
+        for (int i = 0; i < tracks.Count && i < TrackDifficulty.Length; i++)
+        {
+            var so = new SerializedObject(tracks[i]);
+            so.FindProperty("_difficultyLabel").stringValue = TrackDifficulty[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(tracks[i]);
+        }
+
+        AssetDatabase.SaveAssets();
+        Debug.Log($"[Garage] Authored difficulty labels on {System.Math.Min(tracks.Count, TrackDifficulty.Length)} track asset(s).");
     }
 
     // ==================================================================================

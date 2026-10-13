@@ -81,6 +81,11 @@ namespace F1.GameData
         [SerializeField] private float _devBestLapTime = 90f;
         public float DevBestLapTime => _devBestLapTime;
 
+        [Header("Menu Display")]
+        [Tooltip("Shown on the track panel's card. Authored placeholder until real difficulty data exists.")]
+        [SerializeField] private string _difficultyLabel;
+        public string DifficultyLabel => _difficultyLabel;
+
 #if UNITY_EDITOR
         private void OnValidate()
         {

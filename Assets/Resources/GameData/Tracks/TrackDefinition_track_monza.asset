@@ -18,6 +18,7 @@ MonoBehaviour:
   _sceneName: MonzaGP
   _thumbnail: {fileID: 21300000, guid: 3208392cca5666441b0d68d07c581c58, type: 3}
   _minimapTexture: {fileID: 0}
+  _underConstruction: 0
   _trackLengthMeters: 5793
   _standardRaceLaps: 53
   _useAutoSectors: 1
@@ -31,3 +32,4 @@ MonoBehaviour:
   _description: Temple of Speed. Long straights, heavy braking zones. Low downforce
     mandatory.
   _devBestLapTime: 115.86
+  _difficultyLabel: MEDIUM
