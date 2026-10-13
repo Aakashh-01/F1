@@ -221,6 +221,13 @@ public static class GarageBuilder
         PlaceAt(level, new Vector2(1f, 1f), new Vector2(130f, 26f), new Vector2(20f, 18f));
         var xpBg = NewBar("XpBar", profile, new Vector2(0f, 1f), new Vector2(360f, 12f), new Vector2(20f, 100f));
         var xpFill = NewBarFill(xpBg, SlimUiSkin.Accent);
+        var profileWidget = profile.gameObject.AddComponent<F1.UI.ProfileWidget>();
+        var profileSo = new SerializedObject(profileWidget);
+        Set(profileSo, "_playerNameText", playerName.GetComponent<TMP_Text>());
+        Set(profileSo, "_teamText", team.GetComponent<TMP_Text>());
+        Set(profileSo, "_levelText", level.GetComponent<TMP_Text>());
+        Set(profileSo, "_xpFill", xpFill);
+        profileSo.ApplyModifiedPropertiesWithoutUndo();
 
         // --- Dual currency, top-right. Career points first: unlocks cost careerPoints. ---
         var currency = NewPanel("CurrencyPanel", rt, new Vector2(1f, 1f), new Vector2(330f, 140f), new Vector2(24f, 24f));
@@ -232,6 +239,11 @@ public static class GarageBuilder
             .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 86f));
         var premiumValue = NewText("PremiumValue", currency, "0", 22f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
         PlaceAt(premiumValue, new Vector2(0f, 1f), new Vector2(290f, 32f), new Vector2(20f, 104f));
+        var currencyWidget = currency.gameObject.AddComponent<F1.UI.CurrencyWidget>();
+        var currencySo = new SerializedObject(currencyWidget);
+        Set(currencySo, "_careerPointsText", careerValue.GetComponent<TMP_Text>());
+        Set(currencySo, "_premiumText", premiumValue.GetComponent<TMP_Text>());
+        currencySo.ApplyModifiedPropertiesWithoutUndo();
 
         // --- Stats panel, mid-left. The CanvasGroup is the locked dimmer; it must not
         //     block raycasts or it would eat the drags that belong to the layer below. ---
@@ -294,12 +306,8 @@ public static class GarageBuilder
             row.FindPropertyRelative("Value").objectReferenceValue = rowValues[i];
             row.FindPropertyRelative("Fill").objectReferenceValue = rowFills[i];
         }
-        Set(so, "_careerPointsText", careerValue.GetComponent<TMP_Text>());
-        Set(so, "_premiumText", premiumValue.GetComponent<TMP_Text>());
-        Set(so, "_playerNameText", playerName.GetComponent<TMP_Text>());
-        Set(so, "_teamText", team.GetComponent<TMP_Text>());
-        Set(so, "_levelText", level.GetComponent<TMP_Text>());
-        Set(so, "_xpFill", xpFill);
+        Set(so, "_currency", currencyWidget);
+        Set(so, "_profile", profileWidget);
         Set(so, "_continueButton", continueBtn.GetComponent<UnityEngine.UI.Button>());
         Set(so, "_prevButton", prev.GetComponent<UnityEngine.UI.Button>());
         Set(so, "_nextButton", next.GetComponent<UnityEngine.UI.Button>());

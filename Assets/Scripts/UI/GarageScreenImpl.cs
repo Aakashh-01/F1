@@ -37,15 +37,9 @@ namespace F1.UI
         [Header("Stat Rows — order: Power, Torque, Top Speed, 0-100, Weight")]
         [SerializeField] private StatRow[] _statRows;
 
-        [Header("Currency")]
-        [SerializeField] private TMP_Text _careerPointsText;
-        [SerializeField] private TMP_Text _premiumText;
-
-        [Header("Player Profile")]
-        [SerializeField] private TMP_Text _playerNameText;
-        [SerializeField] private TMP_Text _teamText;
-        [SerializeField] private TMP_Text _levelText;
-        [SerializeField] private Image _xpFill;
+        [Header("Shared chrome")]
+        [SerializeField] private CurrencyWidget _currency;
+        [SerializeField] private ProfileWidget _profile;
 
         [Header("Actions")]
         [SerializeField] private Button _continueButton;
@@ -100,21 +94,13 @@ namespace F1.UI
         /// </summary>
         public override void SetCurrency(int amount)
         {
-            if (_careerPointsText != null)
-                _careerPointsText.text = amount.ToString("N0");
+            if (_currency != null) _currency.SetCareerPoints(amount);
         }
 
         public override void RefreshFromProfile()
         {
-            var profile = PlayerProfileManager.Current;
-            if (profile == null) return;
-
-            SetCurrency(profile.careerPoints);
-            if (_premiumText != null) _premiumText.text = profile.premiumCurrency.ToString("N0");
-            if (_playerNameText != null) _playerNameText.text = profile.playerName;
-            if (_teamText != null) _teamText.text = profile.teamName;
-            if (_levelText != null) _levelText.text = $"LEVEL {profile.playerLevel}";
-            if (_xpFill != null) _xpFill.fillAmount = profile.XpProgressToNextLevel();
+            if (_currency != null) _currency.Refresh();
+            if (_profile != null) _profile.Refresh();
         }
 
         public override void SetChosenCar(CarDefinition car)
