@@ -21,6 +21,10 @@
 //     the floor exactly at y = 0 and the car stands on it rather than hovering.
 //
 // Re-runnable via Tools > Lobby > ...
+
+// 2026-10-13: Assets/Scenes/05_LobbyScene.unity is deleted (menu-hub rework). The rig
+// capture below and Tools > Lobby > Build Wing Setup Lobby read from it and will error
+// if run. 30_WingSetupScene is already built; do not rebuild it here.
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;

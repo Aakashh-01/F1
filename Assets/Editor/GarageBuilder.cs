@@ -3,13 +3,20 @@
 // Builds the client-demo garage: screen prefab, scene, display stats, and routing.
 // Run: Tools > Garage > Build All.
 //
-// The garage scene is rebuilt from the rig captured READ-ONLY out of 05_LobbyScene
-// (LobbyBuilder.CaptureGarageRig). That scene is the hand-tuned original and the only
-// copy of the rig, so nothing here ever saves over it.
+// The garage scene is the MENU HUB: one background, two hosted screens (car panel on
+// GameScreen.Lobby, track panel on GameScreen.TrackSelection). The 3D framing is
+// authored in code below — Assets/Scenes/05_LobbyScene.unity (the old rig source) and
+// 20_TrackSelectionScene.unity are deleted, so there is nothing left to capture from.
+// The room art is not built yet; the car stands alone against a solid backdrop until
+// the new lobby environment asset lands (see Assets/Scenes/ReferenceImageLobby.png).
 //
 // WARNING: after FlowSceneNames.Lobby was repointed to 05_GarageScene, Phase3SceneBuilder's
 // Tools > BuildFlowScenes and Tools > BuildLobbyScene now resolve their lobby path HERE and
 // would overwrite this scene with the old tile-strip lobby. Use Tools > Garage instead.
+//
+// WARNING: Tools > Lobby > Build Wing Setup Lobby still captures its rig from the
+// deleted 05_LobbyScene and will error if run. 30_WingSetupScene is already built; do
+// not rebuild it here.
 //
 // The showcase swap deliberately reuses the existing baked CarShowcase_Prefab for all six
 // cars: every CarDefinition points at the same F1_Body body today, so six identical bakes
@@ -35,7 +42,6 @@ public static class GarageBuilder
     private const string TrackPanelPrefabPath = "Assets/Prefabs/TrackPanelScreen_Prefab.prefab";
     private const string GarageScenePath = "Assets/Scenes/05_GarageScene.unity";
     private const string ShowcasePrefabPath = "Assets/Prefabs/CarShowcase_Prefab.prefab";
-    private const string RetiredLobbyScenePath = "Assets/Scenes/05_LobbyScene.unity";
 
     [MenuItem("Tools/Garage/Build All", priority = 0)]
     public static void BuildAll()
@@ -497,104 +503,123 @@ public static class GarageBuilder
     }
 
     // ==================================================================================
-    // Garage scene
+    // Menu hub scene
     // ==================================================================================
 
+    // Framing constants, matched to Assets/Scenes/ReferenceImageLobby.png: head-on, low,
+    // symmetric, car centred. The verification pass in the plan tunes these against a
+    // real screenshot; change them here, never in the scene file.
+    private static readonly Vector3 SocketPosition = new Vector3(0f, 0.05f, 0f);
+    private const float SocketYawDegrees = 180f;   // nose toward the camera at -Z
+    private const float SocketScale = 0.8f;
+    private static readonly Vector3 CameraPosition = new Vector3(0f, 0.85f, -6.2f);
+    private static readonly Vector3 CameraLookAt = new Vector3(0f, 0.72f, 0.35f);
+    private const float CameraFov = 34f;
+    private static readonly Color BackdropColor = new Color(0.055f, 0.065f, 0.08f, 1f);
+
     /// <summary>
-    /// Builds 05_GarageScene: the captured garage rig with the showcase instance replaced
-    /// by a CarSocket carrying the turntable and swapper, a FlowSceneHost declaring
-    /// GameScreen.Lobby with the garage prefab, a GarageSceneController on the same root,
-    /// and one EventSystem.
+    /// Builds 05_GarageScene as the menu hub: car socket + turntable + swapper, a camera
+    /// and two lights framing the car head-on, a FlowSceneHost for the car panel
+    /// (GameScreen.Lobby) and a second, start-inactive host for the track panel
+    /// (GameScreen.TrackSelection), a GarageHubView to swap them, and one EventSystem.
     ///
-    /// Idempotent: re-running re-captures the rig, re-swaps the socket and dedupes the
-    /// named roots. 05_LobbyScene is only ever read.
+    /// Always builds a fresh empty scene and saves over the path, so the old Simple
+    /// Garage room cannot survive a rebuild.
     /// </summary>
     [MenuItem("Tools/Garage/Build Garage Scene", priority = 12)]
     public static void BuildGarageScene()
     {
-        var rig = LobbyBuilder.CaptureGarageRig();
-        if (rig.CarScale == Vector3.zero)
-        {
-            Debug.LogError("[Garage] Rig capture failed; garage scene not built.");
-            return;
-        }
-
-        Scene scene;
-        if (File.Exists(ToAbsolute(GarageScenePath)))
-        {
-            scene = EditorSceneManager.OpenScene(GarageScenePath, OpenSceneMode.Single);
-            Debug.Log("[Garage] Rebuilding the existing garage scene.");
-        }
-        else
-        {
-            scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            Debug.Log($"[Garage] Creating {GarageScenePath}");
-        }
-
-        LobbyBuilder.ApplyGarageRig(scene, rig);
-        SwapShowcaseForSocket(scene);
-
-        var hostGo = EnsureRoot(scene, "FlowSceneHost");
-        var host = EnsureComponent<FlowSceneHost>(hostGo);
-        var screenPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GaragePrefabPath);
-        if (screenPrefab == null)
-        {
+        var garagePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GaragePrefabPath);
+        var trackPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(TrackPanelPrefabPath);
+        if (garagePrefab == null)
             Debug.LogError($"[Garage] {GaragePrefabPath} missing; build the screen prefab first.");
-        }
-        host.Configure(GameFlowManager.GameScreen.Lobby, screenPrefab,
-            HostScreenMode.Fixed, hostGo.transform);
-        EnsureComponent<GarageSceneController>(hostGo);
+        if (trackPrefab == null)
+            Debug.LogError($"[Garage] {TrackPanelPrefabPath} missing; build the track panel prefab first.");
+
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+        // --- Car socket -------------------------------------------------------------
+        var showcasePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ShowcasePrefabPath);
+        if (showcasePrefab == null)
+            Debug.LogError($"[Garage] {ShowcasePrefabPath} missing; build it via Tools > Lobby.");
+
+        // NewScene(Single) makes the new scene active, so everything created below lands
+        // in it directly — no MoveGameObjectToScene round trips.
+        var socket = new GameObject("CarSocket");
+        socket.transform.localPosition = SocketPosition;
+        socket.transform.localRotation = Quaternion.Euler(0f, SocketYawDegrees, 0f);
+        socket.transform.localScale = new Vector3(SocketScale, SocketScale, SocketScale);
+        socket.AddComponent<GarageTurntable>();
+        var swapper = socket.AddComponent<ShowcaseCarSwapper>();
+        WireSwapperEntries(swapper, showcasePrefab);
+
+        // --- Camera, head-on and low -------------------------------------------------
+        var camGo = new GameObject("LobbyCamera", typeof(Camera));
+        camGo.tag = "MainCamera";
+        var cam = camGo.GetComponent<Camera>();
+        cam.fieldOfView = CameraFov;
+        cam.nearClipPlane = 0.1f;
+        cam.farClipPlane = 60f;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = BackdropColor;
+        if (camGo.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>() == null)
+            camGo.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+        camGo.transform.position = CameraPosition;
+        camGo.transform.rotation = Quaternion.LookRotation(
+            (CameraLookAt - CameraPosition).normalized, Vector3.up);
+
+        // --- Key + fill ---------------------------------------------------------------
+        // The reference's ceiling strips are art; until then a front-top key and a cool
+        // rear fill give the car readable form against the backdrop.
+        var keyGo = new GameObject("LobbyKeyLight", typeof(Light));
+        var key = keyGo.GetComponent<Light>();
+        key.type = LightType.Spot;
+        key.color = new Color(1f, 0.98f, 0.94f);
+        key.intensity = 1.4f;
+        key.range = 35f;
+        key.spotAngle = 62f;
+        key.innerSpotAngle = 40f;
+        key.shadows = LightShadows.Soft;
+        keyGo.transform.position = new Vector3(0f, 5.5f, -4.5f);
+        keyGo.transform.rotation = Quaternion.LookRotation(
+            (SocketPosition + Vector3.up * 0.7f - new Vector3(0f, 5.5f, -4.5f)).normalized, Vector3.up);
+
+        var fillGo = new GameObject("LobbyFillLight", typeof(Light));
+        var fill = fillGo.GetComponent<Light>();
+        fill.type = LightType.Directional;
+        fill.color = new Color(0.75f, 0.82f, 0.95f);
+        fill.intensity = 0.35f;
+        fillGo.transform.rotation = Quaternion.Euler(38f, 145f, 0f);
+
+        RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+        RenderSettings.ambientLight = new Color(0.32f, 0.33f, 0.36f);
+
+        // --- Hosts --------------------------------------------------------------------
+        var carHostGo = EnsureRoot(scene, "FlowSceneHost");
+        var carHost = EnsureComponent<FlowSceneHost>(carHostGo);
+        carHost.Configure(GameFlowManager.GameScreen.Lobby, garagePrefab,
+            HostScreenMode.Fixed, carHostGo.transform);
+        EnsureComponent<GarageSceneController>(carHostGo);
+
+        var trackHostGo = EnsureRoot(scene, "TrackPanelHost");
+        var trackHost = EnsureComponent<FlowSceneHost>(trackHostGo);
+        trackHost.Configure(GameFlowManager.GameScreen.TrackSelection, trackPrefab,
+            HostScreenMode.Fixed, trackHostGo.transform);
+        EnsureComponent<TrackPanelSceneController>(trackHostGo);
+        // The car panel owns the stage on entry; GarageHubView swaps from here.
+        trackHostGo.SetActive(false);
+
+        var hubGo = EnsureRoot(scene, "MenuHub");
+        EnsureComponent<GarageHubView>(hubGo);
 
         EnsureEventSystem(scene);
 
         EditorSceneManager.SaveScene(scene, GarageScenePath);
-        Debug.Log($"[Garage] Garage scene saved to {GarageScenePath}");
+        Debug.Log($"[Garage] Menu hub scene saved to {GarageScenePath}");
     }
 
-    /// <summary>
-    /// Replaces the plain CarShowcase instance with a CarSocket at the same captured pose,
-    /// carrying the turntable and the swapper. The swapper's entries all point at the one
-    /// baked showcase prefab; the tint per car does the differentiating.
-    /// </summary>
-    private static void SwapShowcaseForSocket(Scene scene)
+    private static void WireSwapperEntries(ShowcaseCarSwapper swapper, GameObject showcasePrefab)
     {
-        var showcasePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ShowcasePrefabPath);
-        if (showcasePrefab == null)
-        {
-            Debug.LogError($"[Garage] {ShowcasePrefabPath} missing; build it via Tools > Lobby.");
-            return;
-        }
-
-        // A previous run's socket would survive ApplyGarageRig's clear (it owns only the
-        // rig names), so remove it here before creating a fresh one.
-        Transform oldSocket = null;
-        Transform car = null;
-        foreach (var root in scene.GetRootGameObjects())
-        {
-            if (root.name == "CarSocket") oldSocket = root.transform;
-            else if (root.name == "CarShowcase") car = root.transform;
-        }
-
-        if (oldSocket != null) Object.DestroyImmediate(oldSocket.gameObject);
-        if (car == null)
-        {
-            Debug.LogError("[Garage] No CarShowcase instance to replace; the rig did not apply.");
-            return;
-        }
-
-        var pos = car.localPosition;
-        var rot = car.localRotation;
-        var scale = car.localScale;
-        Object.DestroyImmediate(car.gameObject);
-
-        var socket = new GameObject("CarSocket");
-        SceneManager.MoveGameObjectToScene(socket, scene);
-        socket.transform.localPosition = pos;
-        socket.transform.localRotation = rot;
-        socket.transform.localScale = scale;
-        socket.AddComponent<GarageTurntable>();
-        var swapper = socket.AddComponent<ShowcaseCarSwapper>();
-
         var cars = LoadAllCars();
         var so = new SerializedObject(swapper);
         var entries = so.FindProperty("_entries");
@@ -606,33 +631,34 @@ public static class GarageBuilder
             entry.FindPropertyRelative("ShowcasePrefab").objectReferenceValue = showcasePrefab;
         }
         so.ApplyModifiedPropertiesWithoutUndo();
-
-        Debug.Log($"[Garage] CarSocket placed at {pos} with {cars.Count} showcase entr(ies).");
     }
 
     // ==================================================================================
-    // Routing: build settings + the flow root's serialized lobby scene
+    // Routing: build settings + the flow root's serialized scene fields
     // ==================================================================================
 
     /// <summary>
-    /// Swaps the 05_LobbyScene build entry for 05_GarageScene in place (the route order is
-    /// untouched), then rewrites 00_LoadingScene's serialized _lobbyScene, which would
-    /// otherwise keep pointing at the retired scene and quietly load it.
+    /// Routing: drop the retired scenes from the build list, keep the route order
+    /// Loading -> Garage(hub) -> WingSetup -> PreRace -> Race -> Track_01 -> Results, and
+    /// rewrite 00_LoadingScene's serialized scene fields, which would otherwise keep
+    /// pointing at retired scenes and quietly load them.
     /// </summary>
     [MenuItem("Tools/Garage/Update Build Settings && Flow Root", priority = 13)]
     public static void UpdateBuildSettingsAndFlowRoot()
     {
         var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-        int index = scenes.FindIndex(s => s.path == RetiredLobbyScenePath);
-        if (index >= 0)
+        int removed = scenes.RemoveAll(s =>
+            Path.GetFileNameWithoutExtension(s.path) == FlowSceneNames.RetiredGarageLobby ||
+            Path.GetFileNameWithoutExtension(s.path) == FlowSceneNames.RetiredTrackSelection);
+        if (removed > 0)
+            Debug.Log($"[Garage] Removed {removed} retired scene entr(ies) from the build list.");
+
+        bool hasHub = scenes.Exists(s =>
+            Path.GetFileNameWithoutExtension(s.path) == FlowSceneNames.Lobby);
+        if (!hasHub)
         {
-            scenes[index] = new EditorBuildSettingsScene(GarageScenePath, true);
-            Debug.Log("[Garage] Build entry 05_LobbyScene -> 05_GarageScene.");
-        }
-        else if (scenes.All(s => s.path != GarageScenePath))
-        {
-            scenes.Add(new EditorBuildSettingsScene(GarageScenePath, true));
-            Debug.LogWarning("[Garage] No 05_LobbyScene build entry found; appended 05_GarageScene.");
+            scenes.Insert(1, new EditorBuildSettingsScene(GarageScenePath, true));
+            Debug.Log("[Garage] Inserted the hub scene after loading.");
         }
         EditorBuildSettings.scenes = scenes.ToArray();
 
@@ -652,16 +678,19 @@ public static class GarageBuilder
         }
 
         var so = new SerializedObject(flow);
-        var prop = so.FindProperty("_lobbyScene");
-        if (prop == null)
+        var lobbyProp = so.FindProperty("_lobbyScene");
+        var trackProp = so.FindProperty("_trackSelectionScene");
+        if (lobbyProp == null || trackProp == null)
         {
-            Debug.LogError("[Garage] GameFlowManager._lobbyScene not found; flow root not updated.");
+            Debug.LogError("[Garage] GameFlowManager scene fields not found; flow root not updated.");
             return;
         }
-        prop.stringValue = FlowSceneNames.Lobby;
+        lobbyProp.stringValue = FlowSceneNames.Lobby;
+        trackProp.stringValue = FlowSceneNames.TrackSelection;
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorSceneManager.SaveScene(scene);
-        Debug.Log($"[Garage] Flow root lobby scene -> {FlowSceneNames.Lobby}.");
+        Debug.Log($"[Garage] Flow root scenes -> lobby '{FlowSceneNames.Lobby}', " +
+                  $"track selection '{FlowSceneNames.TrackSelection}'.");
     }
 
     // ==================================================================================
