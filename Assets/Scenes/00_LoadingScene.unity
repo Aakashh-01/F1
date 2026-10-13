@@ -462,7 +462,7 @@ MonoBehaviour:
   _brandingScene: 00_LoadingScene
   _lobbyScene: 05_GarageScene
   _mainMenuScene: 
-  _trackSelectionScene: 20_TrackSelectionScene
+  _trackSelectionScene: 05_GarageScene
   _wingSetupScene: 30_WingSetupScene
   _resultsScene: 60_ResultsScene
   _qualifyingScene: 40_PreRaceScene
