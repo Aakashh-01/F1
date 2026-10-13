@@ -32,6 +32,7 @@ using F1.GameFlow;
 public static class GarageBuilder
 {
     private const string GaragePrefabPath = "Assets/Prefabs/GarageScreen_Prefab.prefab";
+    private const string TrackPanelPrefabPath = "Assets/Prefabs/TrackPanelScreen_Prefab.prefab";
     private const string GarageScenePath = "Assets/Scenes/05_GarageScene.unity";
     private const string ShowcasePrefabPath = "Assets/Prefabs/CarShowcase_Prefab.prefab";
     private const string RetiredLobbyScenePath = "Assets/Scenes/05_LobbyScene.unity";
@@ -42,6 +43,7 @@ public static class GarageBuilder
         AuthorCarDisplayStats();
         AuthorTrackMenuDisplay();
         BuildGarageScreenPrefab();
+        BuildTrackPanelPrefab();
         BuildGarageScene();
         UpdateBuildSettingsAndFlowRoot();
         AssetDatabase.SaveAssets();
@@ -318,6 +320,180 @@ public static class GarageBuilder
         PrefabUtility.SaveAsPrefabAsset(root, GaragePrefabPath);
         Object.DestroyImmediate(root);
         Debug.Log($"[Garage] Screen prefab written to {GaragePrefabPath}");
+    }
+
+    // ==================================================================================
+    // Track panel prefab
+    // ==================================================================================
+
+    /// <summary>
+    /// Builds the track panel: SELECT TRACK title, three carousel slots (sides dimmed),
+    /// edge arrows, BACK and CONFIRM, over the shared profile/currency chrome. Same
+    /// self-wiring rule as the garage screen — serialized references only.
+    ///
+    /// Re-runnable: edits the prefab in place.
+    /// </summary>
+    [MenuItem("Tools/Garage/Build Track Panel Prefab", priority = 15)]
+    public static void BuildTrackPanelPrefab()
+    {
+        SlimUiSkin.EnsureLoaded();
+        EnsureFolder("Assets/Prefabs");
+
+        var root = new GameObject("TrackPanelScreen_Prefab",
+            typeof(RectTransform), typeof(Canvas),
+            typeof(UnityEngine.UI.CanvasScaler),
+            typeof(UnityEngine.UI.GraphicRaycaster),
+            typeof(F1.UI.TrackPanelScreenImpl));
+
+        var rt = (RectTransform)root.transform;
+        root.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = root.GetComponent<UnityEngine.UI.CanvasScaler>();
+        scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.screenMatchMode = UnityEngine.UI.CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 1f;
+
+        // No root Graphic: the garage behind is the point, exactly as on the car panel.
+
+        var title = NewText("Title", rt, "SELECT TRACK", 34f, TextAlignmentOptions.Center, SlimUiSkin.TileInk);
+        PlaceAt(title, new Vector2(0.5f, 1f), new Vector2(600f, 60f), new Vector2(0f, 36f));
+
+        // Carousel slots. PlaceAt zeroes the offset on a middle anchor, so the sides get
+        // their anchoredPosition set directly after.
+        var centre = NewPanel("SlotCentre", rt, new Vector2(0.5f, 0.5f), new Vector2(430f, 560f), Vector2.zero);
+        centre.anchoredPosition = new Vector2(0f, 20f);
+        var left = NewPanel("SlotLeft", rt, new Vector2(0.5f, 0.5f), new Vector2(320f, 430f), Vector2.zero);
+        left.anchoredPosition = new Vector2(-560f, 60f);
+        var right = NewPanel("SlotRight", rt, new Vector2(0.5f, 0.5f), new Vector2(320f, 430f), Vector2.zero);
+        right.anchoredPosition = new Vector2(560f, 60f);
+
+        var slots = new F1.UI.TrackPanelScreenImpl.TrackSlot[3];
+        slots[1] = BuildTrackSlot(centre);
+        slots[0] = BuildTrackSlot(left);
+        slots[2] = BuildTrackSlot(right);
+
+        // ASCII "<"/">": the default TMP SDF atlas only guarantees ASCII.
+        var prev = NewButton("PrevButton", rt, "<", 40f, primary: false);
+        PlaceAt(prev, new Vector2(0f, 0.5f), new Vector2(90f, 130f), new Vector2(60f, 0f));
+        var next = NewButton("NextButton", rt, ">", 40f, primary: false);
+        PlaceAt(next, new Vector2(1f, 0.5f), new Vector2(90f, 130f), new Vector2(60f, 0f));
+
+        var back = NewButton("BackButton", rt, "BACK", 26f, primary: false);
+        PlaceAt(back, new Vector2(0f, 0f), new Vector2(240f, 80f), new Vector2(24f, 28f));
+        var confirm = NewButton("ConfirmButton", rt, "CONFIRM", 26f, primary: true);
+        PlaceAt(confirm, new Vector2(1f, 0f), new Vector2(320f, 80f), new Vector2(24f, 28f));
+        confirm.GetComponent<UnityEngine.UI.Button>().interactable = false;
+
+        // Shared chrome — identical placement to the car panel so the corner identity
+        // holds across the swap.
+        var profile = NewPanel("ProfilePanel", rt, new Vector2(0f, 1f), new Vector2(400f, 140f), new Vector2(24f, 24f));
+        var playerName = NewText("PlayerName", profile, "Player", 24f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
+        PlaceAt(playerName, new Vector2(0f, 1f), new Vector2(250f, 34f), new Vector2(20f, 16f));
+        var team = NewText("Team", profile, "Team", 17f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted);
+        PlaceAt(team, new Vector2(0f, 1f), new Vector2(250f, 26f), new Vector2(20f, 56f));
+        var level = NewText("Level", profile, "LEVEL 1", 17f, TextAlignmentOptions.Right, SlimUiSkin.TileInk);
+        PlaceAt(level, new Vector2(1f, 1f), new Vector2(130f, 26f), new Vector2(20f, 18f));
+        var xpBg = NewBar("XpBar", profile, new Vector2(0f, 1f), new Vector2(360f, 12f), new Vector2(20f, 100f));
+        var xpFill = NewBarFill(xpBg, SlimUiSkin.Accent);
+        var profileWidget = profile.gameObject.AddComponent<F1.UI.ProfileWidget>();
+        var profileSo = new SerializedObject(profileWidget);
+        Set(profileSo, "_playerNameText", playerName.GetComponent<TMP_Text>());
+        Set(profileSo, "_teamText", team.GetComponent<TMP_Text>());
+        Set(profileSo, "_levelText", level.GetComponent<TMP_Text>());
+        Set(profileSo, "_xpFill", xpFill);
+        profileSo.ApplyModifiedPropertiesWithoutUndo();
+
+        var currency = NewPanel("CurrencyPanel", rt, new Vector2(1f, 1f), new Vector2(330f, 140f), new Vector2(24f, 24f));
+        NewText("CareerLabel", currency, "CAREER PTS", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
+            .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 16f));
+        var careerValue = NewText("CareerValue", currency, "0", 30f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
+        PlaceAt(careerValue, new Vector2(0f, 1f), new Vector2(290f, 42f), new Vector2(20f, 38f));
+        NewText("PremiumLabel", currency, "PREMIUM", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
+            .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 86f));
+        var premiumValue = NewText("PremiumValue", currency, "0", 22f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
+        PlaceAt(premiumValue, new Vector2(0f, 1f), new Vector2(290f, 32f), new Vector2(20f, 104f));
+        var currencyWidget = currency.gameObject.AddComponent<F1.UI.CurrencyWidget>();
+        var currencySo = new SerializedObject(currencyWidget);
+        Set(currencySo, "_careerPointsText", careerValue.GetComponent<TMP_Text>());
+        Set(currencySo, "_premiumText", premiumValue.GetComponent<TMP_Text>());
+        currencySo.ApplyModifiedPropertiesWithoutUndo();
+
+        var impl = root.GetComponent<F1.UI.TrackPanelScreenImpl>();
+        var so = new SerializedObject(impl);
+        Set(so, "_titleText", title.GetComponent<TMP_Text>());
+        var slotsProp = so.FindProperty("_slots");
+        slotsProp.arraySize = 3;
+        for (int i = 0; i < 3; i++)
+        {
+            var slot = slotsProp.GetArrayElementAtIndex(i);
+            var s = slots[i];
+            slot.FindPropertyRelative("Root").objectReferenceValue = s.Root;
+            slot.FindPropertyRelative("Art").objectReferenceValue = s.Art;
+            slot.FindPropertyRelative("ShortCode").objectReferenceValue = s.ShortCode;
+            slot.FindPropertyRelative("Name").objectReferenceValue = s.Name;
+            slot.FindPropertyRelative("Length").objectReferenceValue = s.Length;
+            slot.FindPropertyRelative("Laps").objectReferenceValue = s.Laps;
+            slot.FindPropertyRelative("Difficulty").objectReferenceValue = s.Difficulty;
+            slot.FindPropertyRelative("SelectedBadge").objectReferenceValue = s.SelectedBadge;
+            slot.FindPropertyRelative("Dim").objectReferenceValue = s.Dim;
+        }
+        Set(so, "_backButton", back.GetComponent<UnityEngine.UI.Button>());
+        Set(so, "_prevButton", prev.GetComponent<UnityEngine.UI.Button>());
+        Set(so, "_nextButton", next.GetComponent<UnityEngine.UI.Button>());
+        Set(so, "_confirmButton", confirm.GetComponent<UnityEngine.UI.Button>());
+        Set(so, "_profile", profileWidget);
+        Set(so, "_currency", currencyWidget);
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        PrefabUtility.SaveAsPrefabAsset(root, TrackPanelPrefabPath);
+        Object.DestroyImmediate(root);
+        Debug.Log($"[Garage] Track panel prefab written to {TrackPanelPrefabPath}");
+    }
+
+    /// <summary>
+    /// Fills one carousel slot: art well up top, short-code chip, name, then the
+    /// LENGTH / LAPS / DIFFICULTY stat band. The CanvasGroup is the side-slot dimmer.
+    /// </summary>
+    private static F1.UI.TrackPanelScreenImpl.TrackSlot BuildTrackSlot(RectTransform parent)
+    {
+        var slot = new F1.UI.TrackPanelScreenImpl.TrackSlot { Root = parent.gameObject };
+
+        var dim = parent.gameObject.AddComponent<CanvasGroup>();
+        dim.blocksRaycasts = false;
+        dim.interactable = false;
+        slot.Dim = dim;
+
+        var badge = NewText("SelectedBadge", parent, "SELECTED", 15f, TextAlignmentOptions.Right, SlimUiSkin.Accent);
+        PlaceAt(badge, new Vector2(1f, 1f), new Vector2(140f, 26f), new Vector2(16f, 12f));
+        slot.SelectedBadge = badge.gameObject;
+
+        var art = NewBar("ArtWell", parent, new Vector2(0.5f, 1f), new Vector2(parent.sizeDelta.x - 32f, parent.sizeDelta.y * 0.42f), new Vector2(0f, 16f));
+        slot.Art = art.GetComponent<UnityEngine.UI.Image>();
+
+        var code = NewText("ShortCode", parent, "", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted);
+        PlaceAt(code, new Vector2(0f, 1f), new Vector2(120f, 22f), new Vector2(16f, 16f));
+        slot.ShortCode = code.GetComponent<TMP_Text>();
+
+        var name = NewText("Name", parent, "Track", 26f, TextAlignmentOptions.Center, SlimUiSkin.TileInk);
+        PlaceAt(name, new Vector2(0.5f, 1f), new Vector2(parent.sizeDelta.x - 32f, 40f), new Vector2(0f, parent.sizeDelta.y * 0.42f + 28f));
+        slot.Name = name.GetComponent<TMP_Text>();
+
+        string[] labels = { "LENGTH", "LAPS", "DIFFICULTY" };
+        var texts = new TMP_Text[3];
+        for (int i = 0; i < 3; i++)
+        {
+            float y = parent.sizeDelta.y * 0.42f + 92f + i * 46f;
+            NewText($"Row{i}Label", parent, labels[i], 13f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
+                .AndPlace(new Vector2(0f, 1f), new Vector2(160f, 20f), new Vector2(24f, y));
+            texts[i] = NewText($"Row{i}Value", parent, "—", 18f, TextAlignmentOptions.Right, SlimUiSkin.TileInk)
+                .AndPlace(new Vector2(1f, 1f), new Vector2(160f, 24f), new Vector2(24f, y))
+                .GetComponent<TMP_Text>();
+        }
+        slot.Length = texts[0];
+        slot.Laps = texts[1];
+        slot.Difficulty = texts[2];
+
+        return slot;
     }
 
     // ==================================================================================
