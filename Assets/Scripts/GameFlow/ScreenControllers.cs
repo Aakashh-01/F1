@@ -141,9 +141,32 @@ namespace F1.GameFlow
 
         protected void TriggerTrackSelected(TrackDefinition track) => OnTrackSelected?.Invoke(track);
         protected void TriggerTrackUnlockRequested(TrackDefinition track) => OnTrackUnlockRequested?.Invoke(track);
+        protected void TriggerBackPressed() => OnBackPressed?.Invoke();
 
         public abstract void PopulateTracks(IReadOnlyList<TrackDefinition> owned, IReadOnlyList<TrackDefinition> locked);
         public abstract void SetSelectedTrack(TrackDefinition track);
+    }
+
+    /// <summary>
+    /// The track panel's controller-side base. Inherits the selection events from
+    /// <see cref="TrackSelectionScreen"/> unchanged — <c>OnTrackSelected</c> stays the
+    /// "a track became the session track" channel, and <c>OnBackPressed</c> stays
+    /// "back to the car panel" — so the flow's screen assignment needs nothing new.
+    /// The back protector lives on the base because a C# event can only be raised by
+    /// its declaring type; the panel's BACK button raises it through the inherited
+    /// <see cref="TrackSelectionScreen.TriggerBackPressed"/>.
+    /// </summary>
+    public abstract class TrackPanelScreen : TrackSelectionScreen, ITrackPanelScreen
+    {
+        public event Action OnPrevTrackPressed;
+        public event Action OnNextTrackPressed;
+        public event Action OnConfirmPressed;
+
+        protected void TriggerPrevTrackPressed() => OnPrevTrackPressed?.Invoke();
+        protected void TriggerNextTrackPressed() => OnNextTrackPressed?.Invoke();
+        protected void TriggerConfirmPressed() => OnConfirmPressed?.Invoke();
+
+        public abstract void ShowFocusedTrack(TrackDefinition track, bool isSelected, bool isAvailable);
     }
 
     /// <summary>

@@ -166,6 +166,33 @@ namespace F1.GameFlow
     }
 
     /// <summary>
+    /// The track panel — the second hosted screen of the menu hub. Same carousel grammar
+    /// as the garage's car panel: prev/next arrows cycle a focus track, the centre slot is
+    /// the hero, and focusing a raceable track makes it the session track immediately.
+    /// Focusing an unraceable circuit — locked, or no scene of its own — is display-only:
+    /// its stats render, Confirm goes dark, the session track is unchanged.
+    ///
+    /// The screen owns widgets and events only; cycle order, availability and navigation
+    /// live in the scene controller.
+    /// </summary>
+    public interface ITrackPanelScreen : ITrackSelectionScreen
+    {
+        event Action OnPrevTrackPressed;
+        event Action OnNextTrackPressed;
+
+        /// <summary>Confirm was pressed with a raceable session track expected.</summary>
+        event Action OnConfirmPressed;
+
+        /// <summary>
+        /// Renders <paramref name="track"/> as the centre slot with its neighbours flanking.
+        /// <paramref name="isSelected"/> is true when the flow accepted the track as the
+        /// session track; <paramref name="isAvailable"/> is false for circuits with no
+        /// scene, which render but cannot be raced.
+        /// </summary>
+        void ShowFocusedTrack(TrackDefinition track, bool isSelected, bool isAvailable);
+    }
+
+    /// <summary>
     /// Wing setup screen — High Downforce vs Low Downforce with track-specific recommendation.
     /// </summary>
     public interface IWingSetupScreen : IScreenController
