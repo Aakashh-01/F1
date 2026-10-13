@@ -128,6 +128,23 @@ namespace F1.GameFlow
         private void Register()
         {
             var flow = GameFlowManager.Instance;
+
+#if UNITY_EDITOR
+            // Editor convenience: pressing Play directly on a flow scene skips the loading
+            // scene — the only place the persistent root is normally created — and the host
+            // would dead-end with "no GameFlowManager", making the scene untestable alone.
+            // Builds keep the loud error below.
+            if (flow == null && Application.isPlaying)
+            {
+                FlowBootstrap.EnsureRoot();
+                flow = GameFlowManager.Instance;
+                if (flow != null)
+                    Debug.LogWarning(
+                        "[FlowSceneHost] No persistent flow root was running, so one was created " +
+                        "for direct scene play. Enter through 00_LoadingScene for the real boot.", this);
+            }
+#endif
+
             if (flow == null)
             {
                 Debug.LogError(

@@ -24,4 +24,11 @@ MonoBehaviour:
   _unlockCostPoints: 0
   _directPurchasePrice: 0
   _rentalCost24h: 2
+  _engineLabel: 1.6L V6-H MK4
+  _powerHP: 980
+  _torqueNm: 825
+  _topSpeedKph: 350
+  _accel0100Seconds: 2.6
+  _weightKg: 729
+  _displayTint: {r: 0.73, g: 0.41, b: 0.78, a: 1}
   _description: 24-hour rental. Times set in this car do not count toward rankings.

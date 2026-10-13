@@ -78,6 +78,33 @@ namespace F1.GameFlow
     }
 
     /// <summary>
+    /// The garage screen — the client-demo replacement for the lobby's car tiles.
+    ///
+    /// Inherits <see cref="OnNextPressed"/> and <see cref="TriggerNextPressed"/> from
+    /// <see cref="LobbyScreen"/> unchanged: "Continue" is the same leave-the-garage event
+    /// the tiles' Next button raised, which is why <see cref="GameFlowManager"/>'s
+    /// <c>case GameScreen.Lobby</c> accepts this class with no changes there.
+    /// </summary>
+    public abstract class GarageScreen : LobbyScreen, IGarageScreen
+    {
+        public event Action<CarDefinition> OnFocusChanged;
+        public event Action OnPrevCarPressed;
+        public event Action OnNextCarPressed;
+        public event Action OnDragStarted;
+        public event Action<float> OnDragDelta;
+        public event Action OnDragEnded;
+
+        public abstract void ShowFocusedCar(CarDefinition car, bool isSessionCar, bool isAvailable);
+
+        protected void TriggerFocusChanged(CarDefinition car) => OnFocusChanged?.Invoke(car);
+        protected void TriggerPrevCarPressed() => OnPrevCarPressed?.Invoke();
+        protected void TriggerNextCarPressed() => OnNextCarPressed?.Invoke();
+        protected void TriggerDragStarted() => OnDragStarted?.Invoke();
+        protected void TriggerDragDelta(float deltaX) => OnDragDelta?.Invoke(deltaX);
+        protected void TriggerDragEnded() => OnDragEnded?.Invoke();
+    }
+
+    /// <summary>
     /// Car selection screen — shows owned, rentable, locked cars by generation.
     /// </summary>
     public abstract class CarSelectionScreen : ScreenController, ICarSelectionScreen

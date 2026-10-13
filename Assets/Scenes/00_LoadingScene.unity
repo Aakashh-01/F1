@@ -460,7 +460,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _brandingScene: 00_LoadingScene
-  _lobbyScene: 05_LobbyScene
+  _lobbyScene: 05_GarageScene
   _mainMenuScene: 
   _trackSelectionScene: 20_TrackSelectionScene
   _wingSetupScene: 30_WingSetupScene

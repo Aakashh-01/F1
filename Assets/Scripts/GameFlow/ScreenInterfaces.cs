@@ -94,6 +94,51 @@ namespace F1.GameFlow
     }
 
     /// <summary>
+    /// The garage — the client-demo replacement for the lobby's car tiles.
+    ///
+    /// The 3D car on the turntable IS the selection: prev/next arrows cycle a focus car,
+    /// the panel describes it, and the flow's session car follows the focus automatically
+    /// whenever the focused car is usable. There is no select button and no tile strip.
+    ///
+    /// The screen owns widgets and events only. The cycle order, the availability check
+    /// and the session-car update all live in the scene controller, so replacing this
+    /// view with the real art later touches nothing above the screen layer.
+    /// </summary>
+    public interface IGarageScreen : ILobbyScreen
+    {
+        /// <summary>
+        /// The view changed which car it displays on its own initiative (a gesture or a
+        /// control the controller did not route). The controller re-focuses the named car.
+        /// The controller's own focus changes are pushed with <see cref="ShowFocusedCar"/>
+        /// and must not echo back through this event.
+        /// </summary>
+        event Action<CarDefinition> OnFocusChanged;
+
+        /// <summary>The previous-car arrow was pressed.</summary>
+        event Action OnPrevCarPressed;
+
+        /// <summary>The next-car arrow was pressed.</summary>
+        event Action OnNextCarPressed;
+
+        /// <summary>A drag on the car began.</summary>
+        event Action OnDragStarted;
+
+        /// <summary>The drag moved, as horizontal pointer delta in pixels.</summary>
+        event Action<float> OnDragDelta;
+
+        /// <summary>The drag ended.</summary>
+        event Action OnDragEnded;
+
+        /// <summary>
+        /// Shows <paramref name="car"/> as the focused car. <paramref name="isSessionCar"/>
+        /// is true when the flow accepted it as the session car;
+        /// <paramref name="isAvailable"/> is false for locked cars, which render their
+        /// stats but cannot be taken into a session.
+        /// </summary>
+        void ShowFocusedCar(CarDefinition car, bool isSessionCar, bool isAvailable);
+    }
+
+    /// <summary>
     /// Car selection screen — shows owned, rentable, locked cars by generation.
     /// </summary>
     public interface ICarSelectionScreen : IScreenController

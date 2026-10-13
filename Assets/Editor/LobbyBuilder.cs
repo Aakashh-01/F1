@@ -1205,7 +1205,7 @@ public class LobbyBuilder
     /// The transform list is snapshotted before any mutation, so entries that were children
     /// of a destroyed camera are fake-null by the time this finishes. Hence the null checks.
     /// </summary>
-    private static void RemoveCameras(Transform root)
+    public static void RemoveCameras(Transform root)
     {
         foreach (var t in AllTransforms(root))
         {
@@ -1232,7 +1232,7 @@ public class LobbyBuilder
     /// Nested prefab instances are skipped throughout. Car_Model is a glTF import instance
     /// and its internals are not ours to edit; only the hierarchy F1_Body itself authored is.
     /// </summary>
-    private static void StripNonVisualComponents(Transform root)
+    public static void StripNonVisualComponents(Transform root)
     {
         for (int pass = 0; pass < 6; pass++)
         {
@@ -1263,7 +1263,7 @@ public class LobbyBuilder
     /// how a showcase ends up quietly running VehiclePhysicsCoordinator in a menu scene, so
     /// this reports rather than trusts.
     /// </summary>
-    private static void ReportLeftovers(Transform root)
+    public static void ReportLeftovers(Transform root)
     {
         var counts = new Dictionary<string, int>();
         foreach (var t in AllTransforms(root))
@@ -1295,7 +1295,7 @@ public class LobbyBuilder
     }
 
     /// <summary>Depth-first over live transforms, collecting before mutating.</summary>
-    private static List<Transform> AllTransforms(Transform root)
+    public static List<Transform> AllTransforms(Transform root)
     {
         var found = new List<Transform>();
         var stack = new Stack<Transform>();

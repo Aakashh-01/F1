@@ -69,6 +69,36 @@ namespace F1.GameData
         [SerializeField] private float _rentalCost24h = 0f;
         public float RentalCost24h => _rentalCost24h;
 
+        [Header("Garage Display (client-demo placeholders)")]
+        [Tooltip("Engine label for the garage stats panel, e.g. \"1.6L V6 Turbo Hybrid\".")]
+        [SerializeField] private string _engineLabel;
+        public string EngineLabel => _engineLabel;
+
+        [Tooltip("Displayed power in hp.")]
+        [SerializeField] private float _powerHP;
+        public float PowerHP => _powerHP;
+
+        [Tooltip("Displayed torque in Nm.")]
+        [SerializeField] private float _torqueNm;
+        public float TorqueNm => _torqueNm;
+
+        [Tooltip("Displayed top speed in km/h.")]
+        [SerializeField] private float _topSpeedKph;
+        public float TopSpeedKph => _topSpeedKph;
+
+        [Tooltip("Displayed 0-100 km/h time in seconds (lower is better).")]
+        [SerializeField] private float _accel0100Seconds;
+        public float Accel0100Seconds => _accel0100Seconds;
+
+        [Tooltip("Displayed weight in kg.")]
+        [SerializeField] private float _weightKg;
+        public float WeightKg => _weightKg;
+
+        [Tooltip("Placeholder showroom tint while every car shares one body prefab. " +
+                 "Real liveries replace this later; the garage panel reads nothing from it.")]
+        [SerializeField] private Color _displayTint = Color.white;
+        public Color DisplayTint => _displayTint;
+
         [Header("Description")]
         [TextArea(2, 4)]
         [SerializeField] private string _description;

@@ -14,17 +14,21 @@ namespace F1.GameFlow
         /// <summary>
         /// The lobby. This is the 3D garage: the car stands in it and does not move.
         ///
-        /// It hosts car selection directly — the tile strip and Next are the first thing on
-        /// screen, with no hub panel and no Start Race button in front of them. It is
-        /// deliberately NOT a separate menu screen in front of the garage, and there is no
-        /// "click Car Selection to navigate" step between loading and it.
-        ///
-        /// The hub that used to sit here (currency, settings, task list, Start Race) was
-        /// removed 2026-09-30; it was a deliberate reversal of the original "no main menu
-        /// between loading and car selection" requirement, decided 2026-09-26, and has since
-        /// been reversed back.
+        /// Since the client-demo UI rework this is <c>05_GarageScene</c> — a scene rebuilt
+        /// from the lobby's captured garage rig, hosting the garage screen where the
+        /// displayed car IS the selection. The scene it replaced remains on disk as
+        /// <see cref="RetiredGarageLobby"/> but is out of the build list and the route.
         /// </summary>
-        public const string Lobby = "05_LobbyScene";
+        public const string Lobby = "05_GarageScene";
+
+        /// <summary>
+        /// The garage scene's predecessor: the hand-authored lobby whose tile strip the
+        /// garage screen replaced. Kept on disk — it is the only copy of the hand-tuned
+        /// garage rig the builder captures from, and the rollback path — but not in the
+        /// build list. Its garage rig source is <see cref="Lobby"/>'s scene, so nothing
+        /// here may ever save over it.
+        /// </summary>
+        public const string RetiredGarageLobby = "05_LobbyScene";
 
         /// <summary>
         /// Car selection. The scene no longer ships — it is gone from the build list and the

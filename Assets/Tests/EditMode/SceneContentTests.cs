@@ -148,6 +148,43 @@ public class SceneContentTests
     }
 
     [Test]
+    public void GarageScene_IsWiredCorrectly()
+    {
+        var scene = EditorSceneManager.OpenScene(
+            $"Assets/Scenes/{FlowSceneNames.Lobby}.unity", OpenSceneMode.Single);
+
+        var host = Object.FindAnyObjectByType<FlowSceneHost>();
+        Assert.IsNotNull(host, "The garage scene must carry a FlowSceneHost.");
+        Assert.AreEqual(GameFlowManager.GameScreen.Lobby, host.HostedScreen,
+            "The garage replaces the lobby in the route, so it must declare GameScreen.Lobby; " +
+            "a new enum member would shift the serialized value behind every other host.");
+
+        var prefab = HostScreenPrefab(host);
+        Assert.IsNotNull(prefab, "The garage host must have a screen prefab assigned.");
+        Assert.IsNotNull(prefab.GetComponent<GarageScreen>(),
+            "The hosted prefab must actually be a garage screen.");
+
+        Assert.IsNotNull(Object.FindAnyObjectByType<GarageSceneController>(),
+            "The garage scene must carry its scene controller.");
+        Assert.IsNotNull(Object.FindAnyObjectByType<GarageTurntable>(),
+            "The garage scene must carry a turntable for the displayed car.");
+        Assert.IsNotNull(Object.FindAnyObjectByType<ShowcaseCarSwapper>(),
+            "The garage scene must carry a showcase swapper.");
+    }
+
+    [Test]
+    public void RetiredGarageLobby_IsOnDiskButOutOfTheBuildList()
+    {
+        Assert.IsTrue(
+            File.Exists(ToAbsolute($"Assets/Scenes/{FlowSceneNames.RetiredGarageLobby}.unity")),
+            "The retired lobby must stay on disk: it is the hand-tuned rig source and the rollback path.");
+        Assert.IsFalse(
+            System.Array.Exists(EditorBuildSettings.scenes,
+                s => s.path.Contains(FlowSceneNames.RetiredGarageLobby)),
+            $"The retired lobby must not be in the build list; the route goes through {FlowSceneNames.Lobby} now.");
+    }
+
+    [Test]
     public void EveryFlowScene_HostsExactlyOneScreen()
     {
         // One screen per scene. Two hosts in a scene means one of them is unreachable.
