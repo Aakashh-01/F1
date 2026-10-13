@@ -134,7 +134,15 @@ namespace F1.GameFlow
             // scene — the only place the persistent root is normally created — and the host
             // would dead-end with "no GameFlowManager", making the scene untestable alone.
             // Builds keep the loud error below.
-            if (flow == null && Application.isPlaying)
+            //
+            // Not under the play mode test runner, though: it drives tests from its own
+            // "InitTestScene*" scene, so an injected root there would hijack tests that
+            // load flow scenes directly — a second manager and event system, and the
+            // active scene wedged Busy on the test's own navigation.
+            var underTestRunner = Application.isPlaying &&
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene()
+                    .name.StartsWith("InitTestScene");
+            if (flow == null && Application.isPlaying && !underTestRunner)
             {
                 FlowBootstrap.EnsureRoot();
                 flow = GameFlowManager.Instance;
