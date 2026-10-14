@@ -512,8 +512,8 @@ public static class GarageBuilder
     private static readonly Vector3 SocketPosition = new Vector3(0f, 0.05f, 0f);
     private const float SocketYawDegrees = 180f;   // nose toward the camera at -Z
     private const float SocketScale = 0.8f;
-    private static readonly Vector3 CameraPosition = new Vector3(0f, 0.85f, -6.2f);
-    private static readonly Vector3 CameraLookAt = new Vector3(0f, 0.72f, 0.35f);
+    private static readonly Vector3 CameraPosition = new Vector3(0f, 0.85f, -5.2f);
+    private static readonly Vector3 CameraLookAt = new Vector3(0f, -0.55f, 0.2f);
     private const float CameraFov = 34f;
     private static readonly Color BackdropColor = new Color(0.055f, 0.065f, 0.08f, 1f);
 
