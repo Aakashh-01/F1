@@ -93,6 +93,13 @@ namespace F1.GameFlow
             Register();
         }
 
+        /// <summary>
+        /// Creates the screen instance now if it does not exist. The flow calls this when
+        /// it resolves a host whose root is still inactive (the hub's second panel) — that
+        /// host has had no Awake yet, so the Awake path has not run.
+        /// </summary>
+        public void EnsureScreen() => EnsureScreenInstance();
+
         private void OnDestroy()
         {
             if (_registered && GameFlowManager.Instance != null)

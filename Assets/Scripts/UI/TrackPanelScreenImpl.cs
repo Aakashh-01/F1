@@ -89,10 +89,10 @@ namespace F1.UI
             RefreshFromProfile();
         }
 
-        // Not overrides: the chrome contract (SetCurrency/RefreshFromProfile) belongs to
-        // ILobbyScreen, and the flow never pushes profile updates to track screens. The
-        // panel refreshes its own chrome on Initialize and when the hub raises it.
-        public void RefreshFromProfile()
+        // SetCurrency joins the chrome contract through the base's virtual; the flow
+        // itself never pushes profile updates to track screens. The panel refreshes its
+        // own chrome on Initialize and when its controller raises the stage.
+        public override void RefreshFromProfile()
         {
             if (_profile != null) _profile.Refresh();
             if (_currency != null) _currency.Refresh();

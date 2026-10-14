@@ -770,6 +770,12 @@ namespace F1.GameFlow
             var host = FindSceneHost(screen);
             if (host != null)
             {
+                // A hub panel's host is found while its root is still inactive, so its
+                // Awake — the usual instantiation point — has not run. Ask instead of
+                // waiting; instantiating under an inactive root defers the screen's own
+                // Awake to the hub's raise, which is what the deferred wiring wants.
+                host.EnsureScreen();
+
                 if (host.HasScreenInstance)
                 {
                     host.ScreenInstance.Initialize(this);
@@ -868,6 +874,17 @@ namespace F1.GameFlow
         private FlowSceneHost FindSceneHost(GameScreen screen)
         {
             foreach (var host in _sceneHosts)
+            {
+                if (host != null && host.HostedScreen == screen)
+                    return host;
+            }
+
+            // A host whose root starts inactive has had no Awake, so it cannot be in the
+            // registry yet — the menu hub's track panel. The scan sees the component
+            // whether its GameObject is active or not, which is what makes the second
+            // hosted screen resolvable on its first show.
+            foreach (var host in FindObjectsByType<FlowSceneHost>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (host != null && host.HostedScreen == screen)
                     return host;

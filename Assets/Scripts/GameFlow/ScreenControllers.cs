@@ -167,6 +167,15 @@ namespace F1.GameFlow
         protected void TriggerConfirmPressed() => OnConfirmPressed?.Invoke();
 
         public abstract void ShowFocusedTrack(TrackDefinition track, bool isSelected, bool isAvailable);
+
+        /// <summary>
+        /// The chrome refresh the lobby hierarchy gets pushed by the flow. The flow never
+        /// pushes profile updates to track screens, and the hosted panel's Initialize is
+        /// skipped on the first show (the hub raises the host only after the flow has
+        /// resolved the screen), so the scene controller calls this when the panel comes
+        /// on stage.
+        /// </summary>
+        public virtual void RefreshFromProfile() { }
     }
 
     /// <summary>

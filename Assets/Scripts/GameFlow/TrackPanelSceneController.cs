@@ -63,6 +63,12 @@ namespace F1.GameFlow
 
             _screen.PopulateTracks(_cycle, System.Array.Empty<TrackDefinition>());
             FocusInitialTrack();
+
+            // The flow resolves the hosted screen while the host root is still inactive,
+            // so its Initialize (the chrome refresh) never runs on the first show. Start
+            // runs only once the hub has raised the stage, which makes it the hook that
+            // actually fires.
+            _screen.RefreshFromProfile();
         }
 
         private void OnDestroy()
