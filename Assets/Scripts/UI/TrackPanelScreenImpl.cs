@@ -26,6 +26,7 @@ namespace F1.UI
         {
             public GameObject Root;
             public Image Art;
+            public Image Flag;
             public TMP_Text ShortCode;
             public TMP_Text Name;
             public TMP_Text Length;
@@ -35,11 +36,22 @@ namespace F1.UI
             public CanvasGroup Dim;
         }
 
+        /// <summary>Flag art keyed by track id — pure rendering data, authored by the
+        /// garage builder, so the view never derives art from naming conventions.</summary>
+        [Serializable]
+        public class TrackFlag
+        {
+            public string TrackId;
+            public Sprite Flag;
+        }
+
         [Header("Header")]
         [SerializeField] private TMP_Text _titleText;
 
         [Header("Slots — order: left, centre, right")]
         [SerializeField] private TrackSlot[] _slots;
+
+        [SerializeField] private TrackFlag[] _flags;
 
         [Header("Actions")]
         [SerializeField] private Button _backButton;
@@ -136,6 +148,15 @@ namespace F1.UI
 
         private int Wrap(int i) => ((i % _tracks.Count) + _tracks.Count) % _tracks.Count;
 
+        private Sprite FlagFor(string trackId)
+        {
+            if (_flags == null || string.IsNullOrEmpty(trackId)) return null;
+            foreach (var entry in _flags)
+                if (entry != null && entry.TrackId == trackId && entry.Flag != null)
+                    return entry.Flag;
+            return null;
+        }
+
         private void ShowEmpty()
         {
             if (_slots != null)
@@ -158,6 +179,11 @@ namespace F1.UI
                 // Without art the well renders as a dark panel rather than Unity's white
                 // "missing sprite" quad.
                 slot.Art.color = hasArt ? Color.white : EmptyArtFill;
+            }
+            if (slot.Flag != null)
+            {
+                slot.Flag.sprite = track != null ? FlagFor(track.TrackId) : null;
+                slot.Flag.enabled = slot.Flag.sprite != null;
             }
             if (slot.ShortCode != null) slot.ShortCode.text = track?.ShortCode ?? "";
             if (slot.Name != null) slot.Name.text = track?.DisplayName ?? "—";

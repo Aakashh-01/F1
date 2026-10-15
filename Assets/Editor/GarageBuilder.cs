@@ -179,9 +179,13 @@ public static class GarageBuilder
     // ==================================================================================
 
     /// <summary>
-    /// Builds the garage screen: profile top-left, dual currency top-right, stats panel
-    /// mid-left, arrows flanking the car, Continue bottom-right, and a drag layer as the
-    /// FIRST canvas child so every panel sits above it and keeps its own raycasts.
+    /// Builds the garage screen to Assets/Scenes/ReferenceImageCarselection.png: a glass
+    /// profile card with helmet avatar top-left, coin/gem currency pills top-right, the CAR
+    /// SPECIFICATIONS glass panel mid-left with red stat bars, chevron arrows flanking the
+    /// car, and the orange parallelogram Continue bottom-right.
+    ///
+    /// All art is procedural (Tools > Garage > Build UI Art) and all type is Titillium Web
+    /// (Tools > Garage > Build F1 Font Assets). Run those first.
     ///
     /// No UnityEvent wiring and no second pass: GarageScreenImpl self-wires its buttons in
     /// Awake, so the inert-buttons trap the lobby builder had to route around does not
@@ -219,16 +223,23 @@ public static class GarageBuilder
         dragImage.raycastTarget = true;
         dragLayer.gameObject.AddComponent<GarageDragLayer>();
 
-        // --- Player profile, top-left. ---
-        var profile = NewPanel("ProfilePanel", rt, new Vector2(0f, 1f), new Vector2(400f, 140f), new Vector2(24f, 24f));
-        var playerName = NewText("PlayerName", profile, "Player", 24f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(playerName, new Vector2(0f, 1f), new Vector2(250f, 34f), new Vector2(20f, 16f));
-        var team = NewText("Team", profile, "Team", 17f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted);
-        PlaceAt(team, new Vector2(0f, 1f), new Vector2(250f, 26f), new Vector2(20f, 56f));
-        var level = NewText("Level", profile, "LEVEL 1", 17f, TextAlignmentOptions.Right, SlimUiSkin.TileInk);
-        PlaceAt(level, new Vector2(1f, 1f), new Vector2(130f, 26f), new Vector2(20f, 18f));
-        var xpBg = NewBar("XpBar", profile, new Vector2(0f, 1f), new Vector2(360f, 12f), new Vector2(20f, 100f));
-        var xpFill = NewBarFill(xpBg, SlimUiSkin.Accent);
+        // --- Player profile card, top-left: avatar, italic name, level + XP, team. ---
+        var profile = NewGlassPanel("ProfilePanel", rt, new Vector2(0f, 1f), new Vector2(430f, 124f), new Vector2(24f, 24f));
+        NewIcon("Avatar", profile, "Helmet_Avatar", new Vector2(0f, 0.5f), new Vector2(92f, 92f), new Vector2(16f, 0f));
+        var playerName = NewF1Text("PlayerName", profile, "Player", "BoldItalic", 28f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(playerName, new Vector2(0f, 1f), new Vector2(296f, 36f), new Vector2(120f, 14f));
+        var level = NewF1Text("Level", profile, "LEVEL 1", "SemiBold", 15f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(level, new Vector2(0f, 1f), new Vector2(96f, 20f), new Vector2(120f, 52f));
+        var xpBg = NewPill("XpBar", profile, new Vector2(0f, 1f), new Vector2(138f, 8f), new Vector2(222f, 58f));
+        var xpFill = NewPillFill(xpBg, new Color(0.92f, 0.93f, 0.96f, 1f));
+        NewF1Text("XpTag", profile, "XP", "SemiBold", 11f,
+            TextAlignmentOptions.MidlineRight, SlimUiSkin.TileInkMuted)
+            .AndPlace(new Vector2(1f, 1f), new Vector2(34f, 16f), new Vector2(16f, 54f));
+        var team = NewF1Text("Team", profile, "Team", "SemiBold", 13f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInkMuted);
+        PlaceAt(team, new Vector2(0f, 1f), new Vector2(296f, 20f), new Vector2(120f, 78f));
         var profileWidget = profile.gameObject.AddComponent<F1.UI.ProfileWidget>();
         var profileSo = new SerializedObject(profileWidget);
         Set(profileSo, "_playerNameText", playerName.GetComponent<TMP_Text>());
@@ -237,68 +248,116 @@ public static class GarageBuilder
         Set(profileSo, "_xpFill", xpFill);
         profileSo.ApplyModifiedPropertiesWithoutUndo();
 
-        // --- Dual currency, top-right. Career points first: unlocks cost careerPoints. ---
-        var currency = NewPanel("CurrencyPanel", rt, new Vector2(1f, 1f), new Vector2(330f, 140f), new Vector2(24f, 24f));
-        NewText("CareerLabel", currency, "CAREER PTS", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-            .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 16f));
-        var careerValue = NewText("CareerValue", currency, "0", 30f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(careerValue, new Vector2(0f, 1f), new Vector2(290f, 42f), new Vector2(20f, 38f));
-        NewText("PremiumLabel", currency, "PREMIUM", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-            .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 86f));
-        var premiumValue = NewText("PremiumValue", currency, "0", 22f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(premiumValue, new Vector2(0f, 1f), new Vector2(290f, 32f), new Vector2(20f, 104f));
+        // --- Currency, top-right: one glass bar, two inset pills. Career points first
+        // (unlocks cost careerPoints); the premium figure reads red like the reference. ---
+        var currency = NewGlassPanel("CurrencyPanel", rt, new Vector2(1f, 1f), new Vector2(480f, 64f), new Vector2(24f, 24f));
+        var careerPill = NewInsetPill("CareerPill", currency, new Vector2(0f, 1f), new Vector2(228f, 48f), new Vector2(8f, 8f));
+        var careerValue = NewF1Text("CareerValue", careerPill, "0", "Bold", 24f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(careerValue, new Vector2(0f, 0.5f), new Vector2(150f, 40f), new Vector2(14f, 0f));
+        NewIcon("Coin", careerPill, "Coin", new Vector2(1f, 0.5f), new Vector2(36f, 36f), new Vector2(10f, 0f));
+        var premiumPill = NewInsetPill("PremiumPill", currency, new Vector2(1f, 1f), new Vector2(228f, 48f), new Vector2(8f, 8f));
+        var premiumValue = NewF1Text("PremiumValue", premiumPill, "0", "Bold", 22f,
+            TextAlignmentOptions.MidlineLeft, new Color(0.98f, 0.30f, 0.27f, 1f));
+        PlaceAt(premiumValue, new Vector2(0f, 0.5f), new Vector2(150f, 40f), new Vector2(14f, 0f));
+        NewIcon("Gem", premiumPill, "Gem", new Vector2(1f, 0.5f), new Vector2(34f, 34f), new Vector2(12f, 0f));
         var currencyWidget = currency.gameObject.AddComponent<F1.UI.CurrencyWidget>();
         var currencySo = new SerializedObject(currencyWidget);
         Set(currencySo, "_careerPointsText", careerValue.GetComponent<TMP_Text>());
         Set(currencySo, "_premiumText", premiumValue.GetComponent<TMP_Text>());
         currencySo.ApplyModifiedPropertiesWithoutUndo();
 
-        // --- Stats panel, mid-left. The CanvasGroup is the locked dimmer; it must not
+        // --- Spec panel, mid-left. The CanvasGroup is the locked dimmer; it must not
         //     block raycasts or it would eat the drags that belong to the layer below. ---
-        var stats = NewPanel("StatsPanel", rt, new Vector2(0f, 0.5f), new Vector2(400f, 470f), new Vector2(24f, 20f));
+        var stats = NewGlassPanel("StatsPanel", rt, new Vector2(0f, 0.5f), new Vector2(420f, 520f), new Vector2(24f, 0f));
         var dimmer = stats.gameObject.AddComponent<CanvasGroup>();
         dimmer.blocksRaycasts = false;
         dimmer.interactable = false;
 
-        var carName = NewText("CarName", stats, "Car", 28f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(carName, new Vector2(0f, 1f), new Vector2(280f, 40f), new Vector2(20f, 16f));
-        var carGen = NewText("CarGen", stats, "GEN 1", 16f, TextAlignmentOptions.Right, SlimUiSkin.TileInkMuted);
-        PlaceAt(carGen, new Vector2(1f, 1f), new Vector2(100f, 24f), new Vector2(20f, 24f));
-        var carStatus = NewText("CarStatus", stats, "OWNED", 19f, TextAlignmentOptions.Left, SlimUiSkin.Accent);
-        PlaceAt(carStatus, new Vector2(0f, 1f), new Vector2(360f, 28f), new Vector2(20f, 62f));
+        NewF1Text("Header", stats, "CAR SPECIFICATIONS", "SemiBold", 14f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInkMuted)
+            .AndPlace(new Vector2(0f, 1f), new Vector2(300f, 20f), new Vector2(20f, 20f));
+        var carGen = NewF1Text("CarGen", stats, "GEN 1", "SemiBold", 13f,
+            TextAlignmentOptions.MidlineRight, SlimUiSkin.TileInkMuted);
+        PlaceAt(carGen, new Vector2(1f, 1f), new Vector2(80f, 18f), new Vector2(20f, 21f));
+        var carName = NewF1Text("CarName", stats, "Car", "BoldItalic", 38f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(carName, new Vector2(0f, 1f), new Vector2(380f, 96f), new Vector2(20f, 44f));
+        var carStatus = NewF1Text("CarStatus", stats, "OWNED", "Bold", 16f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.AccentRed);
+        PlaceAt(carStatus, new Vector2(0f, 1f), new Vector2(380f, 24f), new Vector2(20f, 148f));
 
-        NewText("EngineLabel", stats, "ENGINE", 13f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-            .AndPlace(new Vector2(0f, 1f), new Vector2(100f, 20f), new Vector2(20f, 100f));
-        var engineValue = NewText("EngineValue", stats, "—", 15f, TextAlignmentOptions.Right, SlimUiSkin.TileInk);
-        PlaceAt(engineValue, new Vector2(1f, 1f), new Vector2(240f, 20f), new Vector2(20f, 100f));
+        NewF1Text("EngineLabel", stats, "ENGINE", "SemiBold", 14f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInkMuted)
+            .AndPlace(new Vector2(0f, 1f), new Vector2(90f, 20f), new Vector2(20f, 186f));
+        var engineValue = NewF1Text("EngineValue", stats, "-", "Bold", 14f,
+            TextAlignmentOptions.MidlineRight, SlimUiSkin.TileInk);
+        PlaceAt(engineValue, new Vector2(1f, 1f), new Vector2(280f, 20f), new Vector2(20f, 186f));
 
         string[] rowLabels = { "POWER", "TORQUE", "TOP SPEED", "0-100", "WEIGHT" };
         var rowValues = new TMP_Text[5];
         var rowFills = new Image[5];
         for (int i = 0; i < 5; i++)
         {
-            float y = 136f + i * 56f;
-            NewText($"Row{i}Label", stats, rowLabels[i], 13f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-                .AndPlace(new Vector2(0f, 1f), new Vector2(240f, 18f), new Vector2(20f, y));
-            rowValues[i] = NewText($"Row{i}Value", stats, "—", 17f, TextAlignmentOptions.Right, SlimUiSkin.TileInk)
-                .AndPlace(new Vector2(1f, 1f), new Vector2(150f, 20f), new Vector2(20f, y - 2f))
+            float y = 218f + i * 62f;
+            NewF1Text($"Row{i}Label", stats, rowLabels[i], "SemiBold", 15f,
+                TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk)
+                .AndPlace(new Vector2(0f, 1f), new Vector2(160f, 22f), new Vector2(20f, y));
+            rowValues[i] = NewF1Text($"Row{i}Value", stats, "-", "Bold", 16f,
+                TextAlignmentOptions.MidlineRight, SlimUiSkin.TileInk)
+                .AndPlace(new Vector2(1f, 1f), new Vector2(200f, 22f), new Vector2(20f, y))
                 .GetComponent<TMP_Text>();
-            var barBg = NewBar($"Row{i}Bar", stats, new Vector2(0f, 1f), new Vector2(360f, 10f), new Vector2(20f, y + 26f));
-            rowFills[i] = NewBarFill(barBg, SlimUiSkin.Accent);
+            // The reference bars only Power/Torque/TopSpeed; StatRow.Fill is null-guarded
+            // in the impl, so the last two rows simply have no bar wired.
+            if (i < 3)
+            {
+                var barBg = NewPill($"Row{i}Bar", stats, new Vector2(0f, 1f), new Vector2(380f, 8f), new Vector2(20f, y + 28f));
+                rowFills[i] = NewPillFill(barBg, SlimUiSkin.AccentRed);
+            }
         }
 
-        // --- Arrows flanking the car. Both secondary: Continue is the primary action. ---
-        // ASCII "<"/">": the default TMP SDF atlas only guarantees ASCII, and geometric
-        // shapes like ◀ render as blank boxes there.
-        var prev = NewButton("PrevButton", rt, "<", 40f, primary: false);
-        PlaceAt(prev, new Vector2(0f, 0.5f), new Vector2(90f, 130f), new Vector2(430f, 0f));
-        var next = NewButton("NextButton", rt, ">", 40f, primary: false);
-        PlaceAt(next, new Vector2(1f, 0.5f), new Vector2(90f, 130f), new Vector2(430f, 0f));
+        // --- Chevron arrows flanking the car, captions above and below. Clear of the
+        //     444-px spec-panel edge on the left and pushed to the frame edge on the
+        //     right, mirroring the reference's asymmetry. ---
+        var prev = NewArrowButton("PrevButton", rt, "Chevron_Left", "PREVIOUS");
+        PlaceAt(prev, new Vector2(0f, 0.5f), new Vector2(110f, 110f), new Vector2(565f, 0f));
+        var next = NewArrowButton("NextButton", rt, "Chevron_Right", "NEXT");
+        PlaceAt(next, new Vector2(1f, 0.5f), new Vector2(110f, 110f), new Vector2(115f, 0f));
 
-        // --- Continue, bottom-right. Dark until the flow accepts a session car. ---
-        var continueBtn = NewButton("ContinueButton", rt, "CONTINUE TO RACE", 26f, primary: true);
-        PlaceAt(continueBtn, new Vector2(1f, 0f), new Vector2(320f, 80f), new Vector2(24f, 28f));
-        continueBtn.GetComponent<UnityEngine.UI.Button>().interactable = false;
+        // --- Continue: orange parallelogram, italic NEXT over the race line, sparkle.
+        //     Dark until the flow accepts a session car (disabled tint). ---
+        var continueBtn = NewUiObject("ContinueButton", rt);
+        PlaceAt(continueBtn, new Vector2(1f, 0f), new Vector2(360f, 120f), new Vector2(24f, 28f));
+        var contImage = continueBtn.gameObject.AddComponent<UnityEngine.UI.Image>();
+        contImage.sprite = SlimUiSkin.GarageSprite("Button_Parallelogram");
+        contImage.type = Image.Type.Sliced;
+        contImage.color = Color.white;
+        contImage.raycastTarget = true;
+        var contButton = continueBtn.gameObject.AddComponent<UnityEngine.UI.Button>();
+        contButton.targetGraphic = contImage;
+        contButton.transition = Selectable.Transition.ColorTint;
+        var contColors = contButton.colors;
+        contColors.normalColor = Color.white;
+        contColors.highlightedColor = new Color(1.08f, 1.03f, 0.98f, 1f);
+        contColors.pressedColor = new Color(0.80f, 0.70f, 0.60f, 1f);
+        contColors.disabledColor = new Color(0.42f, 0.42f, 0.45f, 0.85f);
+        contColors.fadeDuration = 0.08f;
+        contButton.colors = contColors;
+        contButton.interactable = false;
+
+        var contLabel = NewF1Text("Label", continueBtn, "NEXT", "BoldItalic", 46f,
+            TextAlignmentOptions.Center, Color.white);
+        contLabel.anchorMin = contLabel.anchorMax = new Vector2(0.5f, 0.5f);
+        contLabel.pivot = new Vector2(0.5f, 0.5f);
+        contLabel.sizeDelta = new Vector2(300f, 56f);
+        contLabel.anchoredPosition = new Vector2(-10f, 16f);
+        var contSub = NewF1Text("SubLabel", continueBtn, "CONTINUE TO RACE", "Bold", 15f,
+            TextAlignmentOptions.Center, Color.white);
+        contSub.anchorMin = contSub.anchorMax = new Vector2(0.5f, 0.5f);
+        contSub.pivot = new Vector2(0.5f, 0.5f);
+        contSub.sizeDelta = new Vector2(320f, 24f);
+        contSub.anchoredPosition = new Vector2(-10f, -26f);
+        NewIcon("Sparkle", continueBtn, "Sparkle", new Vector2(1f, 1f), new Vector2(64f, 64f), new Vector2(26f, 6f));
 
         // --- Serialized wiring. ---
         var so = new SerializedObject(impl);
@@ -316,7 +375,7 @@ public static class GarageBuilder
         }
         Set(so, "_currency", currencyWidget);
         Set(so, "_profile", profileWidget);
-        Set(so, "_continueButton", continueBtn.GetComponent<UnityEngine.UI.Button>());
+        Set(so, "_continueButton", contButton);
         Set(so, "_prevButton", prev.GetComponent<UnityEngine.UI.Button>());
         Set(so, "_nextButton", next.GetComponent<UnityEngine.UI.Button>());
         Set(so, "_dragLayer", dragLayer.GetComponent<GarageDragLayer>());
@@ -333,9 +392,13 @@ public static class GarageBuilder
     // ==================================================================================
 
     /// <summary>
-    /// Builds the track panel: SELECT TRACK title, three carousel slots (sides dimmed),
-    /// edge arrows, BACK and CONFIRM, over the shared profile/currency chrome. Same
-    /// self-wiring rule as the garage screen — serialized references only.
+    /// Builds the track panel to Assets/Scenes/ReferenceImageTrack.png: SELECT TRACK
+    /// title, three glass carousel slots (neon circuit map, flag, LENGTH/LAPS/DIFFICULTY
+    /// stat columns, the centre hero wearing the orange glow border and SELECTED chip),
+    /// edge chevron arrows, the dark parallelogram BACK and the orange CONFIRM reading
+    /// CONTINUE, over the same glass profile/currency chrome as the car panel.
+    ///
+    /// Needs Tools > Garage > Build Track UI Art first (flags, chip, border, maps).
     ///
     /// Re-runnable: edits the prefab in place.
     /// </summary>
@@ -361,46 +424,59 @@ public static class GarageBuilder
 
         // No root Graphic: the garage behind is the point, exactly as on the car panel.
 
-        var title = NewText("Title", rt, "SELECT TRACK", 34f, TextAlignmentOptions.Center, SlimUiSkin.TileInk);
-        PlaceAt(title, new Vector2(0.5f, 1f), new Vector2(600f, 60f), new Vector2(0f, 36f));
+        var title = NewF1Text("Title", rt, "SELECT TRACK", "BoldItalic", 44f,
+            TextAlignmentOptions.Center, SlimUiSkin.TileInk);
+        PlaceAt(title, new Vector2(0.5f, 1f), new Vector2(700f, 60f), new Vector2(0f, 26f));
 
         // Carousel slots. PlaceAt zeroes the offset on a middle anchor, so the sides get
         // their anchoredPosition set directly after.
-        var centre = NewPanel("SlotCentre", rt, new Vector2(0.5f, 0.5f), new Vector2(430f, 560f), Vector2.zero);
-        centre.anchoredPosition = new Vector2(0f, 20f);
-        var left = NewPanel("SlotLeft", rt, new Vector2(0.5f, 0.5f), new Vector2(320f, 430f), Vector2.zero);
-        left.anchoredPosition = new Vector2(-560f, 60f);
-        var right = NewPanel("SlotRight", rt, new Vector2(0.5f, 0.5f), new Vector2(320f, 430f), Vector2.zero);
-        right.anchoredPosition = new Vector2(560f, 60f);
+        var centre = NewGlassPanel("SlotCentre", rt, new Vector2(0.5f, 0.5f), new Vector2(460f, 600f), Vector2.zero);
+        centre.anchoredPosition = new Vector2(0f, 10f);
+        var left = NewGlassPanel("SlotLeft", rt, new Vector2(0.5f, 0.5f), new Vector2(340f, 460f), Vector2.zero);
+        left.anchoredPosition = new Vector2(-560f, 40f);
+        var right = NewGlassPanel("SlotRight", rt, new Vector2(0.5f, 0.5f), new Vector2(340f, 460f), Vector2.zero);
+        right.anchoredPosition = new Vector2(560f, 40f);
 
         var slots = new F1.UI.TrackPanelScreenImpl.TrackSlot[3];
-        slots[1] = BuildTrackSlot(centre);
-        slots[0] = BuildTrackSlot(left);
-        slots[2] = BuildTrackSlot(right);
+        slots[1] = BuildTrackSlot(centre, true);
+        slots[0] = BuildTrackSlot(left, false);
+        slots[2] = BuildTrackSlot(right, false);
 
-        // ASCII "<"/">": the default TMP SDF atlas only guarantees ASCII.
-        var prev = NewButton("PrevButton", rt, "<", 40f, primary: false);
-        PlaceAt(prev, new Vector2(0f, 0.5f), new Vector2(90f, 130f), new Vector2(60f, 0f));
-        var next = NewButton("NextButton", rt, ">", 40f, primary: false);
-        PlaceAt(next, new Vector2(1f, 0.5f), new Vector2(90f, 130f), new Vector2(60f, 0f));
+        // Chevron arrows at the carousel edges, no captions on this screen.
+        var prev = NewArrowButton("PrevButton", rt, "Chevron_Left", null);
+        PlaceAt(prev, new Vector2(0f, 0.5f), new Vector2(96f, 96f), new Vector2(470f, 0f));
+        var next = NewArrowButton("NextButton", rt, "Chevron_Right", null);
+        PlaceAt(next, new Vector2(1f, 0.5f), new Vector2(96f, 96f), new Vector2(470f, 0f));
 
-        var back = NewButton("BackButton", rt, "BACK", 26f, primary: false);
-        PlaceAt(back, new Vector2(0f, 0f), new Vector2(240f, 80f), new Vector2(24f, 28f));
-        var confirm = NewButton("ConfirmButton", rt, "CONFIRM", 26f, primary: true);
-        PlaceAt(confirm, new Vector2(1f, 0f), new Vector2(320f, 80f), new Vector2(24f, 28f));
+        // BACK: the dark twin of the Continue parallelogram.
+        var back = NewParallelogramButton("BackButton", rt,
+            "Assets/Art/UI/Tracks/Button_Parallelogram_Dark.png", "BACK", "BoldItalic", 36f, null,
+            new Vector2(0f, 0f), new Vector2(280f, 100f), new Vector2(24f, 28f));
+
+        // CONFIRM: orange parallelogram, CONTINUE as its race line.
+        var confirm = NewParallelogramButton("ConfirmButton", rt,
+            SlimUiSkin.GarageArtDir + "Button_Parallelogram.png", "CONFIRM", "BoldItalic", 44f, "CONTINUE",
+            new Vector2(1f, 0f), new Vector2(360f, 120f), new Vector2(24f, 28f));
         confirm.GetComponent<UnityEngine.UI.Button>().interactable = false;
 
         // Shared chrome — identical placement to the car panel so the corner identity
         // holds across the swap.
-        var profile = NewPanel("ProfilePanel", rt, new Vector2(0f, 1f), new Vector2(400f, 140f), new Vector2(24f, 24f));
-        var playerName = NewText("PlayerName", profile, "Player", 24f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(playerName, new Vector2(0f, 1f), new Vector2(250f, 34f), new Vector2(20f, 16f));
-        var team = NewText("Team", profile, "Team", 17f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted);
-        PlaceAt(team, new Vector2(0f, 1f), new Vector2(250f, 26f), new Vector2(20f, 56f));
-        var level = NewText("Level", profile, "LEVEL 1", 17f, TextAlignmentOptions.Right, SlimUiSkin.TileInk);
-        PlaceAt(level, new Vector2(1f, 1f), new Vector2(130f, 26f), new Vector2(20f, 18f));
-        var xpBg = NewBar("XpBar", profile, new Vector2(0f, 1f), new Vector2(360f, 12f), new Vector2(20f, 100f));
-        var xpFill = NewBarFill(xpBg, SlimUiSkin.Accent);
+        var profile = NewGlassPanel("ProfilePanel", rt, new Vector2(0f, 1f), new Vector2(430f, 124f), new Vector2(24f, 24f));
+        NewIcon("Avatar", profile, "Helmet_Avatar", new Vector2(0f, 0.5f), new Vector2(92f, 92f), new Vector2(16f, 0f));
+        var playerName = NewF1Text("PlayerName", profile, "Player", "BoldItalic", 28f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(playerName, new Vector2(0f, 1f), new Vector2(296f, 36f), new Vector2(120f, 14f));
+        var level = NewF1Text("Level", profile, "LEVEL 1", "SemiBold", 15f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(level, new Vector2(0f, 1f), new Vector2(96f, 20f), new Vector2(120f, 52f));
+        var xpBg = NewPill("XpBar", profile, new Vector2(0f, 1f), new Vector2(138f, 8f), new Vector2(222f, 58f));
+        var xpFill = NewPillFill(xpBg, new Color(0.92f, 0.93f, 0.96f, 1f));
+        NewF1Text("XpTag", profile, "XP", "SemiBold", 11f,
+            TextAlignmentOptions.MidlineRight, SlimUiSkin.TileInkMuted)
+            .AndPlace(new Vector2(1f, 1f), new Vector2(34f, 16f), new Vector2(16f, 54f));
+        var team = NewF1Text("Team", profile, "Team", "SemiBold", 13f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInkMuted);
+        PlaceAt(team, new Vector2(0f, 1f), new Vector2(296f, 20f), new Vector2(120f, 78f));
         var profileWidget = profile.gameObject.AddComponent<F1.UI.ProfileWidget>();
         var profileSo = new SerializedObject(profileWidget);
         Set(profileSo, "_playerNameText", playerName.GetComponent<TMP_Text>());
@@ -409,15 +485,17 @@ public static class GarageBuilder
         Set(profileSo, "_xpFill", xpFill);
         profileSo.ApplyModifiedPropertiesWithoutUndo();
 
-        var currency = NewPanel("CurrencyPanel", rt, new Vector2(1f, 1f), new Vector2(330f, 140f), new Vector2(24f, 24f));
-        NewText("CareerLabel", currency, "CAREER PTS", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-            .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 16f));
-        var careerValue = NewText("CareerValue", currency, "0", 30f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(careerValue, new Vector2(0f, 1f), new Vector2(290f, 42f), new Vector2(20f, 38f));
-        NewText("PremiumLabel", currency, "PREMIUM", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-            .AndPlace(new Vector2(0f, 1f), new Vector2(290f, 22f), new Vector2(20f, 86f));
-        var premiumValue = NewText("PremiumValue", currency, "0", 22f, TextAlignmentOptions.Left, SlimUiSkin.TileInk);
-        PlaceAt(premiumValue, new Vector2(0f, 1f), new Vector2(290f, 32f), new Vector2(20f, 104f));
+        var currency = NewGlassPanel("CurrencyPanel", rt, new Vector2(1f, 1f), new Vector2(480f, 64f), new Vector2(24f, 24f));
+        var careerPill = NewInsetPill("CareerPill", currency, new Vector2(0f, 1f), new Vector2(228f, 48f), new Vector2(8f, 8f));
+        var careerValue = NewF1Text("CareerValue", careerPill, "0", "Bold", 24f,
+            TextAlignmentOptions.MidlineLeft, SlimUiSkin.TileInk);
+        PlaceAt(careerValue, new Vector2(0f, 0.5f), new Vector2(150f, 40f), new Vector2(14f, 0f));
+        NewIcon("Coin", careerPill, "Coin", new Vector2(1f, 0.5f), new Vector2(36f, 36f), new Vector2(10f, 0f));
+        var premiumPill = NewInsetPill("PremiumPill", currency, new Vector2(1f, 1f), new Vector2(228f, 48f), new Vector2(8f, 8f));
+        var premiumValue = NewF1Text("PremiumValue", premiumPill, "0", "Bold", 22f,
+            TextAlignmentOptions.MidlineLeft, new Color(0.98f, 0.30f, 0.27f, 1f));
+        PlaceAt(premiumValue, new Vector2(0f, 0.5f), new Vector2(150f, 40f), new Vector2(14f, 0f));
+        NewIcon("Gem", premiumPill, "Gem", new Vector2(1f, 0.5f), new Vector2(34f, 34f), new Vector2(12f, 0f));
         var currencyWidget = currency.gameObject.AddComponent<F1.UI.CurrencyWidget>();
         var currencySo = new SerializedObject(currencyWidget);
         Set(currencySo, "_careerPointsText", careerValue.GetComponent<TMP_Text>());
@@ -435,6 +513,7 @@ public static class GarageBuilder
             var s = slots[i];
             slot.FindPropertyRelative("Root").objectReferenceValue = s.Root;
             slot.FindPropertyRelative("Art").objectReferenceValue = s.Art;
+            slot.FindPropertyRelative("Flag").objectReferenceValue = s.Flag;
             slot.FindPropertyRelative("ShortCode").objectReferenceValue = s.ShortCode;
             slot.FindPropertyRelative("Name").objectReferenceValue = s.Name;
             slot.FindPropertyRelative("Length").objectReferenceValue = s.Length;
@@ -443,6 +522,7 @@ public static class GarageBuilder
             slot.FindPropertyRelative("SelectedBadge").objectReferenceValue = s.SelectedBadge;
             slot.FindPropertyRelative("Dim").objectReferenceValue = s.Dim;
         }
+        WireTrackFlags(so);
         Set(so, "_backButton", back.GetComponent<UnityEngine.UI.Button>());
         Set(so, "_prevButton", prev.GetComponent<UnityEngine.UI.Button>());
         Set(so, "_nextButton", next.GetComponent<UnityEngine.UI.Button>());
@@ -457,10 +537,12 @@ public static class GarageBuilder
     }
 
     /// <summary>
-    /// Fills one carousel slot: art well up top, short-code chip, name, then the
-    /// LENGTH / LAPS / DIFFICULTY stat band. The CanvasGroup is the side-slot dimmer.
+    /// Fills one carousel slot: flag top-left, neon map well, italic name, then the
+    /// LENGTH / LAPS / DIFFICULTY stat columns with hairline dividers. The CanvasGroup
+    /// is the side-slot dimmer. The hero slot additionally wears the orange glow border
+    /// and the SELECTED chip the impl toggles.
     /// </summary>
-    private static F1.UI.TrackPanelScreenImpl.TrackSlot BuildTrackSlot(RectTransform parent)
+    private static F1.UI.TrackPanelScreenImpl.TrackSlot BuildTrackSlot(RectTransform parent, bool hero)
     {
         var slot = new F1.UI.TrackPanelScreenImpl.TrackSlot { Root = parent.gameObject };
 
@@ -469,37 +551,182 @@ public static class GarageBuilder
         dim.interactable = false;
         slot.Dim = dim;
 
-        var badge = NewText("SelectedBadge", parent, "SELECTED", 15f, TextAlignmentOptions.Right, SlimUiSkin.Accent);
-        PlaceAt(badge, new Vector2(1f, 1f), new Vector2(140f, 26f), new Vector2(16f, 12f));
+        float w = parent.sizeDelta.x;
+        float artH = parent.sizeDelta.y * 0.47f;
+        float topPad = hero ? 84f : 64f;
+
+        if (hero)
+        {
+            var border = NewUiObject("HeroBorder", parent);
+            Stretch(border);
+            var borderImage = border.gameObject.AddComponent<UnityEngine.UI.Image>();
+            borderImage.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Tracks/Border_Hero.png");
+            if (borderImage.sprite == null)
+                Debug.LogError("[Garage] Missing Border_Hero; run Tools > Garage > Build Track UI Art.");
+            borderImage.type = Image.Type.Sliced;
+            borderImage.raycastTarget = false;
+        }
+
+        var flagRt = NewUiObject("Flag", parent);
+        PlaceAt(flagRt, new Vector2(0f, 1f), new Vector2(hero ? 84f : 64f, hero ? 56f : 42f),
+            new Vector2(16f, 16f));
+        var flagImage = flagRt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        flagImage.preserveAspect = true;
+        flagImage.raycastTarget = false;
+        slot.Flag = flagImage;   // sprite comes from the impl's _flags table at display time
+
+        var badge = NewUiObject("SelectedBadge", parent);
+        badge.anchorMin = badge.anchorMax = new Vector2(1f, 1f);
+        badge.pivot = new Vector2(1f, 1f);
+        badge.sizeDelta = new Vector2(hero ? 170f : 140f, hero ? 44f : 36f);
+        badge.anchoredPosition = new Vector2(-10f, -10f);
+        var chip = badge.gameObject.AddComponent<UnityEngine.UI.Image>();
+        chip.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Tracks/Chip_Selected.png");
+        chip.type = Image.Type.Sliced;
+        chip.raycastTarget = false;
+        var badgeText = NewF1Text("Label", badge, "SELECTED", "Bold", hero ? 16f : 13f,
+            TextAlignmentOptions.Center, Color.white);
+        Stretch(badgeText);
+        badge.gameObject.SetActive(false);
         slot.SelectedBadge = badge.gameObject;
 
-        var art = NewBar("ArtWell", parent, new Vector2(0.5f, 1f), new Vector2(parent.sizeDelta.x - 32f, parent.sizeDelta.y * 0.42f), new Vector2(0f, 16f));
-        slot.Art = art.GetComponent<UnityEngine.UI.Image>();
+        var art = NewUiObject("ArtWell", parent);
+        art.anchorMin = art.anchorMax = new Vector2(0.5f, 1f);
+        art.pivot = new Vector2(0.5f, 1f);
+        art.sizeDelta = new Vector2(w - 40f, artH);
+        art.anchoredPosition = new Vector2(0f, -topPad);
+        var artImage = art.gameObject.AddComponent<UnityEngine.UI.Image>();
+        artImage.preserveAspect = true;
+        artImage.raycastTarget = false;
+        artImage.color = Color.white;
+        slot.Art = artImage;
 
-        var code = NewText("ShortCode", parent, "", 14f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted);
-        PlaceAt(code, new Vector2(0f, 1f), new Vector2(120f, 22f), new Vector2(16f, 16f));
-        slot.ShortCode = code.GetComponent<TMP_Text>();
-
-        var name = NewText("Name", parent, "Track", 26f, TextAlignmentOptions.Center, SlimUiSkin.TileInk);
-        PlaceAt(name, new Vector2(0.5f, 1f), new Vector2(parent.sizeDelta.x - 32f, 40f), new Vector2(0f, parent.sizeDelta.y * 0.42f + 28f));
+        var name = NewF1Text("Name", parent, "Track", "BoldItalic", hero ? 34f : 24f,
+            TextAlignmentOptions.Center, SlimUiSkin.TileInk);
+        name.anchorMin = name.anchorMax = new Vector2(0.5f, 1f);
+        name.pivot = new Vector2(0.5f, 1f);
+        name.sizeDelta = new Vector2(w - 32f, hero ? 80f : 56f);
+        name.anchoredPosition = new Vector2(0f, -topPad - artH - 8f);
         slot.Name = name.GetComponent<TMP_Text>();
 
-        string[] labels = { "LENGTH", "LAPS", "DIFFICULTY" };
+        string[] labels = { "LENGTH:", "LAPS:", "DIFFICULTY:" };
         var texts = new TMP_Text[3];
+        float statsTop = topPad + artH + (hero ? 80f : 56f) + 14f;
         for (int i = 0; i < 3; i++)
         {
-            float y = parent.sizeDelta.y * 0.42f + 92f + i * 46f;
-            NewText($"Row{i}Label", parent, labels[i], 13f, TextAlignmentOptions.Left, SlimUiSkin.TileInkMuted)
-                .AndPlace(new Vector2(0f, 1f), new Vector2(160f, 20f), new Vector2(24f, y));
-            texts[i] = NewText($"Row{i}Value", parent, "—", 18f, TextAlignmentOptions.Right, SlimUiSkin.TileInk)
-                .AndPlace(new Vector2(1f, 1f), new Vector2(160f, 24f), new Vector2(24f, y))
-                .GetComponent<TMP_Text>();
+            float cx = (i - 1) * (hero ? 145f : 105f);
+
+            // Manual placement: PlaceAt pins to corners, these are centre-column boxes.
+            var labelRt = NewF1Text($"Row{i}Label", parent, labels[i], "SemiBold", hero ? 14f : 12f,
+                TextAlignmentOptions.Top, SlimUiSkin.TileInkMuted);
+            labelRt.anchorMin = labelRt.anchorMax = new Vector2(0.5f, 1f);
+            labelRt.pivot = new Vector2(0.5f, 1f);
+            labelRt.sizeDelta = new Vector2(hero ? 140f : 100f, 20f);
+            labelRt.anchoredPosition = new Vector2(cx, -statsTop);
+
+            var valueRt = NewF1Text($"Row{i}Value", parent, "-", "Bold", hero ? 22f : 17f,
+                TextAlignmentOptions.Top, SlimUiSkin.TileInk);
+            valueRt.anchorMin = valueRt.anchorMax = new Vector2(0.5f, 1f);
+            valueRt.pivot = new Vector2(0.5f, 1f);
+            valueRt.sizeDelta = new Vector2(hero ? 140f : 100f, 28f);
+            valueRt.anchoredPosition = new Vector2(cx, -(statsTop + 22f));
+            texts[i] = valueRt.GetComponent<TMP_Text>();
+
+            if (i < 2)
+            {
+                var divider = NewUiObject($"Divider{i}", parent);
+                divider.anchorMin = divider.anchorMax = new Vector2(0.5f, 1f);
+                divider.pivot = new Vector2(0.5f, 1f);
+                divider.sizeDelta = new Vector2(2f, 46f);
+                divider.anchoredPosition = new Vector2(cx + (hero ? 72.5f : 52.5f), -(statsTop + 2f));
+                var dImage = divider.gameObject.AddComponent<UnityEngine.UI.Image>();
+                dImage.color = new Color(1f, 1f, 1f, 0.15f);
+                dImage.raycastTarget = false;
+            }
         }
         slot.Length = texts[0];
         slot.Laps = texts[1];
         slot.Difficulty = texts[2];
 
         return slot;
+    }
+
+    /// <summary>Maps each TrackDefinition to its flag sprite by id substring; the view
+    /// only ever reads the serialized table.</summary>
+    private static void WireTrackFlags(SerializedObject so)
+    {
+        var prop = so.FindProperty("_flags");
+        var tracks = AssetDatabase.FindAssets("t:TrackDefinition")
+            .Select(g => AssetDatabase.LoadAssetAtPath<TrackDefinition>(AssetDatabase.GUIDToAssetPath(g)))
+            .Where(t => t != null)
+            .OrderBy(t => t.name)
+            .ToList();
+        prop.arraySize = tracks.Count;
+        for (int i = 0; i < tracks.Count; i++)
+        {
+            var e = prop.GetArrayElementAtIndex(i);
+            e.FindPropertyRelative("TrackId").stringValue = tracks[i].TrackId;
+            e.FindPropertyRelative("Flag").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Sprite>($"Assets/Art/UI/Tracks/Flag_{FlagNameFor(tracks[i].TrackId)}.png");
+        }
+    }
+
+    private static string FlagNameFor(string trackId)
+    {
+        var id = trackId.ToLowerInvariant();
+        if (id.Contains("monaco")) return "Monaco";
+        if (id.Contains("monza")) return "Italy";
+        if (id.Contains("silverstone")) return "GreatBritain";
+        if (id.Contains("spa")) return "Belgium";
+        if (id.Contains("suzuka")) return "Japan";
+        return "Japan";
+    }
+
+    /// <summary>Parallelogram action button (BACK / CONFIRM): baked sprite, italic label,
+    /// optional second line, and the sparkle on the primary variant. Placed here rather
+    /// than by the caller so the label boxes can read the real button size.</summary>
+    private static RectTransform NewParallelogramButton(string name, Transform parent, string spritePath,
+        string label, string face, float size, string subLabel,
+        Vector2 anchor, Vector2 sz, Vector2 offset)
+    {
+        var rt = NewUiObject(name, parent);
+        PlaceAt(rt, anchor, sz, offset);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        if (image.sprite == null)
+            Debug.LogError($"[Garage] Missing parallelogram sprite at {spritePath}; run the UI art builders.");
+        image.type = Image.Type.Sliced;
+        image.color = Color.white;
+        image.raycastTarget = true;
+        var button = rt.gameObject.AddComponent<UnityEngine.UI.Button>();
+        button.targetGraphic = image;
+        button.transition = Selectable.Transition.ColorTint;
+        var colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1.10f, 1.05f, 1.00f, 1f);
+        colors.pressedColor = new Color(0.78f, 0.74f, 0.70f, 1f);
+        colors.disabledColor = new Color(0.42f, 0.42f, 0.45f, 0.85f);
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+
+        var main = NewF1Text("Label", rt, label, face, size,
+            TextAlignmentOptions.Midline, Color.white);
+        main.anchorMin = main.anchorMax = new Vector2(0.5f, 0.5f);
+        main.pivot = new Vector2(0.5f, 0.5f);
+        main.sizeDelta = new Vector2(rt.sizeDelta.x - 60f, 56f);
+        main.anchoredPosition = new Vector2(-10f, subLabel != null ? 16f : 0f);
+
+        if (subLabel != null)
+        {
+            var sub = NewF1Text("SubLabel", rt, subLabel, "Bold", 15f,
+                TextAlignmentOptions.Midline, Color.white);
+            sub.anchorMin = sub.anchorMax = new Vector2(0.5f, 0.5f);
+            sub.pivot = new Vector2(0.5f, 0.5f);
+            sub.sizeDelta = new Vector2(rt.sizeDelta.x - 60f, 24f);
+            sub.anchoredPosition = new Vector2(-10f, -26f);
+            NewIcon("Sparkle", rt, "Sparkle", new Vector2(1f, 1f), new Vector2(64f, 64f), new Vector2(26f, 6f));
+        }
+        return rt;
     }
 
     // ==================================================================================
@@ -724,6 +951,128 @@ public static class GarageBuilder
         var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
         SlimUiSkin.ApplyFlatPanel(image, SlimUiSkin.CardFill);
         image.raycastTarget = false;
+        return rt;
+    }
+
+    // --- Garage glass skin helpers (art from GarageUiArtBuilder, tints from SlimUiSkin). ---
+
+    private static RectTransform NewGlassPanel(string name, Transform parent,
+        Vector2 anchor, Vector2 size, Vector2 offset)
+    {
+        var rt = NewUiObject(name, parent);
+        PlaceAt(rt, anchor, size, offset);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        SlimUiSkin.ApplyGlassPanel(image);
+        image.raycastTarget = false;
+        SlimUiSkin.AddGlassOutline(rt);
+        return rt;
+    }
+
+    private static RectTransform NewInsetPill(string name, Transform parent,
+        Vector2 anchor, Vector2 size, Vector2 offset)
+    {
+        var rt = NewUiObject(name, parent);
+        PlaceAt(rt, anchor, size, offset);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.sprite = SlimUiSkin.GarageSprite("Panel_Rounded");
+        image.type = Image.Type.Sliced;
+        image.color = SlimUiSkin.GlassInsetFill;
+        image.raycastTarget = false;
+        return rt;
+    }
+
+    private static RectTransform NewIcon(string name, Transform parent, string spriteName,
+        Vector2 anchor, Vector2 size, Vector2 offset)
+    {
+        var rt = NewUiObject(name, parent);
+        PlaceAt(rt, anchor, size, offset);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.sprite = SlimUiSkin.GarageSprite(spriteName);
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        return rt;
+    }
+
+    private static RectTransform NewPill(string name, Transform parent,
+        Vector2 anchor, Vector2 size, Vector2 offset)
+    {
+        var rt = NewUiObject(name, parent);
+        PlaceAt(rt, anchor, size, offset);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.sprite = SlimUiSkin.GarageSprite("Pill_Rounded");
+        image.type = Image.Type.Sliced;
+        image.color = SlimUiSkin.BarBackFill;
+        image.raycastTarget = false;
+        return rt;
+    }
+
+    private static Image NewPillFill(RectTransform pill, Color color)
+    {
+        var rt = NewUiObject("Fill", pill);
+        Stretch(rt);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.sprite = SlimUiSkin.GarageSprite("Pill_Rounded");
+        image.type = UnityEngine.UI.Image.Type.Filled;
+        image.fillMethod = UnityEngine.UI.Image.FillMethod.Horizontal;
+        image.fillOrigin = (int)UnityEngine.UI.Image.OriginHorizontal.Left;
+        image.fillAmount = 0f;
+        image.color = color;
+        image.raycastTarget = false;
+        return image;
+    }
+
+    private static RectTransform NewF1Text(string name, Transform parent, string content,
+        string face, float size, TextAlignmentOptions align, Color color)
+    {
+        var rt = NewText(name, parent, content, size, align, color);
+        var text = rt.GetComponent<TMP_Text>();
+        var font = SlimUiSkin.GarageFont(face);
+        if (font != null) text.font = font;
+        return rt;
+    }
+
+    private static RectTransform NewArrowButton(string name, Transform parent,
+        string chevron, string caption)
+    {
+        var rt = NewUiObject(name, parent);
+        var image = rt.gameObject.AddComponent<UnityEngine.UI.Image>();
+        image.sprite = SlimUiSkin.GarageSprite("Panel_Rounded");
+        image.type = Image.Type.Sliced;
+        image.color = SlimUiSkin.ArrowButtonFill;
+        image.raycastTarget = true;
+        var button = rt.gameObject.AddComponent<UnityEngine.UI.Button>();
+        button.targetGraphic = image;
+        var colors = button.colors;
+        colors.normalColor = Color.white;
+        colors.highlightedColor = new Color(1.30f, 1.32f, 1.38f, 1f);
+        colors.pressedColor = new Color(0.70f, 0.72f, 0.78f, 1f);
+        colors.disabledColor = new Color(1f, 1f, 1f, 0.45f);
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+
+        var chev = NewUiObject("Chevron", rt);
+        Stretch(chev);
+        chev.offsetMin = new Vector2(26f, 26f);
+        chev.offsetMax = new Vector2(-26f, -26f);
+        var chevImage = chev.gameObject.AddComponent<UnityEngine.UI.Image>();
+        chevImage.sprite = SlimUiSkin.GarageSprite(chevron);
+        chevImage.color = Color.white;
+        chevImage.preserveAspect = true;
+        chevImage.raycastTarget = false;
+
+        if (string.IsNullOrEmpty(caption)) return rt;
+        var above = NewF1Text("CaptionAbove", rt, caption, "SemiBold", 13f,
+            TextAlignmentOptions.Center, SlimUiSkin.TileInkMuted);
+        above.anchorMin = above.anchorMax = new Vector2(0.5f, 1f);
+        above.pivot = new Vector2(0.5f, 0f);
+        above.sizeDelta = new Vector2(160f, 20f);
+        above.anchoredPosition = new Vector2(0f, 10f);
+        var below = NewF1Text("CaptionBelow", rt, caption, "SemiBold", 13f,
+            TextAlignmentOptions.Center, SlimUiSkin.TileInkMuted);
+        below.anchorMin = below.anchorMax = new Vector2(0.5f, 0f);
+        below.pivot = new Vector2(0.5f, 1f);
+        below.sizeDelta = new Vector2(160f, 20f);
+        below.anchoredPosition = new Vector2(0f, -10f);
         return rt;
     }
 
