@@ -134,3 +134,6 @@ CAMERA_RESTORE_PLAN.md
 /Assets/SlimUI/
 /Assets/SlimUI.meta
 
+# Qoder per-user settings (local-scope MCP servers etc.)
+.qoder/settings.local.json
+
