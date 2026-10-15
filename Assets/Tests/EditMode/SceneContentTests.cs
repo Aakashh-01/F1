@@ -110,25 +110,6 @@ public class SceneContentTests
     }
 
     [Test]
-    public void TrackSelectionScene_IsWiredCorrectly()
-    {
-        var scene = EditorSceneManager.OpenScene(
-            $"Assets/Scenes/{FlowSceneNames.TrackSelection}.unity", OpenSceneMode.Single);
-
-        var host = Object.FindAnyObjectByType<FlowSceneHost>();
-        Assert.IsNotNull(host, "The track selection scene must carry a FlowSceneHost.");
-        Assert.AreEqual(GameFlowManager.GameScreen.TrackSelection, host.HostedScreen);
-
-        var prefab = HostScreenPrefab(host);
-        Assert.IsNotNull(prefab, "The host must have a screen prefab assigned.");
-        Assert.IsNotNull(prefab.GetComponent<TrackSelectionScreen>(),
-            "The hosted prefab must actually be a track selection screen.");
-
-        Assert.IsNotNull(Object.FindAnyObjectByType<TrackSelectionSceneController>(),
-            "The track selection scene must carry its scene controller.");
-    }
-
-    [Test]
     public void WingSetupScene_IsWiredCorrectly()
     {
         var scene = EditorSceneManager.OpenScene(
@@ -148,43 +129,122 @@ public class SceneContentTests
     }
 
     [Test]
-    public void EveryFlowScene_HostsExactlyOneScreen()
+    public void HubScene_CarPanelHost_IsWiredCorrectly()
     {
-        // One screen per scene. Two hosts in a scene means one of them is unreachable.
+        var scene = EditorSceneManager.OpenScene(
+            $"Assets/Scenes/{FlowSceneNames.Lobby}.unity", OpenSceneMode.Single);
+
+        var host = FindHost(scene, GameFlowManager.GameScreen.Lobby);
+        Assert.IsNotNull(host, "The hub scene must carry a host declaring GameScreen.Lobby.");
+
+        var prefab = HostScreenPrefab(host);
+        Assert.IsNotNull(prefab, "The car panel host must have a screen prefab assigned.");
+        Assert.IsNotNull(prefab.GetComponent<GarageScreen>(),
+            "The car panel prefab must actually be a garage screen.");
+
+        Assert.IsNotNull(Object.FindAnyObjectByType<GarageSceneController>(),
+            "The hub scene must carry the garage scene controller.");
+        Assert.IsNotNull(Object.FindAnyObjectByType<GarageTurntable>(),
+            "The hub scene must carry a turntable for the displayed car.");
+        Assert.IsNotNull(Object.FindAnyObjectByType<ShowcaseCarSwapper>(),
+            "The hub scene must carry a showcase swapper.");
+        Assert.IsNotNull(Object.FindAnyObjectByType<GarageHubView>(),
+            "The hub scene must carry the stage manager that swaps the panels.");
+    }
+
+    [Test]
+    public void HubScene_TrackPanelHost_IsWiredCorrectly()
+    {
+        var scene = EditorSceneManager.OpenScene(
+            $"Assets/Scenes/{FlowSceneNames.TrackSelection}.unity", OpenSceneMode.Single);
+
+        var host = FindHost(scene, GameFlowManager.GameScreen.TrackSelection);
+        Assert.IsNotNull(host,
+            "The hub scene must carry a host declaring GameScreen.TrackSelection; the track " +
+            "panel is its second hosted screen.");
+        Assert.IsFalse(host.gameObject.activeSelf,
+            "The track panel host starts inactive; the car panel owns the stage on entry.");
+
+        var prefab = HostScreenPrefab(host);
+        Assert.IsNotNull(prefab, "The track panel host must have a screen prefab assigned.");
+        Assert.IsNotNull(prefab.GetComponent<TrackPanelScreen>(),
+            "The track panel prefab must actually be a track panel screen.");
+
+        Assert.IsNotNull(Object.FindAnyObjectByType<TrackPanelSceneController>(FindObjectsInactive.Include),
+            "The hub scene must carry the track panel scene controller.");
+    }
+
+    [Test]
+    public void RetiredMenuScenes_AreDeletedFromDiskAndOutOfTheBuildList()
+    {
+        // Both retired scenes are gone from disk — the user chose deletion over retention
+        // for this rework — and must be gone from the build list, so no serialized
+        // reference can load either of them.
+        foreach (var name in new[] { FlowSceneNames.RetiredGarageLobby, FlowSceneNames.RetiredTrackSelection })
+        {
+            Assert.IsFalse(File.Exists(ToAbsolute($"Assets/Scenes/{name}.unity")),
+                $"The retired scene '{name}' should have been deleted from disk.");
+            Assert.IsFalse(
+                System.Array.Exists(EditorBuildSettings.scenes,
+                    s => Path.GetFileNameWithoutExtension(s.path) == name),
+                $"The retired scene '{name}' must not be in the build list.");
+        }
+    }
+
+    [Test]
+    public void EveryFlowScene_HostsEachScreenAtMostOnce()
+    {
+        // One HOST PER SCREEN. A scene may host several screens — the menu hub hosts the
+        // car and track panels — but two hosts claiming the same screen is still the
+        // unreachable-host defect the old one-per-scene rule guarded against.
         foreach (var name in new[]
                  {
                      FlowSceneNames.Loading,
                      FlowSceneNames.Lobby,
-                     FlowSceneNames.TrackSelection,
                      FlowSceneNames.WingSetup
                  })
         {
             var scene = EditorSceneManager.OpenScene(
                 $"Assets/Scenes/{name}.unity", OpenSceneMode.Single);
 
-            int hosts = 0;
+            var seen = new System.Collections.Generic.HashSet<GameFlowManager.GameScreen>();
             foreach (var root in scene.GetRootGameObjects())
             {
-                foreach (var component in root.GetComponents<Component>())
+                foreach (var host in root.GetComponentsInChildren<FlowSceneHost>(true))
                 {
-                    if (component is FlowSceneHost) hosts++;
+                    Assert.IsTrue(seen.Add(host.HostedScreen),
+                        $"{name} hosts {host.HostedScreen} twice; one of them is unreachable.");
                 }
             }
 
-            Assert.AreEqual(1, hosts, $"{name} must host exactly one screen.");
+            Assert.Greater(seen.Count, 0, $"{name} must carry at least one screen host.");
         }
+
+        // The hub carries exactly the pair that share its background.
+        var hub = EditorSceneManager.OpenScene(
+            $"Assets/Scenes/{FlowSceneNames.Lobby}.unity", OpenSceneMode.Single);
+        var hubScreens = new System.Collections.Generic.HashSet<GameFlowManager.GameScreen>();
+        foreach (var root in hub.GetRootGameObjects())
+            foreach (var host in root.GetComponentsInChildren<FlowSceneHost>(true))
+                hubScreens.Add(host.HostedScreen);
+
+        Assert.IsTrue(hubScreens.SetEquals(new[]
+        {
+            GameFlowManager.GameScreen.Lobby, GameFlowManager.GameScreen.TrackSelection
+        }), "The hub scene must host exactly the car and track panels.");
     }
 
     [Test]
     public void EveryFlowScene_HasExactlyOneEventSystem()
     {
         // The runtime logged "There can be only one active Event System" when a scene
-        // carried a second one alongside a persistent one.
+        // carried a second one alongside a persistent one. TrackSelection is not listed:
+        // since the hub rework it names the same scene as Lobby, so listing both would
+        // open the scene twice.
         foreach (var name in new[]
                  {
                      FlowSceneNames.Loading,
                      FlowSceneNames.Lobby,
-                     FlowSceneNames.TrackSelection,
                      FlowSceneNames.WingSetup
                  })
         {
@@ -210,6 +270,16 @@ public class SceneContentTests
         var prop = so.FindProperty("_screenPrefab");
         Assert.IsNotNull(prop, "FlowSceneHost must have a _screenPrefab field.");
         return prop.objectReferenceValue as GameObject;
+    }
+
+    private static FlowSceneHost FindHost(UnityEngine.SceneManagement.Scene scene,
+        GameFlowManager.GameScreen screen)
+    {
+        foreach (var root in scene.GetRootGameObjects())
+            foreach (var host in root.GetComponentsInChildren<FlowSceneHost>(true))
+                if (host.HostedScreen == screen)
+                    return host;
+        return null;
     }
 
     private static string ToAbsolute(string projectPath)

@@ -14,6 +14,7 @@ namespace F1.Progression
     {
         [Header("Identity")]
         public string playerName = "Player";
+        public string teamName = "Apex Racing";
         public int playerLevel = 1;
         public long totalXP = 0;
 
@@ -163,14 +164,26 @@ namespace F1.Progression
         public void AddXP(int xp) { totalXP += xp; CheckLevelUp(); MarkDirty(); }
         public void AddCareerPoints(int points) { careerPoints += points; MarkDirty(); }
 
+        /// <summary>XP per level. Cumulative curve: reaching level L+1 takes L * XpPerLevel total XP.</summary>
+        public const int XpPerLevel = 1000;
+
+        /// <summary>
+        /// Progress through the CURRENT level toward the next, 0..1. Level L spans totalXP
+        /// from (L-1) * XpPerLevel up to L * XpPerLevel, matching <see cref="CheckLevelUp"/>.
+        /// </summary>
+        public float XpProgressToNextLevel()
+        {
+            float intoLevel = totalXP - (float)((playerLevel - 1) * XpPerLevel);
+            return Mathf.Clamp01(intoLevel / XpPerLevel);
+        }
+
         private void CheckLevelUp()
         {
-            // Simple XP curve: level * 1000
-            int requiredXP = playerLevel * 1000;
+            long requiredXP = (long)playerLevel * XpPerLevel;
             while (totalXP >= requiredXP)
             {
                 playerLevel++;
-                requiredXP = playerLevel * 1000;
+                requiredXP = (long)playerLevel * XpPerLevel;
             }
         }
     }

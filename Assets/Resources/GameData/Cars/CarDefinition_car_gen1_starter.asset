@@ -16,7 +16,7 @@ MonoBehaviour:
   _displayName: F1 Gen 1 - Starter
   _generation: 1
   _icon: {fileID: 21300000, guid: 916dc4ac25fad764cb69a3697345d424, type: 3}
-  _carPrefab: {fileID: 1037282087299967351, guid: d0603a6a646e83d43b49066eaba6ba0a, type: 3}
+  _carPrefab: {fileID: 6317130275601892748, guid: 093801ee528ac4249a0bec751c733059, type: 3}
   _basePhysicsProfile: {fileID: 11400000, guid: c9ba836afee3f40468aaa21c9a105a7f, type: 2}
   _highDownforceAero: {fileID: 11400000, guid: 9a2f9cfd95a639e46b0a5b67f26ed5d4, type: 2}
   _lowDownforceAero: {fileID: 11400000, guid: e92d575750cd72d42abf325ac1c1e4dd, type: 2}
@@ -24,5 +24,12 @@ MonoBehaviour:
   _unlockCostPoints: 0
   _directPurchasePrice: 0
   _rentalCost24h: 0.5
+  _engineLabel: 1.6L V6 Turbo Hybrid ERS+
+  _powerHP: 790
+  _torqueNm: 735
+  _topSpeedKph: 328
+  _accel0100Seconds: 3.3
+  _weightKg: 745
+  _displayTint: {r: 1, g: 0.84, b: 0.31, a: 1}
   _description: Entry-level F1 car. Balanced handling, forgiving physics. Free for
     all players.

@@ -16,7 +16,7 @@ MonoBehaviour:
   _displayName: F1 Gen 2 - Rental
   _generation: 2
   _icon: {fileID: 21300000, guid: 131f911deb3a9d042bea79af9fd74912, type: 3}
-  _carPrefab: {fileID: 1037282087299967351, guid: d0603a6a646e83d43b49066eaba6ba0a, type: 3}
+  _carPrefab: {fileID: 6317130275601892748, guid: 093801ee528ac4249a0bec751c733059, type: 3}
   _basePhysicsProfile: {fileID: 11400000, guid: c9ba836afee3f40468aaa21c9a105a7f, type: 2}
   _highDownforceAero: {fileID: 11400000, guid: 9a2f9cfd95a639e46b0a5b67f26ed5d4, type: 2}
   _lowDownforceAero: {fileID: 11400000, guid: e92d575750cd72d42abf325ac1c1e4dd, type: 2}
@@ -24,4 +24,11 @@ MonoBehaviour:
   _unlockCostPoints: 0
   _directPurchasePrice: 0
   _rentalCost24h: 1
+  _engineLabel: 1.6L V6 Turbo Hybrid ERS+
+  _powerHP: 860
+  _torqueNm: 770
+  _topSpeedKph: 338
+  _accel0100Seconds: 3.1
+  _weightKg: 740
+  _displayTint: {r: 0.51, g: 0.78, b: 0.52, a: 1}
   _description: 24-hour rental. Times set in this car do not count toward rankings.

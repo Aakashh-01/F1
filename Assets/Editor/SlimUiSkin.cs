@@ -131,6 +131,99 @@ public static class SlimUiSkin
     /// <summary>Accent used for the selected-tile border. Amber reads on a light panel.</summary>
     public static readonly Color SelectedBorder = new Color(1f, 0.6862745f, 0f, 1f);
 
+    // --- Garage glass skin (see GarageUiArtBuilder) -----------------------------------
+    //
+    // The car-selection reference (Assets/Scenes/ReferenceImageCarselection.png) replaces
+    // the opaque indigo cards with dark translucent rounded glass, F1-red stat bars and an
+    // orange parallelogram primary button. The shapes ship as procedural white sprites in
+    // Assets/Art/UI/Garage so the tints below drive their colour, except the icons and the
+    // parallelogram which bake theirs in.
+
+    public const string GarageArtDir = "Assets/Art/UI/Garage/";
+
+    public static readonly Color GlassPanelFill = new Color(0.043f, 0.051f, 0.063f, 0.78f);
+    public static readonly Color GlassPanelEdge = new Color(1f, 1f, 1f, 0.20f);
+    public static readonly Color GlassInsetFill = new Color(1f, 1f, 1f, 0.06f);
+    public static readonly Color BarBackFill = new Color(1f, 1f, 1f, 0.10f);
+
+    /// <summary>F1 broadcast red — the stat bars and the focused-car status line.</summary>
+    public static readonly Color AccentRed = new Color(0.882f, 0.024f, 0.0f, 1f);
+
+    /// <summary>Dark glass for the prev/next arrow buttons sitting out on the garage.</summary>
+    public static readonly Color ArrowButtonFill = new Color(0.07f, 0.08f, 0.10f, 0.85f);
+
+    public static Sprite GarageSprite(string name)
+    {
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(GarageArtDir + name + ".png");
+        if (sprite == null)
+            Debug.LogError($"[SlimUi] Missing garage sprite {name}; run Tools > Garage > Build UI Art.");
+        return sprite;
+    }
+
+    private const string FontDir = "Assets/TextMesh Pro/Fonts/";
+    private static readonly System.Collections.Generic.Dictionary<string, TMP_FontAsset> _fontCache
+        = new System.Collections.Generic.Dictionary<string, TMP_FontAsset>();
+
+    /// <summary>
+    /// Loads a Titillium Web SDF face — "SemiBold", "Bold" or "BoldItalic". Each asset
+    /// falls back to LiberationSans SDF, so anything Titillium lacks still renders.
+    /// </summary>
+    public static TMP_FontAsset GarageFont(string face)
+    {
+        if (_fontCache.TryGetValue(face, out var cached) && cached != null) return cached;
+        var asset = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"{FontDir}TitilliumWeb-{face} SDF.asset");
+        if (asset == null)
+            Debug.LogError($"[SlimUi] No TitilliumWeb-{face} SDF font asset; run Tools > Garage > Build F1 Font Assets.");
+        _fontCache[face] = asset;
+        return asset;
+    }
+
+    /// <summary>Rounded translucent fill — the glass panel body.</summary>
+    public static void ApplyGlassPanel(Image image, Color? fill = null)
+    {
+        if (image == null) return;
+        image.sprite = GarageSprite("Panel_Rounded");
+        image.type = Image.Type.Sliced;
+        image.preserveAspect = false;
+        image.color = fill ?? GlassPanelFill;
+    }
+
+    /// <summary>Adds the hairline border child over a glass panel's fill.</summary>
+    public static void AddGlassOutline(RectTransform panel)
+    {
+        var existing = panel.Find("Outline");
+        var go = existing != null ? existing.gameObject : new UnityEngine.GameObject("Outline",
+            typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        if (existing == null) go.transform.SetParent(panel, false);
+        var rt = (RectTransform)go.transform;
+        rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero; rt.offsetMax = Vector2.zero;
+        var image = go.GetComponent<Image>();
+        image.sprite = GarageSprite("Panel_Outline");
+        image.type = Image.Type.Sliced;
+        image.color = GlassPanelEdge;
+        image.raycastTarget = false;
+        go.transform.SetAsFirstSibling();
+    }
+
+    /// <summary>Rounded bar: pill background plus a red pill fill. Returns the fill.</summary>
+    public static Image ApplyStatBar(Image bar, Image fill)
+    {
+        if (bar != null)
+        {
+            bar.sprite = GarageSprite("Pill_Rounded");
+            bar.type = Image.Type.Sliced;
+            bar.color = BarBackFill;
+        }
+        if (fill != null)
+        {
+            fill.sprite = GarageSprite("Pill_Rounded");
+            fill.type = Image.Type.Sliced;
+            fill.color = AccentRed;
+        }
+        return fill;
+    }
+
     // --- Loading ---
 
     private static Sprite _cached;

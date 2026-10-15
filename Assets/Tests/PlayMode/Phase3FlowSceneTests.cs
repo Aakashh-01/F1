@@ -141,6 +141,31 @@ public class Phase3FlowSceneTests
     }
 
     [Test]
+    public void BuildSettings_ExcludesTheRetiredGarageLobby()
+    {
+        // The scene is deleted from disk in the menu-hub rework; 05_GarageScene ships as
+        // the lobby. A retired scene left in the build list would break the build and let
+        // a stale serialized reference try to load it.
+        foreach (var entry in UnityEditor.EditorBuildSettings.scenes)
+        {
+            Assert.AreNotEqual(FlowSceneNames.RetiredGarageLobby,
+                Path.GetFileNameWithoutExtension(entry.path),
+                "05_LobbyScene was replaced by 05_GarageScene and must not ship.");
+        }
+    }
+
+    [Test]
+    public void BuildSettings_ExcludesTheRetiredTrackSelection()
+    {
+        foreach (var entry in UnityEditor.EditorBuildSettings.scenes)
+        {
+            Assert.AreNotEqual(FlowSceneNames.RetiredTrackSelection,
+                Path.GetFileNameWithoutExtension(entry.path),
+                "20_TrackSelectionScene was folded into 05_GarageScene and must not ship.");
+        }
+    }
+
+    [Test]
     public void FlowSceneNames_MatchTheScenesOnDisk()
     {
         // Guards against a constant drifting from the asset it names.
@@ -245,9 +270,13 @@ public class Phase3FlowSceneTests
             () => SceneManager.GetActiveScene().name == FlowSceneNames.Lobby, 20f);
         Assert.AreEqual(FlowSceneNames.Lobby, SceneManager.GetActiveScene().name);
 
-        var host = UnityEngine.Object.FindAnyObjectByType<FlowSceneHost>();
-        Assert.IsNotNull(host, "05_LobbyScene must carry a FlowSceneHost.");
-        Assert.AreEqual(GameFlowManager.GameScreen.Lobby, host.HostedScreen);
+        FlowSceneHost host = null;
+        foreach (var candidate in UnityEngine.Object.FindObjectsByType<FlowSceneHost>(
+                     UnityEngine.FindObjectsInactive.Include, UnityEngine.FindObjectsSortMode.None))
+        {
+            if (candidate.HostedScreen == GameFlowManager.GameScreen.Lobby) host = candidate;
+        }
+        Assert.IsNotNull(host, $"{FlowSceneNames.Lobby} must carry a host declaring Lobby.");
         Assert.IsTrue(host.HasScreenInstance,
             "The host must have instantiated the hub screen from its prefab.");
     }

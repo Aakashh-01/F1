@@ -12,19 +12,19 @@ namespace F1.GameFlow
         public const string Loading = "00_LoadingScene";
 
         /// <summary>
-        /// The lobby. This is the 3D garage: the car stands in it and does not move.
-        ///
-        /// It hosts car selection directly — the tile strip and Next are the first thing on
-        /// screen, with no hub panel and no Start Race button in front of them. It is
-        /// deliberately NOT a separate menu screen in front of the garage, and there is no
-        /// "click Car Selection to navigate" step between loading and it.
-        ///
-        /// The hub that used to sit here (currency, settings, task list, Start Race) was
-        /// removed 2026-09-30; it was a deliberate reversal of the original "no main menu
-        /// between loading and car selection" requirement, decided 2026-09-26, and has since
-        /// been reversed back.
+        /// The lobby. This is the menu hub: the 3D garage with the car panel
+        /// (<c>GameScreen.Lobby</c>) and the track panel (<c>GameScreen.TrackSelection</c>)
+        /// hosted as its two screens, staged by <see cref="GarageHubView"/>. The displayed
+        /// car and the displayed track each ARE the selection.
         /// </summary>
-        public const string Lobby = "05_LobbyScene";
+        public const string Lobby = "05_GarageScene";
+
+        /// <summary>
+        /// The garage scene's predecessor. Deleted from disk by the menu-hub rework (the
+        /// hub scene's framing is authored in GarageBuilder now), kept as a constant for
+        /// the build-list exclusion tests, on the pattern of <see cref="CarSelection"/>.
+        /// </summary>
+        public const string RetiredGarageLobby = "05_LobbyScene";
 
         /// <summary>
         /// Car selection. The scene no longer ships — it is gone from the build list and the
@@ -35,7 +35,20 @@ namespace F1.GameFlow
         /// </summary>
         public const string CarSelection = "10_CarSelectionScene";
 
-        public const string TrackSelection = "20_TrackSelectionScene";
+        /// <summary>
+        /// Track selection. Since the menu-hub rework this NAMES THE HUB SCENE: the track
+        /// panel is 05_GarageScene's second hosted screen, so GoToTrackSelection resolves
+        /// through SceneFlowService's same-scene guard into an in-place panel swap, and
+        /// wing setup's BACK lands on the hub with the track panel showing.
+        /// </summary>
+        public const string TrackSelection = "05_GarageScene";
+
+        /// <summary>
+        /// Track selection's predecessor: its own scene. Deleted from disk by the
+        /// menu-hub rework; kept as a constant for the build-list exclusion tests.
+        /// </summary>
+        public const string RetiredTrackSelection = "20_TrackSelectionScene";
+
         public const string WingSetup = "30_WingSetupScene";
         public const string PreRace = "40_PreRaceScene";
         public const string Race = "50_RaceScene";

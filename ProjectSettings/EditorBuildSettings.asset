@@ -9,11 +9,8 @@ EditorBuildSettings:
     path: Assets/Scenes/00_LoadingScene.unity
     guid: c30a083bb5d53894783d674846e1c605
   - enabled: 1
-    path: Assets/Scenes/05_LobbyScene.unity
-    guid: 54c3b2c4d2497a842a9c452afbdbe042
-  - enabled: 1
-    path: Assets/Scenes/20_TrackSelectionScene.unity
-    guid: b1aca6c8b8e70b048ae81da880b3c3ca
+    path: Assets/Scenes/05_GarageScene.unity
+    guid: 049df52f601befa43a8738fdaf9d880a
   - enabled: 1
     path: Assets/Scenes/30_WingSetupScene.unity
     guid: 706ea230495b34f4faa83b6263e09fb4
@@ -26,6 +23,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Track_01.unity
     guid: f0ac763af9ddb2a459b3ed26832bc258
+  - enabled: 1
+    path: Assets/Scenes/60_ResultsScene.unity
+    guid: dc7f4b4ad05012f45b8c9e513cbc16b5
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

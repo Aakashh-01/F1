@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d70056828e885684c94fdebd4d80ae6b, type: 3}
+  m_Name: AIDriver_Medium
+  m_EditorClassIdentifier: 
+  baseLookaheadDistance: 8
+  lookaheadPerKmh: 0.035
+  curvatureLookaheadSteps: 3
+  steeringAngleForFullInput: 32
+  laneOffsetMoveSpeed: 4.4
+  waypointReachDistance: 8
+  forwardProgressSearchSteps: 4
+  throttleFullErrorKmh: 16
+  brakeFullErrorKmh: 42
+  blockedTargetSpeedKmh: 45
+  steeringThrottleReduction: 0.12
+  baseCornerCautionStrength: 0.26
+  competitiveCornerCautionStrength: 0.09
+  overtakeSpeedBoost: 0.07
+  overtakeTrafficSlowdownScale: 0.4
+  overtakeSteeringThrottleScale: 0.48
+  preferRightOvertake: 1
+  overtakeTrigger: 0.18
+  overtakeCommitSeconds: 1.1
+  preferredLaneOffset01: 0
+  freeTrackLaneUse: 0.74
+  waypointLaneInfluence: 0.78
+  laneEdgeSafetyMargin: 1.4
+  laneVariationStrength: 0.05
+  laneVariationFrequency: 0.08
+  followMinGap: 5
+  followTimeHeadway: 1.5
+  followApproachKmhPerMetre: 1
+  followMaxClosingKmh: 20
+  launchStandingSpeedKmh: 5
+  sideTrafficLaneHoldBuffer: 0.25
+  sideTrafficTurnThrottleScale: 0.62
+  sideTrafficTurnBrake: 0.18
+  sideTrafficSteeringThreshold: 0.24
+  packCornerCurvatureThreshold: 0.38
+  packCornerSpeedScale: 0.74
+  emergencyMinGap: 6
+  emergencyTimeHeadway: 1.1
+  emergencySpeedMargin: 1.2
+  emergencyClosingKmh: 4
+  requireRearClearanceToReverse: 1
+  gridLaunchWindowSeconds: 8
+  sideOverlapEscapeMetres: 1.8
+  sideOverlapEscapeShift: 1.6
+  overlapEscapeMinSpeedKmh: 40
+  trackRecoveryMargin: 1.25
+  trackRecoverySpeedKmh: 45
+  stuckSpeedThresholdKmh: 6
+  stuckDetectionSeconds: 4
+  recoveryReverseSeconds: 1.2
+  recoveryCooldownSeconds: 4
+  stuckThrottleDemandThreshold: 0.25

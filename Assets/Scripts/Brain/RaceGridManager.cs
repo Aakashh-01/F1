@@ -17,6 +17,14 @@ public class RaceGridManager : MonoBehaviour
         public Transform spawnPoint;
         public VehiclePhysicsProfile physicsProfileOverride;
         public AIDifficultyProfile difficultyProfile;
+
+        /// <summary>
+        /// Optional driver tuning for this entry. Wins over the manager's
+        /// <see cref="defaultDriverProfile"/>, exactly as
+        /// <see cref="difficultyProfile"/> wins over <c>defaultDifficultyProfile</c> — one
+        /// field means one place to ask, so an entry overrides or it does not.
+        /// </summary>
+        public AIDriverProfile driverProfile;
         public AIDifficultyPreset fallbackDifficulty = AIDifficultyPreset.Medium;
         public bool preferRightOvertake = true;
         [Range(-1f, 1f)] public float preferredLaneOffset01;
@@ -28,9 +36,22 @@ public class RaceGridManager : MonoBehaviour
     public GameObject defaultAICarPrefab;
     public Transform spawnedParent;
 
+    [Tooltip("The track this grid is racing on. Optional — if it is left empty the manager " +
+             "looks for one. Assigned explicitly wherever the scene can supply it, because the " +
+             "AI's lap tracking silently measures nothing without it.")]
+    public TrackPlacement trackPlacement;
+
     [Header("Defaults")]
     public VehiclePhysicsProfile defaultAIPhysicsProfile;
     public AIDifficultyProfile defaultDifficultyProfile;
+
+    /// <summary>
+    /// Driver tuning handed to every AI car this grid spawns, unless its entry names its own.
+    /// Null is legitimate: a car with no profile falls back to the shipped defaults inside
+    /// <c>AIDriverController</c>, which is why this is not overwritten unconditionally the
+    /// way a physics profile would be.
+    /// </summary>
+    public AIDriverProfile defaultDriverProfile;
     [Range(1, 12)] public int perceptionFrameStride = 3;
     public bool autoAssignCenteredLanes = true;
     [Range(0.1f, 0.8f)] public float autoPreferredLaneOffset01 = 0.42f;
@@ -248,6 +269,17 @@ public class RaceGridManager : MonoBehaviour
             driver.difficultyPreset = entry.difficultyProfile != null
                 ? entry.difficultyProfile.preset
                 : entry.fallbackDifficulty;
+
+            // Only assigned when there is something to assign. The driver falls back to the
+            // shipped defaults on its own, and the AI body prefab already carries a real
+            // profile — writing null here would strip it and leave a car running the
+            // fallback while the prefab claimed otherwise.
+            AIDriverProfile driverTuning = entry.driverProfile != null
+                ? entry.driverProfile
+                : defaultDriverProfile;
+            if (driverTuning != null)
+                driver.driverProfile = driverTuning;
+
             driver.preferRightOvertake = entry.preferRightOvertake;
             driver.preferredLaneOffset01 = GetAssignedPreferredLaneOffset(entry, gridIndex);
         }
@@ -258,6 +290,88 @@ public class RaceGridManager : MonoBehaviour
             perception.fixedFrameStride = stride;
             perception.fixedFrameOffset = gridIndex % stride;
         }
+
+        BindLapTracking(car);
+    }
+
+    /// <summary>
+    /// Points every lap tracker on a freshly spawned car at the track this grid is racing on.
+    ///
+    /// <para>
+    /// This mirrors what <c>PlayerCarSpawner</c> has always done for the player, and it exists
+    /// because the AI never did it. Both halves were implicit, and both fail silently:
+    /// </para>
+    ///
+    /// <para>
+    /// The binding itself came from <c>LapTracker.Awake</c>'s own
+    /// <c>FindAnyObjectByType&lt;TrackPlacement&gt;()</c>. That works today only because
+    /// <c>RaceSceneController.BringUpRace</c> loads track content before spawning the grid — a
+    /// load-ordering nobody owns and nothing asserts. Spawn the grid first, or renumber the
+    /// scenes, and every AI's tracker resolves null.
+    /// </para>
+    ///
+    /// <para>
+    /// The layer was worse. <c>IsOnTrackSurface</c> raycasts <c>1 &lt;&lt; TrackLayer</c> from
+    /// 50 m above the car, and every AI tracker's layer came from a number serialised into
+    /// <c>AI_F1_Body.prefab</c>. It happened to be the right layer by coincidence of layer
+    /// numbering, so nothing about it was ever checked. Get it wrong — or move a car's
+    /// colliders onto the Traffic layer, which is what the player path has to undo — and the
+    /// ray finds nothing: lap distance stays 0 forever, no lap ever completes, and the whole
+    /// field ranks level in the standings. No exception, no warning, nothing in the console.
+    /// That is the exact failure <c>LapTracker</c> documents in its own header, and the fix
+    /// reached the player's spawn path and not this one.
+    /// </para>
+    ///
+    /// <para>
+    /// The layer is therefore read off the surface collider that is actually there, never
+    /// from a name lookup and never from a literal.
+    /// </para>
+    /// </summary>
+    private void BindLapTracking(GameObject car)
+    {
+        if (car == null)
+            return;
+
+        TrackPlacement placement = ResolveTrackPlacement();
+        if (placement == null)
+        {
+            // Deliberately NOT BindTrack(null). BindTrack assigns unconditionally, so calling
+            // it with null would erase a binding the car inherited from its prefab or from an
+            // earlier bind — turning "we could not find the track" into "we destroyed the
+            // track reference". Leaving the tracker alone is the honest failure.
+            return;
+        }
+
+        int surfaceLayer = ResolveTrackLayer(placement);
+
+        foreach (LapTracker tracker in car.GetComponentsInChildren<LapTracker>(true))
+        {
+            tracker.BindTrack(placement);
+
+            // A surface with no layer to read is not a reason to write a wrong one: 0 would
+            // raycast the Default layer and find the car's own body, which reports "on track"
+            // forever and is worse than no answer at all.
+            if (surfaceLayer >= 0)
+                tracker.TrackLayer = surfaceLayer;
+        }
+    }
+
+    /// <summary>
+    /// The layer the track surface is genuinely on, or -1 when it cannot be determined.
+    /// </summary>
+    private static int ResolveTrackLayer(TrackPlacement placement)
+    {
+        Collider surface = placement.TrackSurface;
+        return surface != null ? surface.gameObject.layer : -1;
+    }
+
+    private TrackPlacement ResolveTrackPlacement()
+    {
+        if (trackPlacement != null)
+            return trackPlacement;
+
+        trackPlacement = FindAnyObjectByType<TrackPlacement>();
+        return trackPlacement;
     }
 
     private GameObject SpawnCar(RaceGridEntry entry, int gridIndex, int gridPosition)
@@ -439,7 +553,14 @@ public class RaceGridManager : MonoBehaviour
 
     private void ResolveReferences()
     {
+        // The track placement owns the racing line for this grid, so it is asked first. That
+        // keeps the line and the lap tracker pointing at the same track: resolving the line by
+        // a scene-wide search while the tracker was bound somewhere else is how a grid ends
+        // up driving one track's line while measuring another.
+        TrackPlacement placement = ResolveTrackPlacement();
         if (racingLine == null)
-            racingLine = FindAnyObjectByType<AIRacingLine>();
+            racingLine = placement != null && placement.RacingLine != null
+                ? placement.RacingLine
+                : FindAnyObjectByType<AIRacingLine>();
     }
 }

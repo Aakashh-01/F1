@@ -93,6 +93,13 @@ namespace F1.GameFlow
             Register();
         }
 
+        /// <summary>
+        /// Creates the screen instance now if it does not exist. The flow calls this when
+        /// it resolves a host whose root is still inactive (the hub's second panel) — that
+        /// host has had no Awake yet, so the Awake path has not run.
+        /// </summary>
+        public void EnsureScreen() => EnsureScreenInstance();
+
         private void OnDestroy()
         {
             if (_registered && GameFlowManager.Instance != null)
@@ -128,6 +135,31 @@ namespace F1.GameFlow
         private void Register()
         {
             var flow = GameFlowManager.Instance;
+
+#if UNITY_EDITOR
+            // Editor convenience: pressing Play directly on a flow scene skips the loading
+            // scene — the only place the persistent root is normally created — and the host
+            // would dead-end with "no GameFlowManager", making the scene untestable alone.
+            // Builds keep the loud error below.
+            //
+            // Not under the play mode test runner, though: it drives tests from its own
+            // "InitTestScene*" scene, so an injected root there would hijack tests that
+            // load flow scenes directly — a second manager and event system, and the
+            // active scene wedged Busy on the test's own navigation.
+            var underTestRunner = Application.isPlaying &&
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene()
+                    .name.StartsWith("InitTestScene");
+            if (flow == null && Application.isPlaying && !underTestRunner)
+            {
+                FlowBootstrap.EnsureRoot();
+                flow = GameFlowManager.Instance;
+                if (flow != null)
+                    Debug.LogWarning(
+                        "[FlowSceneHost] No persistent flow root was running, so one was created " +
+                        "for direct scene play. Enter through 00_LoadingScene for the real boot.", this);
+            }
+#endif
+
             if (flow == null)
             {
                 Debug.LogError(

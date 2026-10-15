@@ -27,11 +27,17 @@ namespace F1.GameData
         [SerializeField] private Sprite _icon;
         public Sprite Icon => _icon;
 
+        [Tooltip("The player's car body for this definition. Must never point at an AI body: " +
+                 "the AI prefab ships with UseExternalInput and the AI physics profile already " +
+                 "applied, so a player spawned from it cannot be driven.")]
         [SerializeField] private GameObject _carPrefab;
         public GameObject CarPrefab => _carPrefab;
 
         [Header("Physics — Base Profile")]
-        [Tooltip("Base physics profile for this car. Wing setup will swap the AeroProfile at runtime.")]
+        [Tooltip("Base physics profile for this car. Wing setup will swap the AeroProfile at runtime. " +
+                 "This is the CAR's physical limits and is shared by every driver of that car, so " +
+                 "it must be the player profile and never an AI-only profile — AI behaviour tuning " +
+                 "belongs in the AI driver profile instead. See CarDefinitionIsolationTests.")]
         [SerializeField] private VehiclePhysicsProfile _basePhysicsProfile;
         public VehiclePhysicsProfile BasePhysicsProfile => _basePhysicsProfile;
 
@@ -62,6 +68,36 @@ namespace F1.GameData
         [Tooltip("24-hour rental cost (USD)")]
         [SerializeField] private float _rentalCost24h = 0f;
         public float RentalCost24h => _rentalCost24h;
+
+        [Header("Garage Display (client-demo placeholders)")]
+        [Tooltip("Engine label for the garage stats panel, e.g. \"1.6L V6 Turbo Hybrid\".")]
+        [SerializeField] private string _engineLabel;
+        public string EngineLabel => _engineLabel;
+
+        [Tooltip("Displayed power in hp.")]
+        [SerializeField] private float _powerHP;
+        public float PowerHP => _powerHP;
+
+        [Tooltip("Displayed torque in Nm.")]
+        [SerializeField] private float _torqueNm;
+        public float TorqueNm => _torqueNm;
+
+        [Tooltip("Displayed top speed in km/h.")]
+        [SerializeField] private float _topSpeedKph;
+        public float TopSpeedKph => _topSpeedKph;
+
+        [Tooltip("Displayed 0-100 km/h time in seconds (lower is better).")]
+        [SerializeField] private float _accel0100Seconds;
+        public float Accel0100Seconds => _accel0100Seconds;
+
+        [Tooltip("Displayed weight in kg.")]
+        [SerializeField] private float _weightKg;
+        public float WeightKg => _weightKg;
+
+        [Tooltip("Placeholder showroom tint while every car shares one body prefab. " +
+                 "Real liveries replace this later; the garage panel reads nothing from it.")]
+        [SerializeField] private Color _displayTint = Color.white;
+        public Color DisplayTint => _displayTint;
 
         [Header("Description")]
         [TextArea(2, 4)]
@@ -102,6 +138,12 @@ namespace F1.GameData
         /// <summary>
         /// Creates a physics profile with the selected wing's aero applied.
         /// Call this when instantiating the car for qualifying/race.
+        ///
+        /// This deep-copies the whole base profile and swaps only the aero, so every field the
+        /// base carries reaches the player's car. That is exactly right for physical limits
+        /// (mass, downforce, brake force, grip) and exactly wrong for anything that describes a
+        /// *driver*. If an AI-only value ever needs to reach an AI car, it belongs in the AI
+        /// driver profile, not in a profile this method copies into a player car.
         /// </summary>
         public static VehiclePhysicsProfile CreateProfileWithWing(this CarDefinition def, WingType wing)
         {

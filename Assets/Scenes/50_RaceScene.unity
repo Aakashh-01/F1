@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49fc470c13a1a9940a367ac788e5c31b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _raceLapsOverride: -1
+  _raceLapsOverride: 2
   _aiFieldOverride: {fileID: 0}
   _startPlayerAtBackOfGrid: 1
 --- !u!114 &1520020989
